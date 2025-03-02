@@ -1,0 +1,3285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG智能可视化生成器</title>
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --primary-hover: #40a9ff;
+            --background-color: #f5f5f5;
+            --card-background: #ffffff;
+            --border-color: #e8e8e8;
+            --text-color: #333333;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+
+        .editor-container, .preview-container {
+            background: var(--card-background);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .preview-container {
+            background: var(--card-background);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            height: calc(100vh - 100px); /* 设置合适的高度 */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 防止内容溢出 */
+            position: relative;
+        }
+
+        #svgContainerWrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden; /* 修改为 hidden */
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: white;
+            width: 100%;
+            height: 100%;
+        }
+
+        #svgContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            transform-origin: center center;
+        }
+
+        /* SVG自适应样式 */
+        #svgContainer svg {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px;
+            border-radius: 4px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* 统一按钮样式 */
+        button, select {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--card-background);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            height: 36px;
+            line-height: 1.5;
+        }
+
+        button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* 添加按钮点击反馈样式 */
+        button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        button:active::after {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        /* 禁用状态样式 */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 统一输入框样式 */
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            background: var(--card-background);
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        /* 统一文本区域高度 */
+        #gptInput, #modifyInput {
+            height: 120px;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        #svgInput {
+            height: 200px;
+            font-family: monospace;
+        }
+
+        /* 预览容器样式 */
+        #svgContainer {
+            min-height: 400px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 20px;
+            background: white;
+            overflow: auto;
+        }
+
+        /* 状态提示样式优化 */
+        #statusContainer, #errorContainer {
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin: 12px 0;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #statusContainer.success {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+
+        #errorContainer {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+
+        /* 加载动画优化 */
+        #loadingSpinner {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .spinner {
+            border-width: 3px;
+            width: 40px;
+            height: 40px;
+        }
+
+        /* 保存的图表列表样式优化 */
+        .saved-chart-item {
+            background: var(--card-background);
+            padding: 16px;
+            margin: 8px 0;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 响应式设计优化 */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 暗色主题 */
+        .theme-dark {
+            --primary-color: #177ddc;
+            --primary-hover: #1890ff;
+            --background-color: #141414;
+            --card-background: #1f1f1f;
+            --border-color: #434343;
+            --text-color: #ffffff;
+        }
+
+        .theme-dark button,
+        .theme-dark select,
+        .theme-dark input,
+        .theme-dark textarea {
+            background: #2d2d2d;
+            color: #ffffff;
+        }
+
+        .theme-dark #svgContainer {
+            background: #2d2d2d;
+        }
+
+        /* 加载状态指示器样式 */
+        #loadingSpinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--primary-color);
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 状态提示优化 */
+        #statusContainer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        #statusContainer.success {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+
+        #statusContainer.error {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+
+        #statusContainer.info {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #1890ff;
+        }
+
+        /* 在 CSS 样式部分添加中止按钮样式 */
+        .abort-button {
+            background-color: #ff4d4f;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .abort-button:hover {
+            background-color: #ff7875;
+        }
+
+        /* 修改loading spinner样式以适应中止按钮 */
+        #loadingSpinner .loading-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 添加拖拽相关样式 */
+        .draggable {
+            cursor: move;
+            user-select: none;
+        }
+
+        .dragging {
+            opacity: 0.8;
+            outline: 2px dashed var(--primary-color);
+        }
+
+        .drag-handle {
+            fill: var(--primary-color);
+            opacity: 0;
+            cursor: move;
+        }
+
+        .draggable:hover .drag-handle {
+            opacity: 0.2;
+        }
+
+        /* 添加编辑控件样式 */
+        .svg-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .element-controls {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .control-point {
+            fill: var(--primary-color);
+            stroke: white;
+            stroke-width: 2;
+            cursor: pointer;
+            r: 4;
+        }
+
+        .control-point:hover {
+            r: 6;
+        }
+
+        .path-highlight {
+            stroke: var(--primary-color);
+            stroke-width: 2;
+            fill: none;
+            pointer-events: none;
+        }
+
+        .selected-element {
+            outline: 2px dashed var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .connector-line {
+            stroke: var(--primary-color);
+            stroke-width: 2;
+            stroke-dasharray: 4;
+            pointer-events: none;
+        }
+
+        /* 添加新的预览区工具栏样式 */
+        .preview-toolbar {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        /* 添加迷你地图样式 */
+        .minimap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 100px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .minimap:hover {
+            opacity: 1;
+        }
+
+        /* 添加元素hover效果 */
+        .draggable:hover {
+            outline: 2px solid var(--primary-color);
+        }
+
+        .selected {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* 添加网格背景 */
+        .grid-background {
+            background-image: 
+                linear-gradient(to right, #f0f0f0 1px, transparent 1px),
+                linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* 添加鼠标位置指示器样式 */
+        .mouse-position {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* 添加智能对齐指引线样式 */
+        .guide-line {
+            position: absolute;
+            background: var(--primary-color);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .guide-line.vertical {
+            width: 1px;
+            height: 100%;
+        }
+
+        .guide-line.horizontal {
+            height: 1px;
+            width: 100%;
+        }
+
+        /* 优化选择框样式 */
+        .selection-box {
+            position: absolute;
+            border: 1px dashed var(--primary-color);
+            background: rgba(24, 144, 255, 0.1);
+            pointer-events: none;
+            z-index: 998;
+        }
+
+        /* 优化元素选中样式 */
+        .svg-element-selected {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* 优化迷你地图样式 */
+        .minimap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+
+        .minimap-viewport {
+            position: absolute;
+            border: 2px solid var(--primary-color);
+            background: rgba(24, 144, 255, 0.1);
+            cursor: move;
+        }
+
+        /* 添加键盘快捷键提示样式 */
+        .shortcut-hint {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            pointer-events: none;
+        }
+
+        /* 添加缩放控制器样式 */
+        .zoom-slider {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .zoom-slider input[type="range"] {
+            width: 100px;
+        }
+
+        /* 连接点样式 */
+        .connection-point {
+            fill: #1890ff;
+            stroke: white;
+            stroke-width: 2;
+            r: 4;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .connection-point:hover {
+            opacity: 1;
+            r: 6;
+        }
+
+        .draggable:hover .connection-point {
+            opacity: 0.6;
+        }
+
+        /* 连接线设置面板 */
+        .connection-settings {
+            position: absolute;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+        }
+
+        .connection-settings.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>SVG智能可视化生成器</h1>
+
+    <div class="container">
+        <div class="editor-container">
+            <h2>编辑器</h2>
+            <div class="controls">
+                <select id="themeSelector">
+                    <option value="light">明亮主题</option>
+                    <option value="dark">暗黑主题</option>
+                    <option value="blue">蓝色主题</option>
+                    <option value="green">绿色主题</option>
+                </select>
+                <button id="generateBtn">生成图表</button>
+                <button id="undoBtn">撤销</button>
+                <button id="redoBtn">重做</button>
+                <button id="saveBtn">保存图表</button>
+                <select id="exportSelect">
+                    <option value="">导出选项...</option>
+                    <option value="svg">SVG</option>
+                    <option value="png">PNG</option>
+                    <option value="jpg">JPG</option>
+                </select>
+                <button id="shareBtn">生成分享链接</button>
+            </div>
+
+            <!-- API Key输入区 -->
+            <div>
+                <label for="apiKeyInput">请输入您的APIKey:</label>
+                <input type="password" id="apiKeyInput" placeholder="您的 API Key" />
+            </div>
+
+            <!-- GPT提示输入区 -->
+            <div>
+                <label for="gptInput">描述您想要的可视化效果：</label>
+                <textarea id="gptInput" placeholder="例如：创建一个包含3个圆形节点的流程图，节点之间用箭头连接..."></textarea>
+                <button id="submitGPTBtn">生成SVG</button>
+            </div>
+
+            <!-- 添加修改指令输入区 -->
+            <div>
+                <label for="modifyInput">输入修改指令以更新SVG：</label>
+                <textarea id="modifyInput" placeholder="例如：将所有圆形节点改为蓝色，增加一个新的连接..."></textarea>
+                <button id="modifyGPTBtn">修改SVG</button>
+            </div>
+
+            <!-- SVG代码编辑区 -->
+            <textarea id="svgInput" class="svg-editor" placeholder="SVG代码将在这里生成..."></textarea>
+
+            <!-- 保存的图表列表 -->
+            <div id="savedChartsSection">
+                <h3>已保存的图表</h3>
+                <div id="searchContainer">
+                    <input type="text" id="searchInput" placeholder="搜索图表..." />
+                </div>
+                <div id="savedChartsList"></div>
+                <div id="paginationControls"></div>
+                <div class="backup-controls">
+                    <button id="exportBackupBtn">导出备份</button>
+                    <button id="importBackupBtn">导入备份</button>
+                    <input type="file" id="importFileInput" accept=".json" style="display: none;" />
+                </div>
+            </div>
+
+            <div id="errorContainer"></div>
+            <div id="statusContainer"></div>
+            <div id="shareLinkContainer" style="display: none;">
+                <label for="shareLink">分享链接:</label>
+                <input type="text" id="shareLink" readonly />
+            </div>
+            <div id="loadingSpinner">
+                <div class="loading-content">
+                    <div class="spinner"></div>
+                    <div class="loading-text">正在处理中...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text">0%</div>
+                    <button class="abort-button" id="abortBtn">中止处理</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-container">
+            <h2>预览</h2>
+            <div id="svgContainerWrapper" class="grid-background">
+                <div class="svg-controls">
+                    <button id="selectMode">选择</button>
+                    <button id="connectMode">连接</button>
+                    <button id="deleteElement">删除</button>
+                    <button id="bringForward">上移一层</button>
+                    <button id="sendBackward">下移一层</button>
+                    <button id="duplicateElement">复制</button>
+                    <button id="rotateElement">旋转</button>
+                    <input type="color" id="colorPicker" title="更改颜色">
+                    <select id="lineStyle">
+                        <option value="solid">实线</option>
+                        <option value="dashed">虚线</option>
+                        <option value="dotted">点线</option>
+                    </select>
+                    <button id="toggleGrid">显示网格</button>
+                    <button id="toggleSnap">对齐网格</button>
+                    <button id="centerView">居中视图</button>
+                    <button id="fitContent">适应内容</button>
+                </div>
+                <div id="svgContainer"></div>
+                <div class="preview-toolbar">
+                    <button id="panMode">平移模式</button>
+                    <button id="selectMode">选择模式</button>
+                    <span>|</span>
+                    <input type="number" id="zoomLevel" min="10" max="400" value="100" style="width: 60px">
+                    <span>%</span>
+                </div>
+                <div class="minimap" id="minimap"></div>
+                <div class="zoom-controls">
+                    <button id="zoomInBtn">+</button>
+                    <button id="zoomOutBtn">-</button>
+                    <button id="resetZoomBtn">重置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentScale = 1;
+        let undoStack = [];
+        let redoStack = [];
+        const chartsPerPage = 5;
+        let currentPage = 1;
+        let filteredCharts = [];
+        let submitGPTBtn; // 声明全局变量
+        // 添加 AbortController
+        let currentController = null;
+        let isGridVisible = true;
+        let isSnapEnabled = false;
+        let isPanMode = false; // 添加 isPanMode 全局变量
+
+        // DOM元素
+        document.addEventListener('DOMContentLoaded', () => {
+            // 解析URL中的API Key
+            function getApiKeyFromUrl() {
+                try {
+                    const hash = window.location.hash;
+                    if (hash) {
+                        const settingsMatch = hash.match(/[?&]settings=([^&]+)/);
+                        if (settingsMatch) {
+                            const settings = JSON.parse(decodeURIComponent(settingsMatch[1]));
+                            if (settings.key) {
+                                return settings.key;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('解析URL中的API Key失败:', error);
+                }
+                return null;
+            }
+
+            // 获取并设置API Key
+            const apiKey = getApiKeyFromUrl();
+            if (apiKey) {
+                const apiKeyInput = document.getElementById('apiKeyInput');
+                if (apiKeyInput) {
+                    apiKeyInput.value = apiKey;
+                }
+            }
+
+            // 初始化DOM元素引用
+            submitGPTBtn = document.getElementById('submitGPTBtn');
+            const svgInput = document.getElementById('svgInput');
+            const svgContainer = document.getElementById('svgContainer');
+            const gptInput = document.getElementById('gptInput');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const errorContainer = document.getElementById('errorContainer');
+            const statusContainer = document.getElementById('statusContainer');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const modifyInput = document.getElementById('modifyInput');
+            const modifyGPTBtn = document.getElementById('modifyGPTBtn');
+            const zoomInBtn = document.getElementById('zoomInBtn');
+            const zoomOutBtn = document.getElementById('zoomOutBtn');
+            const resetZoomBtn = document.getElementById('resetZoomBtn');
+            const panModeBtn = document.getElementById('panMode');
+            const zoomLevelInput = document.getElementById('zoomLevel');
+            const toggleGridBtn = document.getElementById('toggleGrid');
+            const toggleSnapBtn = document.getElementById('toggleSnap');
+            const centerViewBtn = document.getElementById('centerView');
+            const fitContentBtn = document.getElementById('fitContent');
+            const minimap = document.getElementById('minimap');
+            let isGridVisible = true;
+            let isSnapEnabled = false;
+            let isPanMode = false;
+
+            // 确保所有必要的元素都存在后再添加事件监听器
+            if (zoomInBtn && zoomOutBtn && resetZoomBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                    currentScale = Math.min(currentScale * 1.2, 3);
+                    applyCurrentScale();
+                });
+
+                zoomOutBtn.addEventListener('click', () => {
+                    currentScale = Math.max(currentScale / 1.2, 0.3);
+                    applyCurrentScale();
+                });
+
+                resetZoomBtn.addEventListener('click', () => {
+                    currentScale = 1;
+                    applyCurrentScale();
+                });
+            }
+
+            // 重新绑定事件监听器
+            if (submitGPTBtn) {
+                submitGPTBtn.removeEventListener('click', null);
+                submitGPTBtn.addEventListener('click', async () => {
+                    if (submitGPTBtn.disabled) return;
+
+                    const apiKey = apiKeyInput.value.trim();
+                    const prompt = gptInput.value.trim();
+
+                    if (!apiKey || !prompt) {
+                        showError('请输入API Key和描述');
+                        return;
+                    }
+
+                    try {
+                        submitGPTBtn.disabled = true;
+                        showLoading(true, '正在生成SVG...');
+                        
+                        const svgCode = await generateSVGWithGPT(apiKey, prompt);
+                        if (svgCode) {
+                            svgInput.value = svgCode;
+                            updateSVGPreview();
+                            showStatus('SVG生成成功！', 'success');
+                        } else {
+                            showError('未能生成有效的SVG代码');
+                        }
+                    } catch (error) {
+                        showError(error.message);
+                    } finally {
+                        submitGPTBtn.disabled = false;
+                        showLoading(false);
+                    }
+                });
+            }
+
+            // SVG生成按钮
+            submitGPTBtn.addEventListener('click', async () => {
+                const apiKey = apiKeyInput.value.trim();
+                const prompt = gptInput.value.trim();
+
+                if (!apiKey || !prompt) {
+                    showError('请输入API Key和描述');
+                    return;
+                }
+
+                try {
+                    const svgCode = await generateSVGWithGPT(apiKey, prompt);
+                    if (svgCode) {
+                        svgInput.value = svgCode;
+                        updateSVGPreview();
+                    } else {
+                        showError('未能生成有效的SVG代码');
+                    }
+                } catch (error) {
+                    showError(error.message);
+                }
+            });
+
+            // 添加事件监听器
+            document.getElementById('zoomInBtn').addEventListener('click', () => {
+                currentScale = Math.min(currentScale * 1.2, 3);
+                applyCurrentScale();
+            });
+
+            document.getElementById('zoomOutBtn').addEventListener('click', () => {
+                currentScale = Math.max(currentScale / 1.2, 0.3);
+                applyCurrentScale();
+            });
+
+            document.getElementById('resetZoomBtn').addEventListener('click', () => {
+                currentScale = 1;
+                applyCurrentScale();
+            });
+
+            document.getElementById('undoBtn').addEventListener('click', () => {
+                if (undoStack.length > 1) {
+                    const currentState = undoStack.pop();
+                    redoStack.push(currentState);
+                    svgInput.value = undoStack[undoStack.length - 1];
+                    updateSVGPreview();
+                }
+            });
+
+            document.getElementById('redoBtn').addEventListener('click', () => {
+                if (redoStack.length > 0) {
+                    const nextState = redoStack.pop();
+                    undoStack.push(nextState);
+                    svgInput.value = nextState;
+                    updateSVGPreview();
+                }
+            });
+
+            document.getElementById('saveBtn').addEventListener('click', () => {
+                const name = prompt('请输入图表名称：');
+                if (name) {
+                    const chart = {
+                        id: Date.now(),
+                        name,
+                        svg: svgInput.value,
+                        date: new Date().toISOString()
+                    };
+                    savedCharts.unshift(chart);
+                    localStorage.setItem('savedCharts', JSON.stringify(savedCharts));
+                    updateSavedChartsList();
+                    showStatus('图表已保存', 'success');
+                }
+            });
+
+            document.getElementById('exportBackupBtn').addEventListener('click', () => {
+                const backup = JSON.stringify(savedCharts);
+                downloadFile(backup, 'svg-charts-backup.json', 'application/json');
+            });
+
+            document.getElementById('importBackupBtn').addEventListener('click', () => {
+                document.getElementById('importFileInput').click();
+            });
+
+            document.getElementById('importFileInput').addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const backup = JSON.parse(e.target.result);
+                            savedCharts.push(...backup);
+                            localStorage.setItem('savedCharts', JSON.stringify(savedCharts));
+                            updateSavedChartsList();
+                            showStatus('备份已导入', 'success');
+                        } catch (error) {
+                            showError('导入失败：无效的备份文件');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            });
+
+            document.getElementById('searchInput').addEventListener('input', () => {
+                currentPage = 1;
+                updateSavedChartsList();
+            });
+
+            document.getElementById('themeSelector').addEventListener('change', (e) => {
+                changeTheme(e.target.value);
+            });
+
+            document.getElementById('exportSelect').addEventListener('change', (e) => {
+                if (e.target.value) {
+                    exportSVG(e.target.value);
+                    e.target.value = ''; // 重置选择
+                }
+            });
+
+            document.getElementById('shareBtn').addEventListener('click', () => {
+                const svgCode = encodeURIComponent(svgInput.value);
+                const shareUrl = `${window.location.origin}${window.location.pathname}?svg=${svgCode}`;
+                const shareLinkContainer = document.getElementById('shareLinkContainer');
+                const shareLink = document.getElementById('shareLink');
+                shareLink.value = shareUrl;
+                shareLinkContainer.style.display = 'block';
+                shareLink.select();
+                document.execCommand('copy');
+                showStatus('分享链接已复制到剪贴板', 'success');
+            });
+
+            // 加载分享的SVG
+            window.addEventListener('load', () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const sharedSvg = urlParams.get('svg');
+                if (sharedSvg) {
+                    svgInput.value = decodeURIComponent(sharedSvg);
+                    updateSVGPreview();
+                }
+                updateSavedChartsList();
+            });
+
+            // SVG输入监听
+            svgInput.addEventListener('input', () => {
+                updateSVGPreview();
+            });
+
+            // 键盘快捷键
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'z':
+                            e.preventDefault();
+                            if (!e.shiftKey) document.getElementById('undoBtn').click();
+                            else document.getElementById('redoBtn').click();
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            document.getElementById('saveBtn').click();
+                            break;
+                    }
+                }
+            });
+
+            // 拖拽功能
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
+
+            svgContainer.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialX = svgContainer.offsetLeft;
+                initialY = svgContainer.offsetTop;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    svgContainer.style.left = `${initialX + dx}px`;
+                    svgContainer.style.top = `${initialY + dy}px`;
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // 主题切换增强
+            const themeSelector = document.getElementById('themeSelector');
+            themeSelector.addEventListener('change', (e) => {
+                const theme = e.target.value;
+                changeTheme(theme);
+                localStorage.setItem('preferredTheme', theme);
+            });
+
+            // 加载保存的主题
+            const savedTheme = localStorage.getItem('preferredTheme');
+            if (savedTheme) {
+                themeSelector.value = savedTheme;
+                changeTheme(savedTheme);
+            }
+
+            // 自动保存功能
+            let autoSaveInterval = setInterval(() => {
+                const currentSvg = svgInput.value;
+                if (currentSvg) {
+                    localStorage.setItem('autoSavedSvg', currentSvg);
+                }
+            }, 60000); // 每分钟自动保存
+
+            // 加载自动保存的内容
+            const autoSavedSvg = localStorage.getItem('autoSavedSvg');
+            if (autoSavedSvg && !svgInput.value) {
+                if (confirm('发现自动保存的内容，是否恢复？')) {
+                    svgInput.value = autoSavedSvg;
+                    updateSVGPreview();
+                }
+            }
+
+            // 修改SVG按钮事件
+            modifyGPTBtn.addEventListener('click', async () => {
+                const apiKey = apiKeyInput.value.trim();
+                const modifyPrompt = modifyInput.value.trim();
+                const currentSvg = svgInput.value.trim();
+
+                if (!apiKey || !modifyPrompt || !currentSvg) {
+                    showError('请确保已输入API Key、修改指令，且当前有SVG代码');
+                    return;
+                }
+
+                try {
+                    const modifiedSvg = await modifySVGWithGPT(apiKey, currentSvg, modifyPrompt);
+                    if (modifiedSvg) {
+                        svgInput.value = modifiedSvg;
+                        updateSVGPreview();
+                        showStatus('SVG已成功修改', 'success');
+                    } else {
+                        showError('未能生成有效的修改后SVG代码');
+                    }
+                } catch (error) {
+                    showError(error.message);
+                }
+            });
+
+            // 为所有按钮添加反馈效果
+            document.querySelectorAll('button').forEach(addButtonFeedback);
+            
+            // 改进的生成按钮处理
+            submitGPTBtn.addEventListener('click', async () => {
+                const apiKey = apiKeyInput.value.trim();
+                const prompt = gptInput.value.trim();
+
+                if (!apiKey || !prompt) {
+                    showError('请输入API Key和描述');
+                    return;
+                }
+
+                submitGPTBtn.disabled = true;
+                showLoading(true, '正在生成SVG...');
+
+                try {
+                    const svgCode = await generateSVGWithGPT(apiKey, prompt);
+                    if (svgCode) {
+                        svgInput.value = svgCode;
+                        updateSVGPreview();
+                        showStatus('SVG生成成功！', 'success');
+                    } else {
+                        showError('未能生成有效的SVG代码');
+                    }
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    submitGPTBtn.disabled = false;
+                    showLoading(false);
+                }
+            });
+
+            // 添加中止按钮事件监听器
+            document.getElementById('abortBtn').addEventListener('click', () => {
+                if (currentController) {
+                    currentController.abort();
+                    showStatus('已中止处理', 'info');
+                }
+            });
+
+            // 添加平移模式切换事件
+            panModeBtn.addEventListener('click', togglePanMode);
+
+            // 添加缩放级别输入框事件
+            zoomLevelInput.addEventListener('change', () => {
+                const zoomLevel = Math.max(10, Math.min(400, parseInt(zoomLevelInput.value)));
+                currentScale = zoomLevel / 100;
+                applyCurrentScale();
+            });
+
+            // 添加网格切换事件
+            toggleGridBtn.addEventListener('click', toggleGrid);
+
+            // 添加对齐网格事件
+            toggleSnapBtn.addEventListener('click', toggleSnap);
+
+            // 添加居中视图事件
+            centerViewBtn.addEventListener('click', centerView);
+
+            // 添加适应内容事件
+            fitContentBtn.addEventListener('click', fitContent);
+
+            // 初始化迷你地图
+            initMinimap();
+            initPanMode();
+        });
+
+        // 修改 extractSVGCode 函数
+        function extractSVGCode(text) {
+            if (!text) {
+                return null;
+            }
+
+            try {
+                // 1. 首先尝试解析JSON响应
+                let jsonResponse = null;
+                try {
+                    jsonResponse = JSON.parse(text);
+                    text = jsonResponse.choices?.[0]?.message?.content || text;
+                } catch(e) {
+                    // 如果不是JSON格式，直接使用原始文本
+                }
+
+                // 2. 尝试匹配完整的SVG标签
+                const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/);
+                if (svgMatch) {
+                    return svgMatch[0];
+                }
+
+                // 3. 尝试提取代码块中的内容
+                const codeBlockRegexes = [
+                    /```svg\s*([\s\S]*?)\s*```/,
+                    /```html\s*([\s\S]*?)\s*```/,
+                    /```xml\s*([\\s\S]*?)\s*```/,
+                    /```\s*([\s\S]*?)\s*```/
+                ];
+
+                for (const regex of codeBlockRegexes) {
+                    const match = text.match(regex);
+                    if (match) {
+                        const extractedCode = match[1];
+                        // 验证提取的内容是否包含SVG标签
+                        const svgInCodeBlock = extractedCode.match(/<svg[\s\S]*?<\/svg>/);
+                        if (svgInCodeBlock) {
+                            return svgInCodeBlock[0];
+                        }
+                    }
+                }
+
+                // 4. 检查是否包含未被代码块包裹的SVG
+                const lastResortMatch = text.match(/<svg[\s\S]*?<\/svg>/);
+                if (lastResortMatch) {
+                    return lastResortMatch[0];
+                }
+
+                return null;
+            } catch (error) {
+                console.error('SVG提取错误:', error);
+                return null;
+            }
+        }
+
+        // 添加备用 API 接口列表
+        const API_ENDPOINTS = [
+            'https://api.2023gpt.top/v1/chat/completions',
+            'https://api.2023gpt.top/v1/chat/completions'
+        ];
+
+        // 修改后的 generateSVGWithGPT 函数
+        async function generateSVGWithGPT(apiKey, prompt) {
+            if (currentController) {
+                currentController.abort();
+            }
+            
+            currentController = new AbortController();
+            const signal = currentController.signal;
+
+            let lastError = null;
+            
+            // 遍历所有 API 端点
+            for (const apiUrl of API_ENDPOINTS) {
+                try {
+                    showLoading(true);
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`,
+                        },
+                        mode: 'cors',
+                        credentials: 'omit',
+                        signal,
+                        body: JSON.stringify({
+                            model: 'claude-3-7-sonnet-20250219',
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: '事情很紧急，干不好会被老板辞退！！请认真完成！做好了我将会给你付1万元作为报酬。你是专业的SVG数据可视化与图表设计师，能设计出教科书级别的图文布局。请根据我的描述创建[具体图表类型]。要求： 1. 更现代的布局。添加吸引人的视觉元素和插图使用更复杂的配色方案。视觉设计：采用渐变色和精美的医疗图标系统，现代化的布局与色彩搭配，但是避免有多余的图标或者元素。图表结构与布局: - 为[图表类型]选择最合适的布局模式和空间分配 - 数据图表：确保数据准确表达，比例恰当，坐标轴清晰 - 概念图表：保证元素逻辑排列，层次分明，关系直观 - 每个元素之间维持合适的间距与对齐 - 设置恰当的留白与边距 2. 视觉设计与色彩: - 使用符合[主题/行业]的专业配色方案（主色+3-4个辅助色） - 应用色彩编码增强数据/概念区分（确保色彩具有足够对比度） - 为重要元素添加适当视觉强调（微妙阴影、边框、高亮） - 根据内容复杂度调整透明度和视觉层次 3. 元素设计与交互: - 针对[图表类型]选择合适的图形元素（条形、线条、区域、节点等） - 为图例、标签和注释提供清晰定位 - 设计直观的交互提示（悬停效果、点击区域等，如适用） - 确保所有元素大小适中，便于阅读和理解 4. 文字与标注: - 使用清晰可读的字体系统 - 根据重要性和层级应用文字样式（粗细、颜色、大小） - 确保所有文字有足够对比度（符合WCAG AA标准） - 简洁表达关键信息，避免文字过多或过密 5. 特殊图表类型考虑: - 统计图表（柱状图/饼图/折线图）：强调数据比较与趋势 - 关系图（网络图/桑基图）：突出连接与流动关系 - 地理图表：保持地理准确性与适当简化 - 层级图表（树状图/旭日图）：清晰展示分层结构 - 分布图（散点图/热力图）：突出模式与离群值 - 组成图（堆叠图/马赛克图）：明确表示部分与整体关系 - 时间图表（甘特图/时间线）：精确表达时间跨度与关键节点 6. 专业性与优化: - 遵循所选图表类型的行业标准与最佳实践 - 提供必要的图例、说明和上下文信息 - 确保SVG代码优化（移除冗余元素，合并路径） - 考虑不同设备的响应式显示需求7.各元素之间在空间上不能有重叠的情况，边框也不能重叠，一定不能有重叠，这很重要！！！！。文字更加不能超出文本框的大小。在整体的边界上，要有一定的留白设计，而不是直接铺满导致可能存在边界缺失的情况'
+                                },
+                                {
+                                    role: 'user',
+                                    content: `请根据以下描述生成SVG代码，请直接给出代码就好，不要问用户任何其他问题或者回复非代码相关的内容：${prompt}`
+                                }
+                            ],
+                            temperature: 0.7,
+                            timeout: 180000
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    if (!data || !data.choices || !data.choices[0]) {
+                        throw new Error('API返回数据格式无效');
+                    }
+
+                    const svgCode = extractSVGCode(data.choices[0].message.content);
+                    if (!svgCode) {
+                        throw new Error('未能从响应中提取有效的SVG代码');
+                    }
+
+                    return svgCode;
+
+                } catch (error) {
+                    console.warn(`API ${apiUrl} 调用失败:`, error);
+                    lastError = error;
+                    // 如果是用户中止，直接抛出错误
+                    if (error.name === 'AbortError') {
+                        throw new Error('操作已被用户中止');
+                    }
+                    // 继续尝试下一个接口
+                    continue;
+                }
+            }
+
+            // 如果所有接口都失败了，抛出最后一个错误
+            throw lastError || new Error('所有API接口调用都失败了');
+        }
+
+        // 从API响应中提取SVG代码的函数
+        function extractSVGCode(text) {
+            // 首先尝试匹配完整的SVG标签
+            const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/);
+            if (svgMatch) {
+                return svgMatch[0];
+            }
+
+            // 如果没有找到完整的SVG标签，尝试提取代码块中的内容
+            const codeBlockMatch = text.match(/```(?:svg|html)?\s*([\s\S]*?)\s*```/);
+            if (codeBlockMatch) {
+                const extractedCode = codeBlockMatch[1];
+                // 验证提取的内容是否包含SVG标签
+                const svgInCodeBlock = extractedCode.match(/<svg[\s\S]*?<\/svg>/);
+                if (svgInCodeBlock) {
+                    return svgInCodeBlock[0];
+                }
+            }
+
+            // 如果以上都没找到，返回null
+            return null;
+        }
+
+        // 修改updateSVGPreview函数
+        function updateSVGPreview() {
+            const svgContainer = document.getElementById('svgContainer');
+            const svgInput = document.getElementById('svgInput');
+            
+            try {
+                const svgCode = svgInput.value.trim();
+                if (!svgCode) {
+                    svgContainer.innerHTML = '';
+                    return;
+                }
+
+                // 验证SVG代码格式
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(svgCode, 'image/svg+xml');
+                if (doc.documentElement.tagName === 'parsererror') {
+                    throw new Error('无效的SVG代码');
+                }
+
+                // 更新预览
+                svgContainer.innerHTML = svgCode;
+
+                // 获取新插入的SVG元素
+                const svgElement = svgContainer.querySelector('svg');
+                if (svgElement) {
+                    // 设置SVG自适应容器大小
+                    svgElement.style.width = '100%';
+                    svgElement.style.height = '100%';
+                    svgElement.style.maxWidth = '100%';
+                    svgElement.style.maxHeight = '100%';
+
+                    // 确保SVG有viewBox属性
+                    if (!svgElement.getAttribute('viewBox')) {
+                        const width = svgElement.getAttribute('width') || '800';
+                        const height = svgElement.getAttribute('height') || '600';
+                        svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                    }
+
+                    // 应用当前缩放比例
+                    applyCurrentScale();
+
+                    // 初始化拖拽和编辑功能
+                    initDraggable();
+                    initSVGEditor();
+                    initMinimap();
+                }
+
+                showStatus('SVG预览已更新', 'success');
+            } catch (error) {
+                console.error('SVG预览更新失败:', error);
+                showError(`SVG渲染失败: ${error.message}`);
+            }
+        }
+
+        // 添加 SVG 输入监听
+        document.addEventListener('DOMContentLoaded', () => {
+            const svgInput = document.getElementById('svgInput');
+            if (svgInput) {
+                // 使用 input 事件实时更新预览
+                svgInput.addEventListener('input', debounce(() => {
+                    updateSVGPreview();
+                }, 300)); // 300ms 防抖
+            }
+            
+            // 自动载入已保存的SVG
+            const savedSvg = localStorage.getItem('autoSavedSvg');
+            if (savedSvg && svgInput.value.trim() === '') {
+                svgInput.value = savedSvg;
+                updateSVGPreview();
+            }
+        });
+
+        // 添加自动保存功能
+        setInterval(() => {
+            const svgInput = document.getElementById('svgInput');
+            if (svgInput && svgInput.value.trim()) {
+                localStorage.setItem('autoSavedSvg', svgInput.value);
+            }
+        }, 30000); // 每30秒自动保存
+
+        // 修改applyCurrentScale函数
+        function applyCurrentScale() {
+            const svgElement = svgContainer.querySelector('svg');
+            if (svgElement) {
+                svgElement.style.transform = `scale(${currentScale})`;
+                svgElement.style.transformOrigin = 'center center';
+                // 确保缩放后的SVG保持居中
+                svgContainer.scrollTop = (svgContainer.scrollHeight - svgContainer.clientHeight) / 2;
+                svgContainer.scrollLeft = (svgContainer.scrollWidth - svgContainer.clientWidth) / 2;
+            }
+            updateMinimapViewport();
+        }
+
+        // 修改事件监听器初始化代码
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化所有DOM元素引用
+            const submitGPTBtn = document.getElementById('submitGPTBtn');
+            const svgInput = document.getElementById('svgInput');
+            const svgContainer = document.getElementById('svgContainer');
+            const gptInput = document.getElementById('gptInput');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const modifyInput = document.getElementById('modifyInput');
+            const modifyGPTBtn = document.getElementById('modifyGPTBtn');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const abortBtn = document.getElementById('abortBtn');
+
+            // 确保所有必要的元素都存在
+            if (!submitGPTBtn || !svgInput || !svgContainer || !gptInput || !apiKeyInput) {
+                console.error('无法找到必要的DOM元素');
+                return;
+            }
+
+            // 绑定生成按钮事件
+            submitGPTBtn.addEventListener('click', async () => {
+                if (submitGPTBtn.disabled) return;
+
+                const apiKey = apiKeyInput.value.trim();
+                const prompt = gptInput.value.trim();
+
+                if (!apiKey || !prompt) {
+                    showError('请输入API Key和描述');
+                    return;
+                }
+
+                try {
+                    submitGPTBtn.disabled = true;
+                    showLoading(true, '正在生成SVG...');
+                    
+                    const svgCode = await generateSVGWithGPT(apiKey, prompt);
+                    if (svgCode) {
+                        svgInput.value = svgCode;
+                        updateSVGPreview();
+                        showStatus('SVG生成成功！', 'success');
+                    } else {
+                        showError('未能生成有效的SVG代码');
+                    }
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    submitGPTBtn.disabled = false;
+                    showLoading(false);
+                }
+            });
+
+            // 绑定修改按钮事件
+            if (modifyGPTBtn) {
+                modifyGPTBtn.addEventListener('click', async () => {
+                    const apiKey = apiKeyInput.value.trim();
+                    const modifyPrompt = modifyInput.value.trim();
+                    const currentSvg = svgInput.value.trim();
+
+                    if (!apiKey || !modifyPrompt || !currentSvg) {
+                        showError('请确保已输入API Key、修改指令，且当前有SVG代码');
+                        return;
+                    }
+
+                    try {
+                        modifyGPTBtn.disabled = true;
+                        showLoading(true, '正在修改SVG...');
+                        const modifiedSvg = await modifySVGWithGPT(apiKey, currentSvg, modifyPrompt);
+                        if (modifiedSvg) {
+                            svgInput.value = modifiedSvg;
+                            updateSVGPreview();
+                            showStatus('SVG已成功修改', 'success');
+                        } else {
+                            showError('未能生成有效的修改后SVG代码');
+                        }
+                    } catch (error) {
+                        showError(error.message);
+                    } finally {
+                        modifyGPTBtn.disabled = false;
+                        showLoading(false);
+                    }
+                });
+            }
+
+            // SVG输入框变化时更新预览
+            svgInput.addEventListener('input', debounce(() => {
+                updateSVGPreview();
+            }, 500));
+
+            // 绑定中止按钮事件
+            if (abortBtn) {
+                abortBtn.addEventListener('click', () => {
+                    if (currentController) {
+                        currentController.abort();
+                        showStatus('已中止处理', 'info');
+                    }
+                });
+            }
+
+            // 初始化其他控件
+            initializeControls();
+        });
+
+        // 添加初始化控件的函数
+        function initializeControls() {
+            const controls = document.querySelectorAll('.controls button, .controls select');
+            controls.forEach(control => {
+                if (control.id) {
+                    control.addEventListener('click', (e) => {
+                        switch (control.id) {
+                            case 'undoBtn':
+                                // 处理撤销
+                                if (undoStack.length > 1) {
+                                    const currentState = undoStack.pop();
+                                    redoStack.push(currentState);
+                                    svgInput.value = undoStack[undoStack.length - 1];
+                                    updateSVGPreview();
+                                }
+                                break;
+                            case 'redoBtn':
+                                // 处理重做
+                                if (redoStack.length > 0) {
+                                    const nextState = redoStack.pop();
+                                    undoStack.push(nextState);
+                                    svgInput.value = nextState;
+                                    updateSVGPreview();
+                                }
+                                break;
+                            // 添加其他控件的处理...
+                        }
+                    });
+                }
+            });
+        }
+
+        // 修改applyCurrentScale函数
+        function applyCurrentScale() {
+            const svgElement = svgContainer.querySelector('svg');
+            if (svgElement) {
+                svgElement.style.transform = `scale(${currentScale})`;
+                svgElement.style.transformOrigin = 'center center';
+                // 确保缩放后的SVG保持居中
+                svgContainer.scrollTop = (svgContainer.scrollHeight - svgContainer.clientHeight) / 2;
+                svgContainer.scrollLeft = (svgContainer.scrollWidth - svgContainer.clientWidth) / 2;
+            }
+        }
+
+        // 辅助函数
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            const errorMessage = `
+                <div class="error-message" style="background-color: #fff2f0; border: 1px solid #ffccc7; padding: 12px; border-radius: 4px; margin: 8px 0;">
+                    <div style="color: #ff4d4f; font-weight: bold; margin-bottom: 8px;">
+                        <span style="margin-right: 8px;">❌</span>错误
+                    </div>
+                    <div style="color: #434343;">${message}</div>
+                    <button onclick="this.parentElement.remove()" 
+                            style="background: transparent; border: 1px solid #ffccc7; color: #ff4d4f; padding: 4px 8px; margin-top: 8px; cursor: pointer; border-radius: 4px;">
+                        关闭
+                    </button>
+                </div>
+            `;
+            
+            errorContainer.insertAdjacentHTML('beforeend', errorMessage);
+            
+            // 添加动画效果
+            const newError = errorContainer.lastElementChild;
+            newError.style.animation = 'slideIn 0.3s ease-out';
+            
+            // 8秒后自动消失
+            setTimeout(() => {
+                newError.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => newError.remove(), 300);
+            }, 8000);
+        }
+
+        function showStatus(message, type) {
+            const statusContainer = document.getElementById('statusContainer');
+            
+            // 清除之前的定时器
+            if (statusContainer.dataset.timeoutId) {
+                clearTimeout(parseInt(statusContainer.dataset.timeoutId));
+            }
+
+            statusContainer.textContent = message;
+            statusContainer.className = type;
+            statusContainer.style.display = 'block';
+
+            // 添加进度条
+            const progress = document.createElement('div');
+            progress.style.position = 'absolute';
+            progress.style.bottom = '0';
+            progress.style.left = '0';
+            progress.style.height = '2px';
+            progress.style.width = '100%';
+            progress.style.background = type === 'success' ? '#52c41a' : '#1890ff';
+            progress.style.transition = `width ${duration}ms linear`;
+            
+            statusContainer.appendChild(progress);
+
+            // 开始进度条动画
+            requestAnimationFrame(() => {
+                progress.style.width = '0';
+            });
+
+            // 设置消失定时器
+            const timeoutId = setTimeout(() => {
+                statusContainer.style.display = 'none';
+                progress.remove();
+            }, duration);
+
+            statusContainer.dataset.timeoutId = timeoutId;
+        }
+
+        function showLoading(show, message = '正在处理中...') {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const loadingText = loadingSpinner.querySelector('.loading-text');
+            const progressFill = loadingSpinner.querySelector('.progress-fill');
+            const progressText = loadingSpinner.querySelector('.progress-text');
+            const abortBtn = document.getElementById('abortBtn');
+
+            if (show) {
+                loadingText.textContent = message;
+                loadingSpinner.style.display = 'flex';
+                abortBtn.style.display = 'block';
+                simulateProgress(progressFill, progressText);
+            } else {
+                loadingSpinner.style.display = 'none';
+                progressFill.style.width = '0%';
+                progressText.textContent = '0%';
+                abortBtn.style.display = 'none';
+                
+                // 清除进度条动画
+                const intervalId = progressFill.dataset.intervalId;
+                if (intervalId) {
+                    clearInterval(parseInt(intervalId));
+                    delete progressFill.dataset.intervalId;
+                }
+            }
+        }
+
+        // 模拟进度条
+        function simulateProgress(progressFill, progressText) {
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 10;
+                    if (progress > 90) progress = 90;
+                    progressFill.style.width = `${progress}%`;
+                    progressText.textContent = `${Math.round(progress)}%`;
+                }
+            }, 500);
+
+            // 存储interval ID以便later清除
+            progressFill.dataset.intervalId = interval;
+        }
+
+        // 改进的按钮点击反馈
+        function addButtonFeedback(button) {
+            // 移除可能存在的重复事件监听器
+            button.removeEventListener('click', handleButtonClick);
+            button.addEventListener('click', handleButtonClick);
+        }
+
+        // 按钮点击处理函数
+        function handleButtonClick(event) {
+            // 如果按钮已经禁用，直接返回
+            if (this.disabled) {
+                return;
+            }
+
+            // 添加点击效果类
+            this.classList.add('clicked');
+            // 立即禁用按钮
+            this.disabled = true;
+
+            // 使用防抖处理，确保动画和状态恢复的正确性
+            const button = this;
+            setTimeout(() => {
+                button.classList.remove('clicked');
+                // 仅当不是异步操作按钮时才立即启用
+                if (!button.hasAttribute('data-async')) {
+                    button.disabled = false;
+                }
+            }, 300);
+        }
+
+        // 异步操作按钮处理函数
+        async function handleAsyncButtonClick(button, operation) {
+            if (button.disabled) {
+                return;
+            }
+
+            // 标记为异步按钮
+            button.setAttribute('data-async', 'true');
+            button.disabled = true;
+
+            try {
+                await operation();
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                // 操作完成后恢复按钮状态
+                button.removeAttribute('data-async');
+                button.disabled = false;
+            }
+        }
+
+        // 修改事件监听器设置
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // 修改生成按钮处理
+            submitGPTBtn.removeEventListener('click', null);
+            submitGPTBtn.addEventListener('click', () => {
+                handleAsyncButtonClick(submitGPTBtn, async () => {
+                    const apiKey = apiKeyInput.value.trim();
+                    const prompt = gptInput.value.trim();
+
+                    if (!apiKey || !prompt) {
+                        throw new Error('请输入API Key和描述');
+                    }
+
+                    showLoading(true, '正在生成SVG...');
+                    const svgCode = await generateSVGWithGPT(apiKey, prompt);
+                    
+                    if (svgCode) {
+                        svgInput.value = svgCode;
+                        updateSVGPreview();
+                        showStatus('SVG生成成功！', 'success');
+                    } else {
+                        throw new Error('未能生成有效的SVG代码');
+                    }
+                });
+            });
+
+            // 修改其他按钮的事件监听器
+            document.querySelectorAll('button').forEach(button => {
+                // 跳过已经处理过的按钮
+                if (button === submitGPTBtn || button.hasAttribute('data-handled')) {
+                    return;
+                }
+                
+                // 标记按钮已处理
+                button.setAttribute('data-handled', 'true');
+                addButtonFeedback(button);
+            });
+        });
+
+        // 添加CSS样式
+        const style = document.createElement('style');
+        style.textContent = `
+            button {
+                position: relative;
+                overflow: hidden;
+                transition: all 0.3s ease;
+            }
+
+            button:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+
+            button.clicked {
+                transform: scale(0.95);
+            }
+
+            /* 添加点击涟漪效果 */
+            button::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 0;
+                height: 0;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0;
+                pointer-events: none;
+                transition: width 0.3s ease-out, height 0.3s ease-out, opacity 0.3s ease-out;
+            }
+
+            button:active:not(:disabled)::after {
+                width: 200%;
+                height: 200%;
+                opacity: 1;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 导出功能
+        async function exportSVG(format) {
+            const svgElement = svgContainer.querySelector('svg');
+            if (!svgElement) {
+                showError('没有可导出的SVG');
+                return;
+            }
+
+            try {
+                switch (format) {
+                    case 'svg':
+                        const svgData = new XMLSerializer().serializeToString(svgElement);
+                        downloadFile(svgData, 'visualization.svg', 'image/svg+xml');
+                        break;
+                    case 'png':
+                    case 'jpg':
+                        const canvas = await svgToCanvas(svgElement);
+                        canvas.toBlob((blob) => {
+                            downloadFile(blob, `visualization.${format}`, `image/${format}`, 0.95); // 增加质量参数
+                        }, `image/${format}`);
+                        break;
+                }
+                showStatus(`已成功导出${format.toUpperCase()}文件`, 'success');
+            } catch (error) {
+                showError(`导出失败: ${error.message}`);
+            }
+        }
+
+        // 历史记录管理
+        function updateHistory(svgCode) {
+            undoStack.push(svgCode);
+            if (undoStack.length > 50) undoStack.shift();
+            redoStack = [];
+        }
+
+        // SVG转Canvas工具函数
+        async function svgToCanvas(svgElement) {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                const img = new Image();
+                
+                // 获取SVG的实际尺寸
+                const svgWidth = svgElement.width.baseVal.value || svgElement.viewBox.baseVal.width;
+                const svgHeight = svgElement.height.baseVal.value || svgElement.viewBox.baseVal.height;
+                
+                // 设置更大的输出尺寸
+                const scale = 2; // 增加输出分辨率
+                canvas.width = svgWidth * scale;
+                canvas.height = svgHeight * scale;
+                
+                const svgData = new XMLSerializer().serializeToString(svgElement);
+                const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+                const url = URL.createObjectURL(svgBlob);
+
+                img.onload = () => {
+                    context.scale(scale, scale);
+                    context.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(url);
+                    resolve(canvas);
+                };
+
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('SVG转换失败'));
+                };
+
+                img.src = url;
+            });
+        }
+
+        // 文件下载工具函数
+        function downloadFile(content, fileName, contentType) {
+            const blob = new Blob([content], {type: contentType});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 图表保存和加载功能
+        const savedCharts = JSON.parse(localStorage.getItem('savedCharts') || '[]');
+
+        function updateSavedChartsList() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            filteredCharts = savedCharts.filter(chart => 
+                chart.name.toLowerCase().includes(searchTerm)
+            );
+
+            const startIndex = (currentPage - 1) * chartsPerPage;
+            const endIndex = startIndex + chartsPerPage;
+            const chartsToShow = filteredCharts.slice(startIndex, endIndex);
+
+            const list = document.getElementById('savedChartsList');
+            list.innerHTML = chartsToShow.map(chart => `
+                <div class="saved-chart-item">
+                    <span>${chart.name}</span>
+                    <span class="date">${new Date(chart.date).toLocaleDateString()}</span>
+                    <button onclick="loadChart(${chart.id})">加载</button>
+                    <button onclick="deleteChart(${chart.id})">删除</button>
+                </div>
+            `).join('');
+
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredCharts.length / chartsPerPage);
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    上一页
+                </button>
+                <span>第 ${currentPage} 页，共 ${totalPages} 页</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    下一页
+                </button>
+            `;
+        }
+
+        function changePage(page) {
+            if (page >= 1 && page <= Math.ceil(filteredCharts.length / chartsPerPage)) {
+                currentPage = page;
+                updateSavedChartsList();
+            }
+        }
+
+        function loadChart(id) {
+            const chart = savedCharts.find(c => c.id === id);
+            if (chart) {
+                svgInput.value = chart.svg;
+                updateSVGPreview();
+                showStatus('图表已加载', 'success');
+            }
+        }
+
+        function deleteChart(id) {
+            if (confirm('确定要删除这个图表吗？')) {
+                const index = savedCharts.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    savedCharts.splice(index, 1);
+                    localStorage.setItem('savedCharts', JSON.stringify(savedCharts));
+                    updateSavedChartsList();
+                    showStatus('图表已删除', 'success');
+                }
+            }
+        }
+
+        // 优化的错误处理
+        function handleError(error, context) {
+            console.error(`Error in ${context}:`, error);
+            showError(`${context}: ${error.message}`);
+        }
+
+        // 优化的状态提示
+        function showStatus(message, type = 'info', duration = 3000) {
+            const statusContainer = document.getElementById('statusContainer');
+            
+            // 清除之前的定时器
+            if (statusContainer.dataset.timeoutId) {
+                clearTimeout(parseInt(statusContainer.dataset.timeoutId));
+            }
+
+            statusContainer.textContent = message;
+            statusContainer.className = type;
+            statusContainer.style.display = 'block';
+
+            // 添加进度条
+            const progress = document.createElement('div');
+            progress.style.position = 'absolute';
+            progress.style.bottom = '0';
+            progress.style.left = '0';
+            progress.style.height = '2px';
+            progress.style.width = '100%';
+            progress.style.background = type === 'success' ? '#52c41a' : '#1890ff';
+            progress.style.transition = `width ${duration}ms linear`;
+            
+            statusContainer.appendChild(progress);
+
+            // 开始进度条动画
+            requestAnimationFrame(() => {
+                progress.style.width = '0';
+            });
+
+            // 设置消失定时器
+            const timeoutId = setTimeout(() => {
+                statusContainer.style.display = 'none';
+                progress.remove();
+            }, duration);
+
+            statusContainer.dataset.timeoutId = timeoutId;
+        }
+
+        // 添加修改SVG的GPT函数
+        async function modifySVGWithGPT(apiKey, currentSvg, modifyInstruction) {
+            if (currentController) {
+                currentController.abort();
+            }
+            
+            currentController = new AbortController();
+            const signal = currentController.signal;
+
+            const apiUrl = 'https://api.2023gpt.top/v1/chat/completions';
+            const messages = [
+                {
+                    role: 'system',
+                    content: '你是一个专门修改SVG代码的专家。请根据用户的修改指令更新SVG代码。'
+                },
+                {
+                    role: 'user',
+                    content: `请直接给出代码就好，不要问用户任何其他问题或者回复非代码相关的内容。请根据以下指令修改SVG代码：\n指令：${modifyInstruction}\n当前SVG代码：\n${currentSvg}`
+                }
+            ];
+
+            try {
+                showLoading(true);
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Accept': 'application/json'
+                    },
+                    signal, // 添加 signal
+                    mode: 'cors',
+                    credentials: 'omit',
+                    body: JSON.stringify({
+                        model: 'claude-3-7-sonnet-20250219',
+                        messages: messages,
+                        temperature: 0.7,
+                        timeout: 120000
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`API请求失败: ${errorData.error?.message || response.statusText}`);
+                }
+
+                const data = await response.json();
+                if (!data || !data.choices || !data.choices[0]) {
+                    throw new Error('API返回数据格式无效');
+                }
+
+                const modifiedSvg = extractSVGCode(data.choices[0].message.content);
+                if (!modifiedSvg) {
+                    throw new Error('未能从响应中提取有效的SVG代码');
+                }
+
+                return modifiedSvg;
+            } catch (error) {
+                console.error('API调用错误:', error);
+                if (error.name === 'AbortError') {
+                    throw new Error('操作已被用户中止');
+                }
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    throw new Error('无法连接到API服务器，请检查网络连接或稍后重试');
+                }
+                throw error;
+            } finally {
+                currentController = null;
+                showLoading(false);
+            }
+        }
+
+        // 添加防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化DOM元素引用
+            submitGPTBtn = document.getElementById('submitGPTBtn');
+            const svgInput = document.getElementById('svgInput');
+            const svgContainer = document.getElementById('svgContainer');
+            const gptInput = document.getElementById('gptInput');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const modifyInput = document.getElementById('modifyInput');
+            const modifyGPTBtn = document.getElementById('modifyGPTBtn');
+
+            // 清除可能存在的旧事件监听器
+            const newSubmitBtn = submitGPTBtn.cloneNode(true);
+            submitGPTBtn.parentNode.replaceChild(newSubmitBtn, submitGPTBtn);
+            submitGPTBtn = newSubmitBtn;
+
+            // 使用防抖包装异步操作
+            const debouncedAsyncOperation = debounce(async () => {
+                if (submitGPTBtn.disabled) return;
+
+                const apiKey = apiKeyInput.value.trim();
+                const prompt = gptInput.value.trim();
+
+                if (!apiKey || !prompt) {
+                    showError('请输入API Key和描述');
+                    return;
+                }
+
+                try {
+                    submitGPTBtn.disabled = true;
+                    showLoading(true, '正在生成SVG...');
+                    
+                    const svgCode = await generateSVGWithGPT(apiKey, prompt);
+                    if (svgCode) {
+                        svgInput.value = svgCode;
+                        updateSVGPreview();
+                        showStatus('SVG生成成功！', 'success');
+                    } else {
+                        showError('未能生成有效的SVG代码');
+                    }
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    submitGPTBtn.disabled = false;
+                    showLoading(false);
+                }
+            }, 300); // 300ms 的防抖延迟
+
+            // 只绑定一次事件监听器
+            submitGPTBtn.addEventListener('click', debouncedAsyncOperation);
+
+            // 同样为修改按钮添加防抖
+            const debouncedModifyOperation = debounce(async () => {
+                const apiKey = apiKeyInput.value.trim();
+                const modifyPrompt = modifyInput.value.trim();
+                const currentSvg = svgInput.value.trim();
+
+                if (!apiKey || !modifyPrompt || !currentSvg) {
+                    showError('请确保已输入API Key、修改指令，且当前有SVG代码');
+                    return;
+                }
+
+                try {
+                    modifyGPTBtn.disabled = true;
+                    showLoading(true, '正在修改SVG...');
+                    const modifiedSvg = await modifySVGWithGPT(apiKey, currentSvg, modifyPrompt);
+                    if (modifiedSvg) {
+                        svgInput.value = modifiedSvg;
+                        updateSVGPreview();
+                        showStatus('SVG已成功修改', 'success');
+                    } else {
+                        showError('未能生成有效的修改后SVG代码');
+                    }
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    modifyGPTBtn.disabled = false;
+                    showLoading(false);
+                }
+            }, 300);
+
+            // 清除旧的事件监听器并重新绑定
+            const newModifyBtn = modifyGPTBtn.cloneNode(true);
+            modifyGPTBtn.parentNode.replaceChild(newModifyBtn, modifyGPTBtn);
+            newModifyBtn.addEventListener('click', debouncedModifyOperation);
+
+        });
+
+        // 添加拖拽功能相关代码
+        function initDraggable() {
+            const svgElement = svgContainer.querySelector('svg');
+            if (!svgElement) return;
+
+            let draggedElement = null;
+            let dragOffset = { x: 0, y: 0 };
+
+            // 获取SVG的变换矩阵
+            function getSVGTransformMatrix() {
+                const transform = svgContainer.style.transform;
+                const scale = currentScale || 1;
+                const matrix = new DOMMatrix();
+                matrix.scaleSelf(scale, scale);
+                return matrix;
+            }
+
+            // 转换屏幕坐标到SVG坐标
+            function screenToSVGPoint(x, y) {
+                const matrix = getSVGTransformMatrix();
+                const point = svgElement.createSVGPoint();
+                point.x = x;
+                point.y = y;
+                return point.matrixTransform(matrix.inverse());
+            }
+
+            // 处理拖拽开始
+            function handleDragStart(e) {
+                if (e.button !== 0) return; // 只响应左键
+                const target = e.target.closest('.draggable');
+                if (!target) return;
+
+                e.preventDefault();
+                draggedElement = target;
+                draggedElement.classList.add('dragging');
+
+                try {
+                    // 获取鼠标相对于SVG的坐标
+                    const svgPoint = screenToSVGPoint(e.clientX, e.clientY);
+                    
+                    // 获取元素的当前变换
+                    const transform = draggedElement.transform.baseVal;
+                    const currentTranslate = transform.numberOfItems > 0 ? 
+                        transform.getItem(0).matrix : svgElement.createSVGMatrix();
+
+                    // 计算拖拽的偏移量
+                    dragOffset = {
+                        x: svgPoint.x - (currentTranslate.e || 0),
+                        y: svgPoint.y - (currentTranslate.f || 0)
+                    };
+                } catch (error) {
+                    console.warn('拖拽起始点计算失败:', error);
+                    // 发生错误时重置拖拽状态
+                    draggedElement.classList.remove('dragging');
+                    draggedElement = null;
+                }
+            }
+
+            // 处理拖拽移动
+            function handleDrag(e) {
+                if (!draggedElement) return;
+
+                e.preventDefault();
+                const svgPoint = screenToSVGPoint(e.clientX, e.clientY);
+                
+                // 应用网格对齐（如果启用）
+                let newX = svgPoint.x - dragOffset.x;
+                let newY = svgPoint.y - dragOffset.y;
+                
+                if (isSnapEnabled) {
+                    const gridSize = 20;
+                    newX = Math.round(newX / gridSize) * gridSize;
+                    newY = Math.round(newY / gridSize) * gridSize;
+                }
+
+                // 更新元素位置
+                const transform = svgElement.createSVGTransform();
+                transform.setTranslate(newX, newY);
+
+                const elementTransform = draggedElement.transform.baseVal;
+                if (elementTransform.numberOfItems > 0) {
+                    elementTransform.replaceItem(transform, 0);
+                } else {
+                    elementTransform.appendItem(transform);
+                }
+
+                // 更新连接线（如果有）
+                updateConnectedPaths(draggedElement);
+            }
+
+            // 处理拖拽结束
+            function handleDragEnd() {
+                if (!draggedElement) return;
+                
+                draggedElement.classList.remove('dragging');
+                draggedElement = null;
+                
+                // 更新SVG代码
+                updateSVGCode();
+            }
+
+            // 绑定事件监听器
+            svgContainer.addEventListener('mousedown', handleDragStart);
+            document.addEventListener('mousemove', handleDrag);
+            document.addEventListener('mouseup', handleDragEnd);
+
+            // 为所有可拖拽元素添加类
+            svgElement.querySelectorAll('g, rect, circle, ellipse, path, text').forEach(element => {
+                element.classList.add('draggable');
+            });
+        }
+
+        // 修改平移模式功能
+        let isPanning = false;
+        let panStartPoint = null;
+
+        function initPanMode() {
+            const svgContainer = document.getElementById('svgContainer');
+            
+            svgContainer.addEventListener('mousedown', (e) => {
+                if ((isPanMode && e.button === 0) || e.button === 1) { // 中键或启用平移模式时的左键
+                    e.preventDefault();
+                    isPanning = true;
+                    panStartPoint = {
+                        x: e.clientX - svgContainer.offsetLeft,
+                        y: e.clientY - svgContainer.offsetTop
+                    };
+                    svgContainer.style.cursor = 'grabbing';
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isPanning && panStartPoint) {
+                    const dx = e.clientX - panStartPoint.x - svgContainer.offsetLeft;
+                    const dy = e.clientY - panStartPoint.y - svgContainer.offsetTop;
+                    
+                    // 使用 transform 而不是改变 scrollLeft/scrollTop
+                    svgContainer.style.transform = 
+                        `translate(${dx}px, ${dy}px) scale(${currentScale})`;
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isPanning) {
+                    isPanning = false;
+                    panStartPoint = null;
+                    svgContainer.style.cursor = isPanMode ? 'grab' : 'default';
+                }
+            });
+        }
+
+        // 修改updateSVGCode函数
+        function updateSVGCode() {
+            const svgElement = svgContainer.querySelector('svg');
+            if (svgElement) {
+                const serializer = new XMLSerializer();
+                const svgCode = serializer.serializeToString(svgElement);
+                svgInput.value = svgCode;
+                
+                // 添加到撤销栈
+                updateHistory(svgCode);
+            }
+        }
+
+        // 修改后的 handleConnection 函数
+        function handleConnection(element) {
+            if (currentMode !== 'connect') return;
+
+            if (!connectStartElement) {
+                connectStartElement = element;
+                showConnectorPreview(element);
+            } else {
+                createConnection(connectStartElement, element);
+                connectStartElement = null;
+                hideConnectorPreview();
+            }
+        }
+
+        // 修改后的 createConnection 函数
+        function createConnection(start, end) {
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const startPoint = getElementCenter(start);
+            const endPoint = getElementCenter(end);
+            
+            path.setAttribute('d', `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y}`);
+            path.setAttribute('stroke', 'black');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('fill', 'none');
+            path.dataset.startElement = start.id || (start.id = `elem-${Date.now()}`);
+            path.dataset.endElement = end.id || (end.id = `elem-${Date.now()}`);
+            
+            svgElement.appendChild(path);
+            makeDraggable(path);
+            updateSVGCode();
+        }
+
+        // 修改后的 updateConnectedPaths 函数
+        function updateConnectedPaths(element) {
+            const paths = svgElement.querySelectorAll('path');
+            paths.forEach(path => {
+                if (path.dataset.startElement === element.id || path.dataset.endElement === element.id) {
+                    const startElement = svgElement.querySelector(`#${path.dataset.startElement}`);
+                    const endElement = svgElement.querySelector(`#${path.dataset.endElement}`);
+                    const startPoint = getElementCenter(startElement);
+                    const endPoint = getElementCenter(endElement);
+                    path.setAttribute('d', `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y}`);
+                }
+            });
+        }
+
+        // 修改后的 getElementCenter 函数
+        function getElementCenter(element) {
+            const bbox = element.getBBox();
+            const transform = element.getAttribute('transform');
+            let x = bbox.x + bbox.width / 2;
+            let y = bbox.y + bbox.height / 2;
+
+            if (transform) {
+                const transformMatrix = element.getScreenCTM();
+                const point = svgElement.createSVGPoint();
+                point.x = x;
+                point.y = y;
+                const transformedPoint = point.matrixTransform(transformMatrix);
+                x = transformedPoint.x;
+                y = transformedPoint.y;
+            }
+
+            return { x, y };
+        }
+
+        // 修改后的 selectElement 函数
+        function selectElement(element) {
+            if (selectedElement) {
+                selectedElement.classList.remove('selected-element');
+            }
+            selectedElement = element;
+            element.classList.add('selected-element');
+            showElementControls(element);
+        }
+
+        // 修改后的 showElementControls 函数
+        function showElementControls(element) {
+            const controls = document.createElement('div');
+            controls.className = 'element-controls';
+            // 添加控制点等
+            updateControlsPosition(controls, element);
+        }
+
+        // 修改后的 getCurrentRotation 函数
+        function getCurrentRotation(element) {
+            const transform = element.getAttribute('transform') || '';
+            const match = transform.match(/rotate\(([-\d.]+)\)/);
+            return match ? parseFloat(match[1]) : 0;
+        }
+
+        // 修改后的 rotateElement 函数
+        function rotateElement(element, angle) {
+            const bbox = element.getBBox();
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = bbox.y + bbox.height / 2;
+            element.setAttribute('transform', 
+                `rotate(${angle} ${centerX} ${centerY})`);
+        }
+
+        // 修改后的 initSVGEditor 函数
+        function initSVGEditor() {
+            let selectedElement = null;
+            let isConnecting = false;
+            let connectStartElement = null;
+            let currentMode = 'select';
+
+            const svgElement = svgContainer.querySelector('svg');
+            if (!svgElement) return;
+
+            // 阻止画布的默认拖动行为
+            svgContainer.addEventListener('mousedown', (e) => {
+                if (e.target === svgContainer || e.target === svgElement) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+
+            // 初始化控件事件
+            document.getElementById('selectMode').addEventListener('click', () => {
+                currentMode = 'select';
+                updateModeUI();
+            });
+
+            document.getElementById('connectMode').addEventListener('click', () => {
+                currentMode = 'connect';
+                updateModeUI();
+            });
+
+            document.getElementById('deleteElement').addEventListener('click', () => {
+                if (selectedElement) {
+                    selectedElement.remove();
+                    updateSVGCode();
+                }
+            });
+
+            document.getElementById('colorPicker').addEventListener('change', (e) => {
+                if (selectedElement) {
+                    selectedElement.style.fill = e.target.value;
+                    updateSVGCode();
+                }
+            });
+
+            document.getElementById('lineStyle').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.tagName === 'path') {
+                    switch (e.target.value) {
+                        case 'solid':
+                            selectedElement.style.strokeDasharray = 'none';
+                            break;
+                        case 'dashed':
+                            selectedElement.style.strokeDasharray = '5,5';
+                            break;
+                        case 'dotted':
+                            selectedElement.style.strokeDasharray = '2,2';
+                            break;
+                    }
+                    updateSVGCode();
+                }
+            });
+
+            // 复制元素
+            document.getElementById('duplicateElement').addEventListener('click', () => {
+                if (selectedElement) {
+                    const clone = selectedElement.cloneNode(true);
+                    // 稍微偏移位置
+                    const transform = clone.getAttribute('transform') || '';
+                    clone.setAttribute('transform', transform + ' translate(20,20)');
+                    selectedElement.parentNode.appendChild(clone);
+                    updateSVGCode();
+                }
+            });
+
+            // 旋转元素
+            document.getElementById('rotateElement').addEventListener('click', () => {
+                if (selectedElement) {
+                    const currentRotation = getCurrentRotation(selectedElement);
+                    rotateElement(selectedElement, currentRotation + 45);
+                    updateSVGCode();
+                }
+            });
+
+            // 上移/下移层级
+            document.getElementById('bringForward').addEventListener('click', () => {
+                if (selectedElement && selectedElement.nextSibling) {
+                    selectedElement.parentNode.insertBefore(selectedElement.nextSibling, selectedElement);
+                    updateSVGCode();
+                }
+            });
+
+            document.getElementById('sendBackward').addEventListener('click', () => {
+                if (selectedElement && selectedElement.previousSibling) {
+                    selectedElement.parentNode.insertBefore(selectedElement, selectedElement.previousSibling);
+                    updateSVGCode();
+                }
+            });
+
+            // 改进的元素拖拽功能
+            function makeDraggable(element) {
+                let isDragging = false;
+                let currentX;
+                let currentY;
+                let initialTransform;
+
+                element.addEventListener('mousedown', startDrag);
+                element.addEventListener('mousemove', drag);
+                element.addEventListener('mouseup', endDrag);
+                element.addEventListener('mouseleave', endDrag);
+
+                function startDrag(e) {
+                    if (currentMode !== 'select') return;
+                    
+                    isDragging = true;
+                    currentX = e.clientX;
+                    currentY = e.clientY;
+                    initialTransform = element.getAttribute('transform') || '';
+                    
+                    // 选中当前元素
+                    selectElement(element);
+                    
+                    e.stopPropagation();
+                }
+
+                function drag(e) {
+                    if (!isDragging) return;
+                    
+                    const dx = e.clientX - currentX;
+                    const dy = e.clientY - currentY;
+                    currentX = e.clientX;
+                    currentY = e.clientY;
+
+                    const currentTransform = element.getAttribute('transform') || '';
+                    const newTransform = `${currentTransform} translate(${dx}, ${dy})`;
+                    element.setAttribute('transform', newTransform);
+
+                    updateConnectedPaths(element);
+                    e.stopPropagation();
+                }
+
+                function endDrag() {
+                    isDragging = false;
+                }
+            }
+
+            // 连接线功能
+            function handleConnection(element) {
+                if (currentMode !== 'connect') return;
+
+                if (!connectStartElement) {
+                    connectStartElement = element;
+                    showConnectorPreview(element);
+                } else {
+                    createConnection(connectStartElement, element);
+                    connectStartElement = null;
+                    hideConnectorPreview();
+                }
+            }
+
+            function createConnection(start, end) {
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                const startPoint = getElementCenter(start);
+                const endPoint = getElementCenter(end);
+                
+                path.setAttribute('d', `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y}`);
+                path.setAttribute('stroke', 'black');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('fill', 'none');
+                path.dataset.startElement = start.id || (start.id = `elem-${Date.now()}`);
+                path.dataset.endElement = end.id || (end.id = `elem-${Date.now()}`);
+                
+                svgElement.appendChild(path);
+                makeDraggable(path);
+                updateSVGCode();
+            }
+
+            // 更新连接线位置
+            function updateConnectedPaths(element) {
+                const paths = svgElement.querySelectorAll('path');
+                paths.forEach(path => {
+                    if (path.dataset.startElement === element.id || path.dataset.endElement === element.id) {
+                        const startElement = svgElement.querySelector(`#${path.dataset.startElement}`);
+                        const endElement = svgElement.querySelector(`#${path.dataset.endElement}`);
+                        const startPoint = getElementCenter(startElement);
+                        const endPoint = getElementCenter(endElement);
+                        path.setAttribute('d', `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y}`);
+                    }
+                });
+            }
+
+            // 辅助函数
+            function getElementCenter(element) {
+                const bbox = element.getBBox();
+                const transform = element.getAttribute('transform');
+                let x = bbox.x + bbox.width / 2;
+                let y = bbox.y + bbox.height / 2;
+
+                if (transform) {
+                    const transformMatrix = element.getScreenCTM();
+                    const point = svgElement.createSVGPoint();
+                    point.x = x;
+                    point.y = y;
+                    const transformedPoint = point.matrixTransform(transformMatrix);
+                    x = transformedPoint.x;
+                    y = transformedPoint.y;
+                }
+
+                return { x, y };
+            }
+
+            function selectElement(element) {
+                if (selectedElement) {
+                    selectedElement.classList.remove('selected-element');
+                }
+                selectedElement = element;
+                element.classList.add('selected-element');
+                showElementControls(element);
+            }
+
+            function showElementControls(element) {
+                const controls = document.createElement('div');
+                controls.className = 'element-controls';
+                // 添加控制点等
+                updateControlsPosition(controls, element);
+            }
+
+            function getCurrentRotation(element) {
+                const transform = element.getAttribute('transform') || '';
+                const match = transform.match(/rotate\(([-\d.]+)\)/);
+                return match ? parseFloat(match[1]) : 0;
+            }
+
+            function rotateElement(element, angle) {
+                const bbox = element.getBBox();
+                const centerX = bbox.x + bbox.width / 2;
+                const centerY = bbox.y + bbox.height / 2;
+                element.setAttribute('transform', 
+                    `rotate(${angle} ${centerX} ${centerY})`);
+            }
+
+            // 初始化所有元素的拖拽功能
+            const draggableElements = svgElement.querySelectorAll('g, rect, circle, ellipse, path, text');
+            draggableElements.forEach(element => {
+                makeDraggable(element);
+                element.addEventListener('click', () => handleConnection(element));
+            });
+
+            // 更新界面模式
+            function updateModeUI() {
+                document.querySelectorAll('.svg-controls button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`#${currentMode}Mode`).classList.add('active');
+                svgContainer.style.cursor = currentMode === 'connect' ? 'crosshair' : 'default';
+            }
+
+            // 初始化界面
+            updateModeUI();
+
+            // 添加预览连接线相关变量
+            let previewLine = null;
+            let previewLineUpdateHandler = null;
+
+            // 显示连接线预览
+            function showConnectorPreview(startElement) {
+                const svgElement = svgContainer.querySelector('svg');
+                previewLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                previewLine.setAttribute('stroke', 'var(--primary-color)');
+                previewLine.setAttribute('stroke-width', '2');
+                previewLine.setAttribute('stroke-dasharray', '4');
+                previewLine.setAttribute('fill', 'none');
+                svgElement.appendChild(previewLine);
+
+                // 添加鼠标移动事件来更新预览线
+                previewLineUpdateHandler = (e) => {
+                    const startPoint = getElementCenter(startElement);
+                    const svgPoint = svgElement.createSVGPoint();
+                    const CTM = svgElement.getScreenCTM();
+                    svgPoint.x = e.clientX;
+                    svgPoint.y = e.clientY;
+                    const transformedPoint = svgPoint.matrixTransform(CTM.inverse());
+                    
+                    previewLine.setAttribute('d', `M ${startPoint.x} ${startPoint.y} L ${transformedPoint.x} ${transformedPoint.y}`);
+                };
+
+                svgElement.addEventListener('mousemove', previewLineUpdateHandler);
+            }
+
+            // 隐藏连接线预览
+            function hideConnectorPreview() {
+                if (previewLine) {
+                    const svgElement = svgContainer.querySelector('svg');
+                    previewLine.remove();
+                    previewLine = null;
+                    if (previewLineUpdateHandler) {
+                        svgElement.removeEventListener('mousemove', previewLineUpdateHandler);
+                        previewLineUpdateHandler = null;
+                    }
+                }
+            }
+
+            // 修改后的 handleConnection 函数
+            function handleConnection(element) {
+                if (currentMode !== 'connect') return;
+
+                if (!connectStartElement) {
+                    connectStartElement = element;
+                    showConnectorPreview(element);
+                } else {
+                    createConnection(connectStartElement, element);
+                    connectStartElement = null;
+                    hideConnectorPreview();
+                }
+            }
+        }
+
+        // 添加主题切换功能
+        function changeTheme(theme) {
+            const body = document.body;
+            // 移除所有主题相关的类
+            body.classList.remove('theme-dark', 'theme-light', 'theme-blue', 'theme-green');
+            
+            // 添加新主题类
+            switch (theme) {
+                case 'dark':
+                    body.classList.add('theme-dark');
+                    document.documentElement.style.setProperty('--primary-color', '#177ddc');
+                    document.documentElement.style.setProperty('--background-color', '#141414');
+                    document.documentElement.style.setProperty('--card-background', '#1f1f1f');
+                    document.documentElement.style.setProperty('--border-color', '#434343');
+                    document.documentElement.style.setProperty('--text-color', '#ffffff');
+                    break;
+                case 'blue':
+                    body.classList.add('theme-light');
+                    document.documentElement.style.setProperty('--primary-color', '#1890ff');
+                    document.documentElement.style.setProperty('--background-color', '#e6f7ff');
+                    document.documentElement.style.setProperty('--card-background', '#ffffff');
+                    document.documentElement.style.setProperty('--border-color', '#91d5ff');
+                    document.documentElement.style.setProperty('--text-color', '#000000');
+                    break;
+                case 'green':
+                    body.classList.add('theme-light');
+                    document.documentElement.style.setProperty('--primary-color', '#52c41a');
+                    document.documentElement.style.setProperty('--background-color', '#f6ffed');
+                    document.documentElement.style.setProperty('--card-background', '#ffffff');
+                    document.documentElement.style.setProperty('--border-color', '#b7eb8f');
+                    document.documentElement.style.setProperty('--text-color', '#000000');
+                    break;
+                default: // light theme
+                    body.classList.add('theme-light');
+                    document.documentElement.style.setProperty('--primary-color', '#1890ff');
+                    document.documentElement.style.setProperty('--background-color', '#f5f5f5');
+                    document.documentElement.style.setProperty('--card-background', '#ffffff');
+                    document.documentElement.style.setProperty('--border-color', '#e8e8e8');
+                    document.documentElement.style.setProperty('--text-color', '#333333');
+                    break;
+            }
+
+            // 保存主题设置到本地存储
+            localStorage.setItem('preferredTheme', theme);
+        }
+
+        // 切换网格背景
+        function toggleGrid() {
+            isGridVisible = !isGridVisible;
+            const wrapper = document.getElementById('svgContainerWrapper');
+            if (wrapper) {
+                wrapper.classList.toggle('grid-background', isGridVisible);
+            }
+        }
+
+        // 切换对齐网格
+        function toggleSnap() {
+            isSnapEnabled = !isSnapEnabled;
+            const toggleSnapBtn = document.getElementById('toggleSnap');
+            if (toggleSnapBtn) {
+                toggleSnapBtn.classList.toggle('active', isSnapEnabled);
+            }
+            
+            // 如果启用了网格对齐
+            if (isSnapEnabled) {
+                // 实现网格对齐逻辑
+                function snapToGrid(x, y) {
+                    const gridSize = 20; // 网格大小
+                    return {
+                        x: Math.round(x / gridSize) * gridSize,
+                        y: Math.round(y / gridSize) * gridSize
+                    };
+                }
+            }
+        }
+
+        // 居中视图
+        function centerView() {
+            const svgElement = svgContainer.querySelector('svg');
+            if (svgElement) {
+                const bbox = svgElement.getBBox();
+                const centerX = bbox.x + bbox.width / 2;
+                const centerY = bbox.y + bbox.height / 2;
+                svgContainer.scrollLeft = centerX - svgContainer.clientWidth / 2;
+                svgContainer.scrollTop = centerY - svgContainer.clientHeight / 2;
+            }
+        }
+
+        // 适应内容
+        function fitContent() {
+            const svgElement = svgContainer.querySelector('svg');
+            if (svgElement) {
+                const bbox = svgElement.getBBox();
+                const scaleX = svgContainer.clientWidth / bbox.width;
+                const scaleY = svgContainer.clientHeight / bbox.height;
+                currentScale = Math.min(scaleX, scaleY);
+                applyCurrentScale();
+            }
+        }
+
+        // 切换平移模式
+        function togglePanMode() {
+            const panModeBtn = document.getElementById('panMode');
+            if (panModeBtn) {
+                isPanMode = !isPanMode;
+                panModeBtn.classList.toggle('active', isPanMode);
+                svgContainer.style.cursor = isPanMode ? 'grab' : 'default';
+            }
+        }
+
+        // 初始化迷你地图
+        function initMinimap() {
+            const svgElement = svgContainer.querySelector('svg');
+            if (!svgElement) return;
+
+            const minimapSvg = svgElement.cloneNode(true);
+            minimapSvg.removeAttribute('width');
+            minimapSvg.removeAttribute('height');
+            minimapSvg.setAttribute('viewBox', svgElement.getAttribute('viewBox'));
+            minimapSvg.style.width = '100%';
+            minimapSvg.style.height = '100%';
+
+            minimap.innerHTML = '';
+            minimap.appendChild(minimapSvg);
+
+            const viewport = document.createElement('div');
+            viewport.style.position = 'absolute';
+            viewport.style.border = '2px solid red';
+            viewport.style.pointerEvents = 'none';
+            minimap.appendChild(viewport);
+
+            updateMinimapViewport();
+        }
+
+        // 更新迷你地图视口
+        function updateMinimapViewport() {
+            const svgElement = svgContainer.querySelector('svg');
+            if (!svgElement) return;
+
+            const bbox = svgElement.getBBox();
+            const scaleX = minimap.clientWidth / bbox.width;
+            const scaleY = minimap.clientHeight / bbox.height;
+            const scale = Math.min(scaleX, scaleY);
+
+            const viewport = minimap.querySelector('div');
+            viewport.style.width = `${svgContainer.clientWidth * scale}px`;
+            viewport.style.height = `${svgContainer.clientHeight * scale}px`;
+            viewport.style.left = `${svgContainer.scrollLeft * scale}px`;
+            viewport.style.top = `${svgContainer.scrollTop * scale}px`;
+        }
+
+        // 修改 createConnection 函数
+        function createConnection(startElement, startPoint, endElement, endPoint) {
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const start = getPointCoordinates(startElement, startPoint);
+            const end = getPointCoordinates(endElement, endPoint);
+            
+            path.setAttribute('d', `M ${start.x} ${start.y} L ${end.x} ${end.y}`);
+            path.setAttribute('stroke', '#000000');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('fill', 'none');
+            path.classList.add('connection-line');
+            
+            // 存储连接信息
+            path.dataset.startElement = startElement.id || (startElement.id = `elem-${Date.now()}`);
+            path.dataset.endElement = endElement.id || (endElement.id = `elem-${Date.now()}`);
+            path.dataset.startPoint = startPoint;
+            path.dataset.endPoint = endPoint;
+            
+            svgElement.appendChild(path);
+            makeDraggable(path);
+            
+            // 添加右键菜单事件
+            path.addEventListener('contextmenu', showConnectionSettings);
+            
+            return path;
+        }
+
+        // 添加获取连接点坐标函数
+        function getPointCoordinates(element, pointType) {
+            const bbox = element.getBBox();
+            const points = {
+                'center': { x: bbox.x + bbox.width/2, y: bbox.y + bbox.height/2 },
+                'top': { x: bbox.x + bbox.width/2, y: bbox.y },
+                'right': { x: bbox.x + bbox.width, y: bbox.y + bbox.height/2 },
+                'bottom': { x: bbox.x + bbox.width/2, y: bbox.y + bbox.height },
+                'left': { x: bbox.x, y: bbox.y + bbox.height/2 },
+                'topLeft': { x: bbox.x, y: bbox.y },
+                'topRight': { x: bbox.x + bbox.width, y: bbox.y },
+                'bottomLeft': { x: bbox.x, y: bbox.y + bbox.height },
+                'bottomRight': { x: bbox.x + bbox.width, y: bbox.y + bbox.height }
+            };
+
+            const point = points[pointType] || points.center;
+            
+            // 考虑元素的变换
+            const ctm = element.getScreenCTM();
+            const svgPoint = svgElement.createSVGPoint();
+            svgPoint.x = point.x;
+            svgPoint.y = point.y;
+            const transformedPoint = svgPoint.matrixTransform(ctm);
+            
+            return transformedPoint;
+        }
+
+        // 添加连接点到元素
+        function addConnectionPoints(element) {
+            const bbox = element.getBBox();
+            const points = [
+                { type: 'topLeft', x: 0, y: 0 },
+                { type: 'top', x: 0.5, y: 0 },
+                { type: 'topRight', x: 1, y: 0 },
+                { type: 'right', x: 1, y: 0.5 },
+                { type: 'bottomRight', x: 1, y: 1 },
+                { type: 'bottom', x: 0.5, y: 1 },
+                { type: 'bottomLeft', x: 0, y: 1 },
+                { type: 'left', x: 0, y: 0.5 },
+                { type: 'center', x: 0.5, y: 0.5 }
+            ];
+
+            points.forEach(point => {
+                const connectionPoint = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                connectionPoint.setAttribute('class', 'connection-point');
+                connectionPoint.setAttribute('cx', bbox.x + bbox.width * point.x);
+                connectionPoint.setAttribute('cy', bbox.y + bbox.height * point.y);
+                connectionPoint.setAttribute('data-point-type', point.type);
+                
+                connectionPoint.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    handleConnectionStart(element, point.type);
+                });
+                
+                element.appendChild(connectionPoint);
+            });
+        }
+
+        // 修改连接线处理函数
+        let connectionStart = null;
+
+        function handleConnectionStart(element, pointType) {
+            if (currentMode !== 'connect') return;
+
+            connectionStart = {
+                element: element,
+                pointType: pointType
+            };
+            
+            showConnectorPreview(element, pointType);
+        }
+
+        function handleConnectionEnd(element, pointType) {
+            if (!connectionStart) return;
+            
+            const connection = createConnection(
+                connectionStart.element,
+                connectionStart.pointType,
+                element,
+                pointType
+            );
+            
+            connectionStart = null;
+            hideConnectorPreview();
+            updateSVGCode();
+        }
+
+        // 添加连接线设置面板
+        function showConnectionSettings(e) {
+            e.preventDefault();
+            const path = e.target;
+            
+            const settings = document.createElement('div');
+            settings.className = 'connection-settings';
+            settings.style.left = `${e.clientX}px`;
+            settings.style.top = `${e.clientY}px`;
+            
+            settings.innerHTML = `
+                <div>
+                    <label>线条样式:</label>
+                    <select class="line-style">
+                        <option value="solid">实线</option>
+                        <option value="dashed">虚线</option>
+                        <option value="dotted">点线</option>
+                    </select>
+                </div>
+                <div>
+                    <label>线条颜色:</label>
+                    <input type="color" class="line-color" value="${path.getAttribute('stroke') || '#000000'}">
+                </div>
+                <div>
+                    <label>线条宽度:</label>
+                    <input type="number" class="line-width" min="1" max="10" value="${path.getAttribute('stroke-width') || '2'}">
+                </div>
+            `;
+            
+            // 添加事件监听
+            settings.querySelector('.line-style').addEventListener('change', (e) => {
+                switch (e.target.value) {
+                    case 'solid':
+                        path.setAttribute('stroke-dasharray', 'none');
+                        break;
+                    case 'dashed':
+                        path.setAttribute('stroke-dasharray', '5,5');
+                        break;
+                    case 'dotted':
+                        path.setAttribute('stroke-dasharray', '2,2');
+                        break;
+                }
+                updateSVGCode();
+            });
+            
+            settings.querySelector('.line-color').addEventListener('input', (e) => {
+                path.setAttribute('stroke', e.target.value);
+                updateSVGCode();
+            });
+            
+            settings.querySelector('.line-width').addEventListener('input', (e) => {
+                path.setAttribute('stroke-width', e.target.value);
+                updateSVGCode();
+            });
+            
+            document.body.appendChild(settings);
+            
+            // 点击其他地方关闭设置面板
+            const closeSettings = (e) => {
+                if (!settings.contains(e.target)) {
+                    settings.remove();
+                    document.removeEventListener('mousedown', closeSettings);
+                }
+            };
+            
+            document.addEventListener('mousedown', closeSettings);
+        }
+
+        // 修复坐标转换问题
+        function screenToSVGPoint(screenX, screenY) {
+            const svgElement = document.querySelector('#svgContainer svg');
+            if (!svgElement) return { x: 0, y: 0 };
+
+            try {
+                // 创建 SVG 点
+                const point = svgElement.createSVGPoint();
+                
+                // 获取 SVG 元素的边界框和当前变换矩阵
+                const svgRect = svgElement.getBoundingClientRect();
+                let ctm = svgElement.getScreenCTM();
+                
+                if (!ctm) {
+                    console.warn('无法获取变换矩阵，使用默认坐标');
+                    return {
+                        x: (screenX - svgRect.left) / (currentScale || 1),
+                        y: (screenY - svgRect.top) / (currentScale || 1)
+                    };
+                }
+
+                // 设置点的坐标为鼠标位置
+                point.x = screenX;
+                point.y = screenY;
+
+                // 创建考虑当前缩放的变换矩阵
+                const scale = currentScale || 1;
+                const scaleMatrix = svgElement.createSVGMatrix()
+                    .scale(1 / scale);
+                
+                // 组合变换矩阵
+                ctm = ctm.multiply(scaleMatrix);
+
+                // 转换坐标
+                const transformedPoint = point.matrixTransform(ctm.inverse());
+
+                return {
+                    x: transformedPoint.x,
+                    y: transformedPoint.y
+                };
+            } catch (error) {
+                console.warn('SVG 坐标转换失败:', error);
+                // 如果转换失败，返回基本的相对坐标
+                const rect = svgElement.getBoundingClientRect();
+                return {
+                    x: (screenX - rect.left) / (currentScale || 1),
+                    y: (screenY - rect.top) / (currentScale || 1)
+                };
+            }
+        }
+
+        // 修改 handleDragStart 函数
+        function handleDragStart(e) {
+            if (e.button !== 0) return; // 只响应左键
+            const target = e.target.closest('.draggable');
+            if (!target) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            
+            try {
+                // 获取当前变换信息
+                let currentX = 0;
+                let currentY = 0;
+                const transform = target.transform.baseVal;
+                
+                if (transform.numberOfItems > 0) {
+                    const matrix = transform.getItem(0).matrix;
+                    currentX = matrix.e || 0;
+                    currentY = matrix.f || 0;
+                }
+
+                // 获取鼠标相对于SVG的坐标
+                const svgPoint = screenToSVGPoint(e.clientX, e.clientY);
+                
+                draggedElement = target;
+                draggedElement.classList.add('dragging');
+                
+                // 计算偏移量
+                dragOffset = {
+                    x: svgPoint.x - currentX,
+                    y: svgPoint.y - currentY
+                };
+            } catch (error) {
+                console.warn('拖拽初始化失败:', error);
+                if (draggedElement) {
+                    draggedElement.classList.remove('dragging');
+                    draggedElement = null;
+                }
+                dragOffset = { x: 0, y: 0 };
+            }
+        }
+
+        // 修改 handleDrag 函数以使用新的坐标转换
+        function handleDrag(e) {
+            if (!draggedElement) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            try {
+                const svgElement = document.querySelector('#svgContainer svg');
+                if (!svgElement) throw new Error('未找到SVG元素');
+
+                // 获取新位置
+                const svgPoint = screenToSVGPoint(e.clientX, e.clientY);
+                
+                // 应用网格对齐
+                let newX = svgPoint.x - dragOffset.x;
+                let newY = svgPoint.y - dragOffset.y;
+                
+                if (isSnapEnabled) {
+                    const gridSize = 20;
+                    newX = Math.round(newX / gridSize) * gridSize;
+                    newY = Math.round(newY / gridSize) * gridSize;
+                }
+
+                // 更新元素位置
+                const transform = svgElement.createSVGTransform();
+                transform.setTranslate(newX, newY);
+
+                const elementTransform = draggedElement.transform.baseVal;
+                if (elementTransform.numberOfItems > 0) {
+                    elementTransform.replaceItem(transform, 0);
+                } else {
+                    elementTransform.appendItem(transform);
+                }
+
+                // 更新连接的路径
+                if (typeof updateConnectedPaths === 'function') {
+                    updateConnectedPaths(draggedElement);
+                }
+
+            } catch (error) {
+                console.warn('拖拽更新失败:', error);
+            }
+        }
+
+    </script>
+</body>
+</html>
