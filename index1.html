@@ -2,502 +2,488 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR码解码与拼接工具</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QR码扫描与拼接工具</title>
     <style>
-        /* 全局样式 */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 15px;
-            background-color: #f8f9fa;
-            color: #333;
-            line-height: 1.6;
         }
-        
-        /* 标题与描述 */
         h1 {
-            font-size: 1.8em;
-            color: #0056b3;
             text-align: center;
+            color: #0066cc;
             margin-bottom: 5px;
         }
-        
-        p.description {
+        .description {
             text-align: center;
+            margin-bottom: 20px;
             color: #666;
-            margin-top: 0;
-            margin-bottom: 20px;
         }
-        
-        /* 扫描相关 */
-        .scan-section {
-            background-color: white;
+        .card {
+            background: white;
             border-radius: 8px;
-            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
-        
-        #scan-button {
+        .card-header {
+            background: #f7f9fc;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eaecef;
+            font-weight: bold;
+        }
+        .card-body {
+            padding: 15px;
+        }
+        .btn {
             display: block;
             width: 100%;
             padding: 12px;
-            background-color: #007bff;
+            background: #0066cc;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 16px;
             font-weight: 500;
             cursor: pointer;
-            margin-bottom: 15px;
-        }
-        
-        #scan-button:hover {
-            background-color: #0069d9;
-        }
-        
-        #scan-button:active {
-            background-color: #0062cc;
-        }
-        
-        #scan-status {
             text-align: center;
-            color: #666;
-            margin-bottom: 15px;
-        }
-        
-        /* 已扫描内容列表 */
-        .blocks-section {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        h2 {
-            font-size: 1.2em;
-            color: #555;
-            margin-top: 0;
             margin-bottom: 10px;
         }
-        
-        #blocks-list {
+        .btn:active {
+            background: #0052a3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:active {
+            background: #5a6268;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:active {
+            background: #218838;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:active {
+            background: #c82333;
+        }
+        #video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 100%;
+            overflow: hidden;
+            border-radius: 4px;
+            background: #000;
+            display: none;
+        }
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #scan-region {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 70%;
+            height: 70%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+        #close-scanner {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .block-list {
             max-height: 200px;
             overflow-y: auto;
             border: 1px solid #ddd;
             border-radius: 4px;
-            padding: 10px;
-            background-color: #f5f5f5;
             margin-bottom: 15px;
         }
-        
         .block-item {
-            padding: 8px;
+            padding: 10px 15px;
             border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
         .block-item:last-child {
             border-bottom: none;
         }
-        
-        .block-number {
-            font-weight: 500;
-            color: #0056b3;
+        .block-num {
+            font-weight: bold;
+            color: #0066cc;
         }
-        
-        #missing-blocks {
-            color: #dc3545;
-            margin-bottom: 10px;
+        .block-type {
+            color: #666;
             font-size: 14px;
         }
-        
-        /* 合并结果区域 */
-        .result-section {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        .block-actions {
+            display: flex;
+            gap: 8px;
         }
-        
-        #result-area {
-            width: 100%;
-            height: 150px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: vertical;
-            font-family: inherit;
-            box-sizing: border-box;
-            margin-bottom: 15px;
-        }
-        
-        #copy-button {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background-color: #28a745;
-            color: white;
+        .delete-block {
+            background: #f8d7da;
+            color: #721c24;
             border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        
-        #copy-button:hover {
-            background-color: #218838;
-        }
-        
-        #copy-button:active {
-            background-color: #1e7e34;
-        }
-        
-        /* 状态消息 */
-        .status {
-            text-align: center;
-            padding: 10px;
             border-radius: 4px;
-            margin: 10px 0;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .status-bar {
+            padding: 10px;
+            text-align: center;
+            color: #fff;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-weight: 500;
             display: none;
         }
-        
-        .status.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        .status-success {
+            background-color: #28a745;
         }
-        
-        .status.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        .status-error {
+            background-color: #dc3545;
         }
-        
-        .status.warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
+        .status-warning {
+            background-color: #ffc107;
+            color: #333;
         }
-        
-        /* 按钮和UI元素共享样式 */
-        button {
-            transition: background-color 0.15s ease-in-out;
+        .missing-blocks {
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-size: 14px;
         }
-        
-        button:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
+        .result-area {
+            width: 100%;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
         }
-        
-        /* 工具栏 */
+        .canvas-hidden {
+            display: none;
+        }
         .toolbar {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
         }
-        
-        .toolbar button {
-            flex: 1;
-            padding: 8px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
+        .toolbar .btn {
+            margin-bottom: 0;
+        }
+        .version {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>QR码解码与拼接工具</h1>
-    <p class="description">扫描、解码并拼接多个QR码内容</p>
-    
-    <div class="scan-section">
-        <button id="scan-button">扫描QR码</button>
-        <div id="scan-status">尚未扫描任何内容</div>
-    </div>
-    
-    <div class="blocks-section">
-        <h2>已扫描内容</h2>
-        <div id="blocks-list">
-            <div class="empty-msg">暂无内容，请扫描QR码...</div>
+    <div class="container">
+        <h1>QR码扫描与拼接工具</h1>
+        <p class="description">扫描QR码，自动拼接与解码</p>
+        
+        <div class="card">
+            <div class="card-header">扫描QR码</div>
+            <div class="card-body">
+                <button id="start-scan" class="btn">开启摄像头扫描</button>
+                <button id="manual-input" class="btn btn-secondary">手动输入QR码内容</button>
+                <div id="video-container">
+                    <video id="video" playsinline></video>
+                    <div id="scan-region"></div>
+                    <button id="close-scanner">×</button>
+                </div>
+                <div id="scan-status" style="text-align:center;margin-top:10px;color:#666;">准备就绪，点击按钮开始扫描</div>
+            </div>
         </div>
-        <div id="missing-blocks"></div>
-        <div class="toolbar">
-            <button id="clear-button">清空所有</button>
-            <button id="merge-button">合并内容</button>
+        
+        <div class="card">
+            <div class="card-header">已扫描内容</div>
+            <div class="card-body">
+                <div class="block-list" id="blocks-list">
+                    <div style="padding:15px;text-align:center;color:#999;">尚未扫描任何内容</div>
+                </div>
+                <div id="missing-blocks" class="missing-blocks"></div>
+                <div class="toolbar">
+                    <button id="clear-blocks" class="btn btn-danger">清空所有</button>
+                    <button id="merge-blocks" class="btn btn-success">合并内容</button>
+                </div>
+            </div>
         </div>
+        
+        <div class="card">
+            <div class="card-header">拼接结果</div>
+            <div class="card-body">
+                <textarea id="result" class="result-area" readonly placeholder="扫描并合并QR码后，结果将显示在这里..."></textarea>
+                <button id="copy-result" class="btn btn-success">复制到剪贴板</button>
+            </div>
+        </div>
+        
+        <div id="status" class="status-bar"></div>
+        
+        <canvas id="canvas" class="canvas-hidden"></canvas>
+        
+        <div class="version">v1.0.0 - 离线可用版本</div>
     </div>
     
-    <div class="result-section">
-        <h2>拼接结果</h2>
-        <textarea id="result-area" readonly placeholder="扫描并合并内容后将显示在这里..."></textarea>
-        <button id="copy-button">复制到剪贴板</button>
-    </div>
-    
-    <div id="status-message" class="status"></div>
-    
-    <!-- 引入Pako库用于解压缩 -->
+    <!-- 引入jsQR库 -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- 引入pako库用于解压缩 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     
     <script>
-        // 存储已扫描的块
-        let scannedBlocks = {};
-        let totalBlocks = 0;
+        // 全局变量
+        let blocks = {};              // 存储已扫描的块
+        let totalBlocks = 0;          // 总块数
+        let videoStream = null;       // 视频流
+        let scanning = false;         // 是否正在扫描
+        let lastResult = null;        // 上次扫描结果
+        let lastResultTime = 0;       // 上次结果时间
         
         // DOM元素
-        const scanButton = document.getElementById('scan-button');
-        const scanStatus = document.getElementById('scan-status');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const videoContainer = document.getElementById('video-container');
+        const startScanBtn = document.getElementById('start-scan');
+        const manualInputBtn = document.getElementById('manual-input');
+        const closeScanner = document.getElementById('close-scanner');
         const blocksList = document.getElementById('blocks-list');
         const missingBlocks = document.getElementById('missing-blocks');
-        const clearButton = document.getElementById('clear-button');
-        const mergeButton = document.getElementById('merge-button');
-        const resultArea = document.getElementById('result-area');
-        const copyButton = document.getElementById('copy-button');
-        const statusMessage = document.getElementById('status-message');
+        const clearBlocksBtn = document.getElementById('clear-blocks');
+        const mergeBlocksBtn = document.getElementById('merge-blocks');
+        const resultArea = document.getElementById('result');
+        const copyResultBtn = document.getElementById('copy-result');
+        const scanStatus = document.getElementById('scan-status');
+        const statusBar = document.getElementById('status');
         
-        // 初始化事件监听器
+        // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            scanButton.addEventListener('click', scanQRCode);
-            clearButton.addEventListener('click', clearAllBlocks);
-            mergeButton.addEventListener('click', mergeBlocks);
-            copyButton.addEventListener('click', copyToClipboard);
+            // 设置事件监听
+            startScanBtn.addEventListener('click', startScanner);
+            manualInputBtn.addEventListener('click', openManualInput);
+            closeScanner.addEventListener('click', stopScanner);
+            clearBlocksBtn.addEventListener('click', clearAllBlocks);
+            mergeBlocksBtn.addEventListener('click', mergeBlocks);
+            copyResultBtn.addEventListener('click', copyResult);
             
-            // 检查是否支持Web API扫描
-            if (!('BarcodeDetector' in window)) {
-                showStatus('您的浏览器不支持条码扫描API，请使用Chrome最新版本', 'warning');
-                scanButton.textContent = '使用系统相机扫描';
-            }
+            // 尝试从本地存储中恢复数据
+            restoreFromStorage();
         });
         
-        /**
-         * 扫描QR码
-         */
-        function scanQRCode() {
-            // 判断使用哪种扫描方法
-            if ('BarcodeDetector' in window) {
-                // 使用Web API扫描
-                scanUsingWebAPI();
+        // 开始扫描器
+        function startScanner() {
+            // 尝试访问摄像头
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',  // 优先使用后置摄像头
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                })
+                .then(function(stream) {
+                    videoStream = stream;
+                    video.srcObject = stream;
+                    video.setAttribute('playsinline', true); // iOS要求
+                    video.play();
+                    videoContainer.style.display = 'block';
+                    startScanBtn.style.display = 'none';
+                    manualInputBtn.style.display = 'none';
+                    scanning = true;
+                    scanStatus.textContent = '正在扫描，请将QR码对准框内...';
+                    showStatus('摄像头已开启，对准QR码进行扫描', 'success');
+                    
+                    // 设置canvas大小
+                    requestAnimationFrame(tick);
+                })
+                .catch(function(error) {
+                    console.error('无法访问摄像头:', error);
+                    showStatus('无法访问摄像头，请检查权限设置', 'error');
+                    
+                    // 提供手动输入选项
+                    openManualInput();
+                });
             } else {
-                // 使用标准文件输入扫描
-                scanUsingFileInput();
+                showStatus('您的浏览器不支持摄像头访问', 'error');
+                openManualInput();
             }
         }
         
-        /**
-         * 使用Web API扫描QR码
-         */
-        async function scanUsingWebAPI() {
-            try {
-                const barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+        // 停止扫描器
+        function stopScanner() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            
+            videoContainer.style.display = 'none';
+            startScanBtn.style.display = 'block';
+            manualInputBtn.style.display = 'block';
+            scanning = false;
+            scanStatus.textContent = '扫描已停止';
+        }
+        
+        // 处理视频帧
+        function tick() {
+            if (!scanning) return;
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                // 设置canvas大小与视频相匹配
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
                 
-                // 创建视频流
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                const videoElement = document.createElement('video');
-                videoElement.srcObject = stream;
-                videoElement.autoplay = true;
+                // 绘制视频帧到canvas
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
-                // 创建扫描框
-                const scanFrame = document.createElement('div');
-                scanFrame.style.position = 'fixed';
-                scanFrame.style.top = '0';
-                scanFrame.style.left = '0';
-                scanFrame.style.width = '100%';
-                scanFrame.style.height = '100%';
-                scanFrame.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-                scanFrame.style.display = 'flex';
-                scanFrame.style.flexDirection = 'column';
-                scanFrame.style.justifyContent = 'center';
-                scanFrame.style.alignItems = 'center';
-                scanFrame.style.zIndex = '9999';
+                // 获取图像数据
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 
-                const videoContainer = document.createElement('div');
-                videoContainer.style.position = 'relative';
-                videoContainer.style.width = '80%';
-                videoContainer.style.maxWidth = '500px';
-                videoContainer.style.aspectRatio = '1/1';
-                
-                videoElement.style.width = '100%';
-                videoElement.style.height = '100%';
-                videoElement.style.objectFit = 'cover';
-                videoElement.style.borderRadius = '8px';
-                
-                const closeButton = document.createElement('button');
-                closeButton.textContent = '取消';
-                closeButton.style.marginTop = '20px';
-                closeButton.style.padding = '10px 20px';
-                closeButton.style.backgroundColor = '#dc3545';
-                closeButton.style.color = 'white';
-                closeButton.style.border = 'none';
-                closeButton.style.borderRadius = '4px';
-                closeButton.style.fontSize = '16px';
-                
-                videoContainer.appendChild(videoElement);
-                scanFrame.appendChild(videoContainer);
-                scanFrame.appendChild(closeButton);
-                document.body.appendChild(scanFrame);
-                
-                // 定时检测QR码
-                const scanInterval = setInterval(async () => {
-                    try {
-                        const barcodes = await barcodeDetector.detect(videoElement);
-                        if (barcodes.length > 0) {
-                            // 扫描到QR码
-                            clearInterval(scanInterval);
-                            const qrData = barcodes[0].rawValue;
-                            
-                            // 关闭相机
-                            stream.getTracks().forEach(track => track.stop());
-                            document.body.removeChild(scanFrame);
-                            
-                            // 处理扫描到的数据
-                            processQRData(qrData);
-                        }
-                    } catch (error) {
-                        console.error('QR码检测错误:', error);
-                    }
-                }, 300);
-                
-                // 关闭按钮处理
-                closeButton.addEventListener('click', () => {
-                    clearInterval(scanInterval);
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(scanFrame);
+                // 使用jsQR库进行QR码检测
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
                 });
                 
-            } catch (error) {
-                console.error('相机访问错误:', error);
-                showStatus('无法访问相机，请检查权限或使用其他方式', 'error');
-                // 回退到文件输入方法
-                scanUsingFileInput();
-            }
-        }
-        
-        /**
-         * 使用文件输入扫描QR码
-         */
-        function scanUsingFileInput() {
-            // 创建文件输入元素
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.capture = 'environment'; // 尝试使用后置相机
-            
-            fileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    // 手动处理文件，在这里您可能需要使用其他库来解析QR码
-                    // 由于Web浏览器环境限制，这里我们可以提示用户使用专门的QR扫描应用
-                    showStatus('请使用专门的QR码扫描应用扫描，然后将结果复制粘贴到下方输入框', 'info', 0);
-                    
-                    // 创建一个输入框让用户粘贴扫描结果
-                    createManualInputDialog();
+                // 如果检测到QR码
+                if (code) {
+                    // 防止重复扫描同一个码
+                    if (lastResult !== code.data || Date.now() - lastResultTime > 2000) {
+                        lastResult = code.data;
+                        lastResultTime = Date.now();
+                        
+                        // 处理QR码数据
+                        handleQRData(code.data);
+                    }
                 }
-            });
+            }
             
-            fileInput.click();
+            // 继续处理下一帧
+            requestAnimationFrame(tick);
         }
         
-        /**
-         * 创建手动输入对话框
-         */
-        function createManualInputDialog() {
+        // 打开手动输入对话框
+        function openManualInput() {
+            // 创建对话框
             const dialog = document.createElement('div');
             dialog.style.position = 'fixed';
             dialog.style.top = '0';
             dialog.style.left = '0';
             dialog.style.width = '100%';
             dialog.style.height = '100%';
-            dialog.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            dialog.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
             dialog.style.display = 'flex';
-            dialog.style.flexDirection = 'column';
             dialog.style.justifyContent = 'center';
             dialog.style.alignItems = 'center';
-            dialog.style.zIndex = '9999';
+            dialog.style.zIndex = '1000';
             dialog.style.padding = '20px';
             dialog.style.boxSizing = 'border-box';
             
-            const container = document.createElement('div');
-            container.style.backgroundColor = 'white';
-            container.style.padding = '20px';
-            container.style.borderRadius = '8px';
-            container.style.width = '100%';
-            container.style.maxWidth = '400px';
+            // 对话框内容
+            const content = document.createElement('div');
+            content.style.backgroundColor = 'white';
+            content.style.padding = '20px';
+            content.style.borderRadius = '8px';
+            content.style.width = '100%';
+            content.style.maxWidth = '400px';
+            content.style.boxSizing = 'border-box';
             
+            // 标题
             const title = document.createElement('h3');
-            title.textContent = '输入扫描结果';
+            title.textContent = '手动输入QR码内容';
             title.style.margin = '0 0 15px 0';
             
+            // 输入框
             const input = document.createElement('textarea');
             input.style.width = '100%';
-            input.style.height = '100px';
+            input.style.height = '120px';
             input.style.padding = '10px';
             input.style.border = '1px solid #ddd';
             input.style.borderRadius = '4px';
             input.style.marginBottom = '15px';
             input.style.boxSizing = 'border-box';
-            input.placeholder = '粘贴从QR码扫描器获取的文本...';
+            input.placeholder = '粘贴QR码扫描内容，通常格式为 [1/3][H]xxx 或 [1/3][N]xxx';
             
-            const buttonContainer = document.createElement('div');
-            buttonContainer.style.display = 'flex';
-            buttonContainer.style.gap = '10px';
+            // 按钮容器
+            const buttons = document.createElement('div');
+            buttons.style.display = 'flex';
+            buttons.style.gap = '10px';
             
-            const cancelButton = document.createElement('button');
-            cancelButton.textContent = '取消';
-            cancelButton.style.flex = '1';
-            cancelButton.style.padding = '10px';
-            cancelButton.style.backgroundColor = '#dc3545';
-            cancelButton.style.color = 'white';
-            cancelButton.style.border = 'none';
-            cancelButton.style.borderRadius = '4px';
+            // 取消按钮
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = '取消';
+            cancelBtn.className = 'btn btn-secondary';
+            cancelBtn.style.margin = '0';
             
-            const confirmButton = document.createElement('button');
-            confirmButton.textContent = '确认';
-            confirmButton.style.flex = '1';
-            confirmButton.style.padding = '10px';
-            confirmButton.style.backgroundColor = '#28a745';
-            confirmButton.style.color = 'white';
-            confirmButton.style.border = 'none';
-            confirmButton.style.borderRadius = '4px';
+            // 确认按钮
+            const confirmBtn = document.createElement('button');
+            confirmBtn.textContent = '确认';
+            confirmBtn.className = 'btn btn-success';
+            confirmBtn.style.margin = '0';
             
-            buttonContainer.appendChild(cancelButton);
-            buttonContainer.appendChild(confirmButton);
-            
-            container.appendChild(title);
-            container.appendChild(input);
-            container.appendChild(buttonContainer);
-            dialog.appendChild(container);
-            
+            // 添加到DOM
+            buttons.appendChild(cancelBtn);
+            buttons.appendChild(confirmBtn);
+            content.appendChild(title);
+            content.appendChild(input);
+            content.appendChild(buttons);
+            dialog.appendChild(content);
             document.body.appendChild(dialog);
             
-            // 设置按钮事件
-            cancelButton.addEventListener('click', () => {
-                document.body.removeChild(dialog);
-            });
+            // 设置焦点
+            setTimeout(() => input.focus(), 100);
             
-            confirmButton.addEventListener('click', () => {
+            // 按钮事件
+            cancelBtn.addEventListener('click', () => document.body.removeChild(dialog));
+            confirmBtn.addEventListener('click', () => {
                 const data = input.value.trim();
                 if (data) {
-                    processQRData(data);
+                    handleQRData(data);
                 }
                 document.body.removeChild(dialog);
             });
         }
         
-        /**
-         * 处理扫描到的QR码数据
-         * @param {string} data QR码内容
-         */
-        function processQRData(data) {
+        // 处理QR码数据
+        function handleQRData(data) {
             try {
-                // 尝试解析格式为 "[索引/总数][编码类型]内容" 的数据
+                // 解析格式为 [索引/总数][编码类型]数据
                 const indexMatch = data.match(/^$$(\d+)\/(\d+)$$/);
-                
                 if (!indexMatch) {
                     throw new Error('无法识别的QR码格式');
                 }
@@ -510,258 +496,325 @@
                     totalBlocks = total;
                 }
                 
-                // 提取编码类型
-                const encodingMatch = data.match(/$$([HN])$$/);
-                if (!encodingMatch) {
+                // 提取编码类型 (H为十六进制压缩数据，N为普通文本)
+                const typeMatch = data.match(/$$([HN])$$/);
+                if (!typeMatch) {
                     throw new Error('无法识别的编码类型');
                 }
                 
-                const encodingType = encodingMatch[1]; // 'H' 或 'N'
+                const encodingType = typeMatch[1];
                 
-                // 提取内容，移除索引和编码类型标记
+                // 提取数据部分
                 const content = data.substring(data.indexOf(']', data.indexOf(']') + 1) + 1);
                 
-                // 存储块
-                scannedBlocks[index] = {
+                // 存储块数据
+                blocks[index] = {
                     content: content,
                     encoding: encodingType
                 };
                 
-                // 更新UI
-                updateUI();
+                // 播放成功提示音
+                playSound(true);
                 
-                // 更新扫描状态
-                scanStatus.textContent = `已扫描 ${Object.keys(scannedBlocks).length} 个块，共 ${totalBlocks} 个`;
+                // 更新UI
+                updateBlocksUI();
+                
+                // 保存到本地存储
+                saveToStorage();
                 
                 // 显示成功消息
-                showStatus(`成功扫描块 #${index}`, 'success');
+                showStatus(`成功扫描块 #${index}/${total}`, 'success');
+                scanStatus.textContent = `已扫描 ${Object.keys(blocks).length} 个块，共 ${totalBlocks} 个`;
+                
+                // 如果所有块都已扫描，提示合并
+                if (Object.keys(blocks).length === totalBlocks) {
+                    showStatus('已扫描全部块，可以合并内容了', 'success');
+                    
+                    // 自动停止扫描
+                    if (scanning) {
+                        stopScanner();
+                    }
+                }
             } catch (error) {
-                console.error('处理QR数据出错:', error);
-                showStatus('无法处理QR码内容: ' + error.message, 'error');
+                console.error('处理QR码数据出错:', error);
+                showStatus('无法处理QR码: ' + error.message, 'error');
+                
+                // 播放错误提示音
+                playSound(false);
             }
         }
         
-        /**
-         * 更新UI显示
-         */
-        function updateUI() {
-            // 更新已扫描块列表
-            blocksList.innerHTML = '';
-            
-            if (Object.keys(scannedBlocks).length === 0) {
-                blocksList.innerHTML = '<div class="empty-msg">暂无内容，请扫描QR码...</div>';
-                return;
-            }
-            
-            // 按索引排序显示块
-            const sortedIndices = Object.keys(scannedBlocks)
-                .map(Number)
-                .sort((a, b) => a - b);
-            
-            for (const index of sortedIndices) {
-                const block = scannedBlocks[index];
-                const item = document.createElement('div');
-                item.className = 'block-item';
-                
-                const blockInfo = document.createElement('span');
-                blockInfo.className = 'block-number';
-                blockInfo.textContent = `块 #${index}`;
-                
-                const encodingInfo = document.createElement('span');
-                encodingInfo.textContent = block.encoding === 'H' ? '(压缩)' : '(普通文本)';
-                
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = '删除';
-                deleteButton.style.padding = '4px 8px';
-                deleteButton.style.backgroundColor = '#dc3545';
-                deleteButton.style.color = 'white';
-                deleteButton.style.border = 'none';
-                deleteButton.style.borderRadius = '4px';
-                deleteButton.style.fontSize = '12px';
-                deleteButton.style.cursor = 'pointer';
-                
-                deleteButton.addEventListener('click', () => {
-                    delete scannedBlocks[index];
-                    updateUI();
-                });
-                
-                item.appendChild(blockInfo);
-                item.appendChild(encodingInfo);
-                item.appendChild(deleteButton);
-                blocksList.appendChild(item);
-            }
-            
-            // 检查是否缺失块
-            checkMissingBlocks();
-        }
-        
-        /**
-         * 检查缺失的块
-         */
-        function checkMissingBlocks() {
-            if (totalBlocks === 0) {
+        // 更新已扫描块的UI显示
+        function updateBlocksUI() {
+            if (Object.keys(blocks).length === 0) {
+                blocksList.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">尚未扫描任何内容</div>';
                 missingBlocks.textContent = '';
                 return;
             }
             
-            const scannedIndices = new Set(Object.keys(scannedBlocks).map(Number));
-            const missing = [];
+            // 清空列表
+            blocksList.innerHTML = '';
             
-            for (let i = 1; i <= totalBlocks; i++) {
-                if (!scannedIndices.has(i)) {
-                    missing.push(i);
-                }
+            // 按索引排序
+            const indices = Object.keys(blocks).map(Number).sort((a, b) => a - b);
+            
+            // 创建块列表
+            for (const index of indices) {
+                const block = blocks[index];
+                
+                const item = document.createElement('div');
+                item.className = 'block-item';
+                
+                const info = document.createElement('div');
+                
+                const blockNum = document.createElement('span');
+                blockNum.className = 'block-num';
+                blockNum.textContent = `块 #${index}/${totalBlocks} `;
+                
+                const blockType = document.createElement('span');
+                blockType.className = 'block-type';
+                blockType.textContent = block.encoding === 'H' ? '(压缩数据)' : '(普通文本)';
+                
+                info.appendChild(blockNum);
+                info.appendChild(blockType);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-block';
+                deleteBtn.textContent = '删除';
+                deleteBtn.addEventListener('click', () => {
+                    delete blocks[index];
+                    updateBlocksUI();
+                    saveToStorage();
+                });
+                
+                item.appendChild(info);
+                item.appendChild(deleteBtn);
+                blocksList.appendChild(item);
             }
             
-            if (missing.length > 0) {
-                missingBlocks.textContent = `缺失的块: ${missing.join(', ')}`;
-            } else {
-                missingBlocks.textContent = '已扫描所有块!';
+            // 检查缺失的块
+            if (totalBlocks > 0) {
+                const missing = [];
+                for (let i = 1; i <= totalBlocks; i++) {
+                    if (!blocks[i]) {
+                        missing.push(i);
+                    }
+                }
+                
+                if (missing.length > 0) {
+                    missingBlocks.textContent = `缺失的块: ${missing.join(', ')}`;
+                } else {
+                    missingBlocks.textContent = '已扫描所有块!';
+                }
             }
         }
         
-        /**
-         * 合并所有扫描的块
-         */
+        // 合并已扫描的块
         function mergeBlocks() {
+            if (Object.keys(blocks).length === 0) {
+                showStatus('没有可合并的内容', 'error');
+                return;
+            }
+            
             try {
-                if (Object.keys(scannedBlocks).length === 0) {
-                    showStatus('没有可合并的内容，请先扫描QR码', 'warning');
-                    return;
-                }
+                // 按索引排序
+                const indices = Object.keys(blocks).map(Number).sort((a, b) => a - b);
                 
-                // 检查块的完整性
-                checkMissingBlocks();
-                
-                // 按顺序排序块索引
-                const sortedIndices = Object.keys(scannedBlocks)
-                    .map(Number)
-                    .sort((a, b) => a - b);
-                
-                // 准备拼接内容
-                let mergedText = '';
+                // 合并内容
+                let mergedContent = '';
                 let isCompressed = false;
                 
-                // 收集所有块的内容
-                for (const index of sortedIndices) {
-                    const block = scannedBlocks[index];
+                for (const index of indices) {
+                    const block = blocks[index];
+                    mergedContent += block.content;
                     
-                    // 如果有任意一个块是压缩的，标记整体为压缩内容
+                    // 如果有任一块是压缩的，标记整体为压缩
                     if (block.encoding === 'H') {
                         isCompressed = true;
                     }
-                    
-                    mergedText += block.content;
                 }
                 
                 // 如果是压缩内容，需要解压
                 if (isCompressed) {
-                    // 将十六进制字符串转换回字节数组
-                    const bytes = new Uint8Array(mergedText.length / 2);
-                    for (let i = 0; i < mergedText.length; i += 2) {
-                        bytes[i / 2] = parseInt(mergedText.substring(i, i + 2), 16);
+                    try {
+                        // 将十六进制转换为字节数组
+                        const bytes = new Uint8Array(mergedContent.length / 2);
+                        for (let i = 0; i < mergedContent.length; i += 2) {
+                            bytes[i / 2] = parseInt(mergedContent.substring(i, i + 2), 16);
+                        }
+                        
+                        // 解压缩
+                        const decompressed = pako.inflate(bytes);
+                        
+                        // 转换为文本
+                        const decoder = new TextDecoder('utf-8');
+                        mergedContent = decoder.decode(decompressed);
+                    } catch (err) {
+                        throw new Error('解压失败: ' + err.message);
                     }
-                    
-                    // 解压缩
-                    const decompressed = pako.inflate(bytes);
-                    
-                    // 转换回文本
-                    const decoder = new TextDecoder();
-                    mergedText = decoder.decode(decompressed);
                 }
                 
-                // 显示合并结果
-                resultArea.value = mergedText;
-                showStatus('内容成功合并!', 'success');
+                // 显示结果
+                resultArea.value = mergedContent;
+                showStatus('内容合并成功!', 'success');
+                
+                // 保存合并后的结果
+                localStorage.setItem('mergedResult', mergedContent);
             } catch (error) {
-                console.error('合并内容出错:', error);
-                showStatus('合并内容失败: ' + error.message, 'error');
+                console.error('合并出错:', error);
+                showStatus('合并失败: ' + error.message, 'error');
             }
         }
         
-        /**
-         * 复制结果到剪贴板
-         */
-        function copyToClipboard() {
+        // 复制结果到剪贴板
+        function copyResult() {
             const text = resultArea.value;
             
             if (!text) {
-                showStatus('没有内容可复制', 'warning');
+                showStatus('没有内容可复制', 'error');
                 return;
             }
             
-            // 使用Clipboard API
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text)
-                    .then(() => {
-                        showStatus('已复制到剪贴板!', 'success');
-                    })
-                    .catch(err => {
-                        console.error('复制失败:', err);
-                        showStatus('复制失败，请手动复制', 'error');
-                        // 回退到选择文本方法
-                        selectAllText();
-                    });
-            } else {
-                // 回退方法
-                selectAllText();
-                try {
+            resultArea.select();
+            resultArea.setSelectionRange(0, 99999);
+            
+            try {
+                // 尝试使用Clipboard API
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text)
+                        .then(() => showStatus('已复制到剪贴板!', 'success'))
+                        .catch(() => {
+                            // 回退到execCommand
+                            document.execCommand('copy');
+                            showStatus('已复制到剪贴板!', 'success');
+                        });
+                } else {
+                    // 回退到execCommand
                     const successful = document.execCommand('copy');
                     if (successful) {
                         showStatus('已复制到剪贴板!', 'success');
                     } else {
                         showStatus('复制失败，请手动复制', 'warning');
                     }
-                } catch (err) {
-                    console.error('复制出错:', err);
-                    showStatus('复制失败，请手动复制', 'error');
                 }
+            } catch (err) {
+                showStatus('复制失败，请手动复制', 'error');
             }
         }
         
-        /**
-         * 选择文本区域中的所有文本
-         */
-        function selectAllText() {
-            resultArea.focus();
-            resultArea.select();
-        }
-        
-        /**
-         * 清空所有已扫描的块
-         */
+        // 清空所有块
         function clearAllBlocks() {
-            if (Object.keys(scannedBlocks).length === 0) {
+            if (Object.keys(blocks).length === 0) {
                 return;
             }
             
-            // 确认对话框
             if (confirm('确定要清空所有已扫描的内容吗?')) {
-                scannedBlocks = {};
+                blocks = {};
                 totalBlocks = 0;
+                lastResult = null;
                 resultArea.value = '';
-                scanStatus.textContent = '尚未扫描任何内容';
-                updateUI();
+                
+                updateBlocksUI();
+                saveToStorage();
+                
                 showStatus('已清空所有内容', 'success');
+                scanStatus.textContent = '准备就绪，点击按钮开始扫描';
             }
         }
         
-        /**
-         * 显示状态消息
-         * @param {string} message 消息内容
-         * @param {string} type 消息类型 ('error', 'success', 'warning', 'info')
-         * @param {number} duration 显示持续时间(毫秒)，0表示不自动隐藏
-         */
+        // 保存到本地存储
+        function saveToStorage() {
+            try {
+                localStorage.setItem('blocks', JSON.stringify(blocks));
+                localStorage.setItem('totalBlocks', totalBlocks.toString());
+            } catch (e) {
+                console.error('保存到本地存储失败:', e);
+            }
+        }
+        
+        // 从本地存储中恢复
+        function restoreFromStorage() {
+            try {
+                const savedBlocks = localStorage.getItem('blocks');
+                const savedTotal = localStorage.getItem('totalBlocks');
+                const savedResult = localStorage.getItem('mergedResult');
+                
+                if (savedBlocks) {
+                    blocks = JSON.parse(savedBlocks);
+                }
+                
+                if (savedTotal) {
+                    totalBlocks = parseInt(savedTotal);
+                }
+                
+                if (savedResult) {
+                    resultArea.value = savedResult;
+                }
+                
+                updateBlocksUI();
+                
+                if (Object.keys(blocks).length > 0) {
+                    scanStatus.textContent = `已从存储中恢复 ${Object.keys(blocks).length} 个块，共 ${totalBlocks} 个`;
+                    showStatus('已从本地存储恢复数据', 'success');
+                }
+            } catch (e) {
+                console.error('从本地存储恢复失败:', e);
+            }
+        }
+        
+        // 显示状态消息
         function showStatus(message, type, duration = 3000) {
-            statusMessage.textContent = message;
-            statusMessage.className = `status ${type}`;
-            statusMessage.style.display = 'block';
+            statusBar.textContent = message;
+            statusBar.className = `status-bar status-${type}`;
+            statusBar.style.display = 'block';
             
-            // 如果设置了持续时间，则自动隐藏
-            if (duration > 0) {
-                setTimeout(() => {
-                    statusMessage.style.display = 'none';
-                }, duration);
+            clearTimeout(statusBar.timer);
+            statusBar.timer = setTimeout(() => {
+                statusBar.style.display = 'none';
+            }, duration);
+        }
+        
+        // 播放提示音
+        function playSound(success) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                if (success) {
+                    // 成功音效
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = 880;
+                    gainNode.gain.value = 0.3;
+                    oscillator.start();
+                    
+                    setTimeout(() => {
+                        oscillator.frequency.value = 1318.51;
+                    }, 80);
+                    
+                    setTimeout(() => {
+                        oscillator.stop();
+                    }, 160);
+                } else {
+                    // 错误音效
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = 440;
+                    gainNode.gain.value = 0.3;
+                    oscillator.start();
+                    
+                    setTimeout(() => {
+                        oscillator.frequency.value = 392;
+                    }, 100);
+                    
+                    setTimeout(() => {
+                        oscillator.stop();
+                    }, 200);
+                }
+            } catch (e) {
+                console.log('无法播放提示音', e);
             }
         }
     </script>
