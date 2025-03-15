@@ -269,6 +269,43 @@
             font-size: 0.8rem;
             color: #999;
         }
+        
+        /* 调试面板 */
+        .debug-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .debug-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .debug-content {
+            font-family: monospace;
+            font-size: 0.85rem;
+            background: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        
+        /* 手动输入区域 */
+        .manual-input {
+            background: #f0f8ff;
+            border: 1px solid #b8daff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        .manual-input textarea {
+            height: 100px;
+        }
     </style>
 </head>
 <body>
@@ -289,6 +326,12 @@
                 <button id="stop-button" class="btn-light">停止扫描</button>
                 <button id="torch-button" class="btn-light">开关闪光灯</button>
             </div>
+        </div>
+        
+        <div class="manual-input">
+            <div class="card-title">手动输入</div>
+            <textarea id="manual-text" placeholder="如果自动扫描失败，可以从其他扫码App中复制结果粘贴到这里，然后点击"添加""></textarea>
+            <button id="manual-add-button" class="btn-primary">添加内容</button>
         </div>
         
         <div class="card">
@@ -314,8 +357,13 @@
             <button id="copy-button" class="btn-primary">复制到剪贴板</button>
         </div>
         
+        <div class="debug-panel" id="debug-panel">
+            <div class="debug-title">调试信息</div>
+            <div class="debug-content" id="debug-content"></div>
+        </div>
+        
         <div class="footer">
-            扫描器版本 v1.0.1 - 使用jsQR解码
+            扫描器版本 v1.0.2 - 支持多种QR码格式
         </div>
         
         <canvas id="canvas"></canvas>
@@ -339,6 +387,7 @@
         let lastResult = null;
         let lastResultTime = 0;
         let scanInterval = null;
+        let debugMode = false; // 调试模式
         
         // DOM元素
         const scanner = document.getElementById('scanner');
@@ -356,6 +405,10 @@
         const resultArea = document.getElementById('result');
         const copyButton = document.getElementById('copy-button');
         const status = document.getElementById('status');
+        const debugPanel = document.getElementById('debug-panel');
+        const debugContent = document.getElementById('debug-content');
+        const manualText = document.getElementById('manual-text');
+        const manualAddButton = document.getElementById('manual-add-button');
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
@@ -366,6 +419,19 @@
             clearButton.addEventListener('click', clearBlocks);
             mergeButton.addEventListener('click', mergeBlocks);
             copyButton.addEventListener('click', copyResult);
+            manualAddButton.addEventListener('click', addManualText);
+            
+            // 启用调试模式的秘密方法 (连续点击标题5次)
+            let headerClickCount = 0;
+            document.querySelector('h1').addEventListener('click', () => {
+                headerClickCount++;
+                if (headerClickCount >= 5) {
+                    debugMode = !debugMode;
+                    debugPanel.style.display = debugMode ? 'block' : 'none';
+                    showStatus(debugMode ? '已启用调试模式' : '已关闭调试模式', 'info');
+                    headerClickCount = 0;
+                }
+            });
             
             // 从本地存储恢复数据
             restoreFromStorage();
@@ -528,33 +594,95 @@
             }, 100);
         }
         
+        // 处理手动输入的文本
+        function addManualText() {
+            const text = manualText.value.trim();
+            if (!text) {
+                showStatus('请输入内容', 'error');
+                return;
+            }
+            
+            // 处理输入内容
+            processQRCode(text);
+            
+            // 清空输入框
+            manualText.value = '';
+        }
+        
         // 处理QR码数据
         function processQRCode(data) {
             try {
-                // 解析格式: [索引/总数][类型]内容
-                const indexMatch = data.match(/^$$(\d+)\/(\d+)$$/);
-                if (!indexMatch) {
-                    throw new Error('无法识别的QR码格式');
+                // 显示调试信息
+                if (debugMode) {
+                    debugContent.textContent = `原始数据:\n${data}`;
                 }
                 
-                const index = parseInt(indexMatch[1]);
-                const total = parseInt(indexMatch[2]);
+                // 尝试多种格式解析
+                // 1. 常规格式: [n/total][type]content
+                // 2. 宽松格式: [n/total] [type] content
+                // 3. 其他变体
+                
+                let indexMatch = null;
+                let typeMatch = null;
+                let content = '';
+                let index = 0;
+                let total = 0;
+                let encoding = 'N'; // 默认为普通文本
+                
+                // 尝试常规格式
+                indexMatch = data.match(/^\s*$$(\d+)\/(\d+)$$\s*/i);
+                if (indexMatch) {
+                    index = parseInt(indexMatch[1]);
+                    total = parseInt(indexMatch[2]);
+                    
+                    // 移除索引部分
+                    let remaining = data.substring(indexMatch[0].length);
+                    
+                    // 查找编码类型标记
+                    typeMatch = remaining.match(/^\s*$$([HNCc])$$\s*/i);
+                    if (typeMatch) {
+                        encoding = typeMatch[1].toUpperCase();
+                        if (encoding === 'C') encoding = 'H'; // 将C视为H
+                        
+                        // 移除类型标记，剩下的就是内容
+                        content = remaining.substring(typeMatch[0].length);
+                    } else {
+                        // 如果没有类型标记，整个remaining都是内容
+                        content = remaining;
+                    }
+                } else {
+                    // 尝试更宽松的格式，如分离的部分
+                    indexMatch = data.match(/$$(\d+)\/(\d+)$$/i);
+                    if (indexMatch) {
+                        index = parseInt(indexMatch[1]);
+                        total = parseInt(indexMatch[2]);
+                        
+                        // 查找编码类型标记
+                        typeMatch = data.match(/$$([HNCc])$$/i);
+                        if (typeMatch) {
+                            encoding = typeMatch[1].toUpperCase();
+                            if (encoding === 'C') encoding = 'H'; // 将C视为H
+                            
+                            // 移除已识别部分, 剩下的假定是内容
+                            content = data.replace(indexMatch[0], '').replace(typeMatch[0], '').trim();
+                        } else {
+                            // 移除索引部分，其余作为内容
+                            content = data.replace(indexMatch[0], '').trim();
+                        }
+                    } else {
+                        throw new Error('无法识别的QR码格式');
+                    }
+                }
+                
+                // 如果没有成功解析，显示详细信息
+                if (debugMode) {
+                    debugContent.textContent += `\n解析结果:\n索引=${index}/${total}, 类型=${encoding}, 内容长度=${content.length}`;
+                }
                 
                 // 更新总块数
                 if (total > totalBlocks) {
                     totalBlocks = total;
                 }
-                
-                // 解析编码类型
-                const typeMatch = data.match(/$$([HN])$$/);
-                if (!typeMatch) {
-                    throw new Error('无法识别的编码类型');
-                }
-                
-                const encoding = typeMatch[1]; // 'H'为十六进制压缩数据, 'N'为普通文本
-                
-                // 提取内容
-                const content = data.substring(data.indexOf(']', data.indexOf(']') + 1) + 1);
                 
                 // 存储块
                 blocks[index] = {
@@ -580,6 +708,12 @@
                 }
             } catch (error) {
                 console.error('处理QR码出错:', error);
+                
+                // 显示更多调试信息
+                if (debugMode) {
+                    debugContent.textContent += `\n解析错误: ${error.message}`;
+                }
+                
                 showStatus('QR码格式错误: ' + error.message, 'error');
                 
                 // 播放错误声音
@@ -711,7 +845,22 @@
                         const decoder = new TextDecoder('utf-8');
                         mergedContent = decoder.decode(decompressed);
                     } catch (err) {
-                        throw new Error('解压失败: ' + err.message);
+                        // 如果解压失败，可能是Base64编码
+                        try {
+                            // 尝试Base64解码然后解压缩
+                            const binaryString = atob(mergedContent);
+                            const bytes = new Uint8Array(binaryString.length);
+                            for (let i = 0; i < binaryString.length; i++) {
+                                bytes[i] = binaryString.charCodeAt(i);
+                            }
+                            
+                            const decompressed = pako.inflate(bytes);
+                            const decoder = new TextDecoder('utf-8');
+                            mergedContent = decoder.decode(decompressed);
+                        } catch (err2) {
+                            console.error('解压失败:', err, err2);
+                            throw new Error('解压失败，尝试了多种方法但均未成功');
+                        }
                     }
                 }
                 
