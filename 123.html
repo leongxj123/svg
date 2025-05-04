@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义课表平台调研报告</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-light: #60a5fa;
+            --primary-dark: #1e40af;
+            --secondary-color: #8b5cf6;
+            --accent-1: #f43f5e;
+            --accent-2: #06b6d4;
+            --accent-3: #f59e0b;
+            --accent-4: #10b981;
+            --accent-5: #8b5cf6;
+            --dark-bg: #1e293b;
+            --light-bg: #f8fafc;
+            --text-dark: #0f172a;
+            --text-light: #f8fafc;
+            --text-muted: #64748b;
+            --border-light: #e2e8f0;
+            --padding-section: 100px 0;
+            --card-radius: 16px;
+            --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        body {
+            color: var(--text-dark);
+            background-color: var(--light-bg);
+            line-height: 1.6;
+            overflow-x: hidden;
+            font-weight: 400;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-light);
+            padding: 140px 0 100px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"%3E%3Cpath fill="%23ffffff" fill-opacity="0.08" d="M0,96L48,112C96,128,192,160,288,181.3C384,203,480,213,576,208C672,203,768,181,864,170.7C960,160,1056,160,1152,133.3C1248,107,1344,53,1392,26.7L1440,0L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"%3E%3C/path%3E%3C/svg%3E');
+            background-size: 100% 100%;
+            background-position: bottom;
+            opacity: 0.8;
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            position: relative;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 4rem 0 2.5rem;
+            color: var(--primary-color);
+            position: relative;
+            display: inline-block;
+        }
+        
+        h2::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary-color), var(--primary-light));
+            border-radius: 2px;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 1.75rem 0 1rem;
+            color: var(--text-dark);
+        }
+        
+        p {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+        }
+        
+        section {
+            padding: var(--padding-section);
+            position: relative;
+        }
+        
+        section:nth-child(odd) {
+            background-color: white;
+        }
+        
+        .highlight-section {
+            background: linear-gradient(135deg, var(--accent-2), var(--accent-4));
+            color: var(--text-light);
+            padding: 120px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .highlight-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"%3E%3Cpath fill="%23ffffff" fill-opacity="0.08" d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,235,864,250.7C960,267,1056,245,1152,208C1248,171,1344,117,1392,90.7L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"%3E%3C/path%3E%3C/svg%3E');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.2;
+        }
+        
+        .highlight-section h2 {
+            color: white;
+        }
+        
+        .highlight-section h2::after {
+            background: linear-gradient(to right, rgba(255,255,255,0.7), rgba(255,255,255,0.3));
+        }
+        
+        ul, ol {
+            margin: 20px 0 30px 20px;
+        }
+        
+        li {
+            margin-bottom: 12px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: var(--card-radius);
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: var(--transition-normal);
+            border: 1px solid var(--border-light);
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .card h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .card h3 i {
+            margin-right: 10px;
+            opacity: 0.8;
+        }
+        
+        .color-1 { 
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .color-2 { 
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-3)); 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .color-3 { 
+            background: linear-gradient(135deg, var(--accent-5), var(--accent-2)); 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .color-4 { 
+            background: linear-gradient(135deg, var(--accent-4), var(--accent-2)); 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .color-card {
+            color: var(--text-light);
+            padding: 2.5rem 2rem;
+            border: none;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .color-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            z-index: -1;
+            transition: var(--transition-normal);
+        }
+        
+        .color-card:hover::after {
+            transform: scale(1.2);
+        }
+        
+        .color-card::before {
+            display: none;
+        }
+        
+        .color-card h3 {
+            color: white;
+            font-size: 1.75rem;
+            margin-bottom: 1.25rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-card p {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 2.5rem 0;
+            border-radius: var(--card-radius);
+            overflow: hidden;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+            background-color: white;
+        }
+        
+        th {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            text-align: left;
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 1rem;
+            vertical-align: top;
+            transition: var(--transition-normal);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover td {
+            background-color: rgba(0, 0, 0, 0.01);
+        }
+        
+        tr:nth-child(even) td {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        tr:nth-child(even):hover td {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+        
+        .bold {
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        
+        .footer {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            padding: 4rem 0;
+            text-align: center;
+            font-size: 0.9rem;
+            position: relative;
+        }
+        
+        /* 添加图标和功能指示器 */
+        .section-icon {
+            font-size: 2rem;
+            margin-right: 0.75rem;
+            color: var(--primary-color);
+            vertical-align: middle;
+            opacity: 0.8;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-up {
+            animation: fadeUp 0.6s ease-out forwards;
+        }
+        
+        /* 响应式设计增强 */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            h2 {
+                font-size: 2rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card, .color-card {
+                padding: 1.5rem;
+            }
+            
+            section {
+                padding: 70px 0;
+            }
+            
+            .highlight-section {
+                padding: 80px 0;
+            }
+            
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            tr {
+                margin-bottom: 1rem;
+                border: 1px solid var(--border-light);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+                border-bottom: 1px solid var(--border-light);
+            }
+            
+            td:before {
+                position: absolute;
+                top: 1rem;
+                left: 1rem;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: 600;
+            }
+            
+            td:nth-of-type(1):before { content: "竞品名称"; }
+            td:nth-of-type(2):before { content: "平台及定位"; }
+            td:nth-of-type(3):before { content: "功能特点"; }
+            td:nth-of-type(4):before { content: "用户规模/活跃度"; }
+        }
+        
+        /* 添加滚动触发效果 */
+        .scroll-fade {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .scroll-fade.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* 装饰元素 */
+        .decorative-dot {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 0;
+            filter: blur(1px);
+        }
+        
+        header .container {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .intro-badge {
+            display: inline-block;
+            background-color: rgba(255,255,255,0.15);
+            border-radius: 100px;
+            padding: 0.5rem 1.25rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(5px);
+            color: white;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="intro-badge">课表平台研究与分析</div>
+            <h1>自定义课表平台调研报告</h1>
+        </div>
+    </header>
+
+    <section>
+        <div class="container scroll-fade">
+            <h2><i class="fas fa-chart-line section-icon"></i>1. 市场背景与需求分析</h2>
+            <p>随着移动互联网的普及，智能手机已成为学生不可或缺的日常工具，大多数大学生每天使用手机时长超过5小时。传统的纸质课表需要开学时打印，携带和管理不便；一旦忘记查看，容易导致错过上课或跑错教室。课表工具应运而生，基于手机的应用可以自动导入或录入课程信息，提供便捷的课程浏览和提醒功能，帮助学生随时查看安排、避免迟到、合理规划学习时间。</p>
+            
+            <div class="grid">
+                <div class="card color-1 color-card">
+                    <h3><i class="fas fa-exclamation-circle"></i> 学生痛点</h3>
+                    <p>传统课表印刷耗时，无法动态提醒，学生常忘带纸质课表，错过上课或进教室出错。课程和活动增多后，手动管理效率低。</p>
+                </div>
+                <div class="card color-2 color-card">
+                    <h3><i class="fas fa-lightbulb"></i> 需求场景</h3>
+                    <p>每学期开学初快速导入课表，考前自动提醒考试；日常根据课表和任务安排自习、实验等；随时通过手机小部件查看下节课或作业；对课表进行自定义（颜色、主题）等。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container scroll-fade">
+            <h2><i class="fas fa-puzzle-piece section-icon"></i>2. 核心功能模块拆解</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3><i class="fas fa-user-shield"></i> 用户管理</h3>
+                    <p>注册登录（手机号、第三方账号等）、个人信息设置（学校、专业、年级）、权限控制。支持多角色管理，如学生与家长账号关联。提供数据备份、恢复功能，保障用户数据安全。</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-calendar-alt"></i> 课表构建</h3>
+                    <p>支持多种方式添加课程：手动录入（课程名、时间、地点、教师、周次等）、从学校教务系统一键导入（解析HTML/CSV）、通过文件导入（ICS/CSV）或扫码共享。</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-thumbs-up"></i> 课程推荐</h3>
+                    <p>根据用户专业、年级、历史选课数据等，智能推荐相关课程或线上学习资源。</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-bell"></i> 提醒与同步</h3>
+                    <p>提供上课提醒、考试倒计时、作业/任务提醒等功能。</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-chart-pie"></i> 统计分析</h3>
+                    <p>对用户课表和学习行为进行数据统计，生成可视化图表（柱状图、饼图）展示，帮助学生分析学习负载、按课程统计成绩或出勤情况。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="highlight-section">
+        <div class="container scroll-fade">
+            <h2><i class="fas fa-code section-icon" style="color: white;"></i>3. 技术实现方案</h2>
+            <div class="grid">
+                <div>
+                    <h3><i class="fas fa-laptop-code"></i> 前端</h3>
+                    <p>建议采用跨平台开发框架（如Flutter、React Native）同时覆盖iOS、Android、鸿蒙等平台，以降低开发成本并统一体验。</p>
+                </div>
+                <div>
+                    <h3><i class="fas fa-server"></i> 后端与数据库</h3>
+                    <p>后端可采用RESTful API设计（使用Spring Boot、Node.js等框架），数据库方面选用MySQL、PostgreSQL存储结构化课表与用户信息。</p>
+                </div>
+                <div>
+                    <h3><i class="fas fa-mobile-alt"></i> 移动端与推送</h3>
+                    <p>支持离线缓存和系统通知，推送使用FCM或厂商推送（如华为、小米）确保提醒及时送达。</p>
+                </div>
+                <div>
+                    <h3><i class="fas fa-plug"></i> 适配性与扩展</h3>
+                    <p>系统架构模块化，前后端分离，便于后续功能迭代，支持与第三方服务（如学校教务、教学视频平台等）无缝对接。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section>
+        <div class="container scroll-fade">
+            <h2><i class="fas fa-search-plus section-icon"></i>4. 国内外竞品分析</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>竞品名称</th>
+                        <th>平台及定位</th>
+                        <th>功能特点</th>
+                        <th>用户规模/活跃度</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="bold">超级课程表</td>
+                        <td>Android/iOS – 大学生</td>
+                        <td>主要功能：课表导入与查看、课程提醒、考试倒计时；扩展：校园二手市场、一卡通充值、校园社团等</td>
+                        <td>华为市场安装量约5,924万次</td>
+                    </tr>
+                    <tr>
+                        <td class="bold">课程表·ClassTable</td>
+                        <td>iOS/iPad – 中学/大学生</td>
+                        <td>功能：横/纵屏周视图、多课时设置、考试倒计时、每日课程提醒；支持AirDrop/AirTrans蓝牙Wi-Fi共享课表</td>
+                        <td>App Store教育类免费榜Top3</td>
+                    </tr>
+                    <tr>
+                        <td class="bold">WakeUp课程表</td>
+                        <td>Android/iOS/鸿蒙 – 在校学生</td>
+                        <td>功能：纯净无广告（体积小）；支持1800+高校教务系统导入；多课表切换、丰富主题外观定制；桌面小组件查看课表</td>
+                        <td>开源项目，用户群体稳定增长</td>
+                    </tr>
+                    <tr>
+                        <td class="bold">学习计划与课程表</td>
+                        <td>Android/iOS – 中学/大学生</td>
+                        <td>功能：课程表管理+学习计划；内置课程表、作业、考试及提醒模块；新增成绩管理等高级功能</td>
+                        <td>Google Play下载1000万+</td>
+                    </tr>
+                    <tr>
+                        <td class="bold">MyStudyLife</td>
+                        <td>Web/Android/iOS/Win – 全球学生</td>
+                        <td>功能：跨平台学业日历，可云端同步课程、作业、考试等；支持轮换课表、任务提醒和复习计划</td>
+                        <td>全球用户数百万，欧美校园广泛使用</td>
+                    </tr>
+                    <tr>
+                        <td class="bold">Google 日历</td>
+                        <td>Web/Android/iOS – 所有用户</td>
+                        <td>功能：通用日历应用，可手动添加课程或导入ICS；与Google Classroom集成，学校版支持课程自动录入</td>
+                        <td>全球亿级用户，常作为辅助工具使用</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section>
+        <div class="container scroll-fade">
+            <h2><i class="fas fa-users section-icon"></i>5. 用户行为与体验调研</h2>
+            <div class="grid">
+                <div class="card color-3 color-card">
+                    <h3><i class="fas fa-clock"></i> 使用习惯</h3>
+                    <p>大多数大学生习惯使用手机查询课程安排，尤其在早晚高峰（例如每天21:00-0:00）集中在手机上查看学习信息。</p>
+                </div>
+                <div class="card color-4 color-card">
+                    <h3><i class="fas fa-palette"></i> 界面偏好</h3>
+                    <p>学生偏好简洁、一目了然的界面设计。功能上要求周视图/列表视图清晰展示全周课程，不同课程用颜色区分，界面可自定义主题和颜色。</p>
+                </div>
+                <div class="card color-1 color-card">
+                    <h3><i class="fas fa-hand-pointer"></i> 交互习惯</h3>
+                    <p>学生常使用日历同步和桌面小组件以快速查看课表，点击课程块能查看详细信息并编辑。</p>
+                </div>
+                <div class="card color-2 color-card">
+                    <h3><i class="fas fa-mobile-alt"></i> 移动端使用频率</h3>
+                    <p>晚间和课前是使用高峰。由于学生随身携带手机，使用课表App的频率高于桌面或纸质版。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container scroll-fade">
+            <h2><i class="fas fa-coins section-icon"></i>6. 商业化与运营建议</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3><i class="fas fa-ad"></i> 广告/推广</h3>
+                    <p>在App内嵌入精准广告或品牌合作，如教育资源、电商导流等。与校园社团、电商或学习资料平台合作，获取分成。</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-file-invoice-dollar"></i> 内容付费</h3>
+                    <p>提供增值内容或服务订阅，例如推出"高级主题包"、"专业课程讲解"、"复习资料包"等付费模块。</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-crown"></i> 会员与订阅</h3>
+                    <p>提供会员服务，如免广告、云端备份扩容、跨校区同步、多账号管理等高级功能。</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-university"></i> 校园渠道运营</h3>
+                    <p>通过学校官方和学生组织推广。与高校教务处、学生会或新生入学培训合作，扩大知名度；在校园活动时派发海报或优惠码。</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-shopping-cart"></i> 增值服务/电商导流</h3>
+                    <p>与文具、教材、校园生活电商平台合作，向用户推荐电子书、学习用品等商品，通过联盟营销分成。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="highlight-section">
+        <div class="container scroll-fade">
+            <h2><i class="fas fa-rocket section-icon" style="color: white;"></i>7. 潜在挑战与未来发展方向</h2>
+            <div class="grid">
+                <div>
+                    <h3><i class="fas fa-cogs"></i> 技术难点</h3>
+                    <p>教务系统兼容性复杂，各高校使用不同的教务系统，需要针对各系统编写不同的导入解析方案，并及时维护。</p>
+                </div>
+                <div>
+                    <h3><i class="fas fa-heart"></i> 用户粘性</h3>
+                    <p>课表应用本质工具性强，往往"完成任务后就留存率低"。如何维持高打开率是难点。竞品尝试引入社交或游戏化元素来增强粘性。</p>
+                </div>
+                <div>
+                    <h3><i class="fas fa-chalkboard-teacher"></i> 教育场景变化</h3>
+                    <p>随着在线教育、混合教学模式普及，课表工具可以与网课平台、慕课（MOOC）等深度对接，自动导入线上课程表、考试安排。</p>
+                </div>
+                <div>
+                    <h3><i class="fas fa-brain"></i> 智能化升级</h3>
+                    <p>人工智能和数据分析的发展为课表应用提供新方向。未来可通过AI分析学生课程安排与学习负载，给出个性化学习建议。</p>
+                </div>
+                <div>
+                    <h3><i class="fas fa-project-diagram"></i> 跨界融合</h3>
+                    <p>课表工具可与学习社区、笔记App、知识库等结合，实现学习资源共享。未来发展方向包括：与在线课堂/直播平台打通，实现"点课表、看直播"一体化；与学校官网或教务系统无缝对接，成为官方推荐的校内应用。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="container">
+            <p>自定义课表平台调研报告 © 2025 By.leong</p>
+        </div>
+    </div>
+    
+    <!-- 添加装饰元素 -->
+    <div class="decorative-dot" style="top: 15%; right: 10%; width: 150px; height: 150px; background-color: rgba(96, 165, 250, 0.1);"></div>
+    <div class="decorative-dot" style="top: 40%; left: 5%; width: 200px; height: 200px; background-color: rgba(139, 92, 246, 0.08);"></div>
+    <div class="decorative-dot" style="bottom: 30%; right: 5%; width: 180px; height: 180px; background-color: rgba(16, 185, 129, 0.07);"></div>
+    
+    <script>
+        // 滚动触发动画
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化所有滚动元素
+            const scrollElements = document.querySelectorAll('.scroll-fade');
+            
+            // 检查元素是否在视窗内
+            const elementInView = (el, percentageScroll = 100) => {
+                const elementTop = el.getBoundingClientRect().top;
+                return (
+                    elementTop <= 
+                    ((window.innerHeight || document.documentElement.clientHeight) * (percentageScroll/100))
+                );
+            };
+            
+            // 添加active类
+            const displayScrollElement = (element) => {
+                element.classList.add('active');
+            };
+            
+            // 处理滚动
+            const handleScrollAnimation = () => {
+                scrollElements.forEach((el) => {
+                    if (elementInView(el, 80)) {
+                        displayScrollElement(el);
+                    }
+                });
+            };
+            
+            // 初始检查
+            handleScrollAnimation();
+            
+            // 添加滚动监听器
+            window.addEventListener('scroll', () => {
+                handleScrollAnimation();
+            });
+            
+            // 为标题添加淡入动画
+            const headers = document.querySelectorAll('h1, h2');
+            headers.forEach((header, index) => {
+                header.classList.add('fade-up');
+                header.style.animationDelay = `${0.2 * index}s`;
+            });
+            
+            // 为卡片添加淡入动画
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.classList.add('fade-up');
+                card.style.animationDelay = `${0.1 * (index % 5)}s`;
+            });
+        });
+    </script>
+</body>
+</html> 
