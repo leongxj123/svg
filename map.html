@@ -3132,5 +3132,12 @@
             document.getElementById('custom-route-list').innerHTML = listItems;
         }
     </script>
+    <script type="text/javascript">
+        // 添加页面加载事件监听器，确保在页面加载完成后初始化地图
+        window.onload = function() {
+            // 调用initMap函数以初始化地图和其他组件
+            initMap();
+        };
+    </script>
 </body>
 </html>
