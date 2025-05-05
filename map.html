@@ -1,0 +1,3136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>南京鼓楼医院周边两日自驾游路线 - 高级互动版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --secondary-color: #f5222d;
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --font-family: "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: var(--font-family);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f0f2f5;
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #sidebar {
+            width: 400px;
+            background: #fff;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width 0.3s ease;
+        }
+        #sidebar.collapsed {
+            width: 60px;
+        }
+        #sidebar-toggle {
+            position: absolute;
+            top: 15px;
+            left: 400px;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 3;
+            transition: left 0.3s ease;
+        }
+        #sidebar-toggle.collapsed {
+            left: 60px;
+        }
+        #main-content {
+            flex: 1;
+            position: relative;
+            transition: margin-left 0.3s ease;
+        }
+        #container {
+            width: 100%;
+            height: 100%;
+        }
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            width: 300px; /* 固定宽度 */
+        }
+        .search-box {
+            margin-bottom: 10px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .search-box button {
+            padding: 8px 16px;
+            margin-left: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: var(--primary-color);
+            color: white;
+            transition: all 0.3s;
+        }
+        .search-box button:hover {
+            background: #40a9ff;
+        }
+        .day-button {
+            padding: 8px 16px;
+            margin: 4px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: var(--primary-color);
+            color: white;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .day-button i {
+            margin-right: 5px;
+        }
+        .day-button:hover {
+            background: #40a9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+        }
+        .day-button.active {
+            background: #096dd9;
+        }
+        .info-window {
+            padding: 15px;
+            max-width: 350px;
+            border-radius: 8px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.2);
+        }
+        .info-window h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        .info-window h3 i {
+            margin-right: 8px;
+        }
+        .info-window p {
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .info-window-actions {
+            display: flex;
+            margin-top: 10px;
+            justify-content: space-between;
+        }
+        .info-window img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        .legend:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .legend-color {
+            width: 30px;
+            height: 4px;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+        .sidebar-header {
+            padding: 20px;
+            background: linear-gradient(120deg, var(--primary-color), #0050b3);
+            color: white;
+            position: relative;
+        }
+        .sidebar-title {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .sidebar-title i {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .sidebar-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .sidebar-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+        .sidebar-content::-webkit-scrollbar-thumb:hover {
+            background: #aaa;
+        }
+        .route-info {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .route-info:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .route-info h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            font-size: 1.2em;
+        }
+        .route-info h2 i {
+            margin-right: 8px;
+        }
+        .poi-list {
+            margin-top: 20px;
+        }
+        .poi-item {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .poi-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-3px);
+        }
+        .poi-item.active {
+            border-left: 4px solid var(--primary-color);
+        }
+        .poi-item h3 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        .poi-item h3 i {
+            margin-right: 8px;
+        }
+        .poi-item p {
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+        .poi-item .poi-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            transition: all 0.5s ease;
+        }
+        .poi-item:hover .poi-image {
+            transform: scale(1.03);
+        }
+        .poi-features {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .poi-feature {
+            background: #f5f5f5;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .poi-feature i {
+            margin-right: 4px;
+            font-size: 10px;
+        }
+        .weather-info {
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .weather-info p {
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .weather-info p i {
+            margin-right: 8px;
+            width: 20px;
+            text-align: center;
+        }
+        .weather-date {
+            margin-top: 5px;
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+        .traffic-toggle {
+            margin-top: 10px;
+        }
+        .action-button {
+            padding: 8px 16px;
+            margin: 4px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: var(--success-color);
+            color: white;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .action-button i {
+            margin-right: 6px;
+        }
+        .action-button:hover {
+            background: #73d13d;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(82, 196, 26, 0.3);
+        }
+        .transport-mode {
+            display: flex;
+            margin-bottom: 15px;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .transport-button {
+            padding: 8px 12px;
+            flex: 1;
+            margin-right: 5px;
+            border: 1px solid var(--primary-color);
+            border-radius: 4px;
+            cursor: pointer;
+            background: white;
+            color: var(--primary-color);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .transport-button i {
+            margin-right: 5px;
+        }
+        .transport-button:last-child {
+            margin-right: 0;
+        }
+        .transport-button:hover {
+            background: #e6f7ff;
+        }
+        .transport-button.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        .slideshow-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .slideshow-slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+        .slideshow-slide.active {
+            opacity: 1;
+        }
+        .slideshow-caption {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .slideshow-prev, .slideshow-next {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 2;
+            transition: all 0.3s;
+        }
+        .slideshow-prev:hover, .slideshow-next:hover {
+            background: rgba(0,0,0,0.6);
+        }
+        .slideshow-prev {
+            left: 10px;
+        }
+        .slideshow-next {
+            right: 10px;
+        }
+        .slideshow-dots {
+            position: absolute;
+            bottom: 35px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 2;
+        }
+        .slideshow-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            margin: 0 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .slideshow-dot.active {
+            background: white;
+        }
+        .custom-route-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .custom-route-panel h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .custom-route-panel h3 i {
+            margin-right: 8px;
+        }
+        .custom-route-list {
+            margin: 10px 0;
+            min-height: 40px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .custom-route-item {
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .custom-route-item:last-child {
+            margin-bottom: 0;
+        }
+        .custom-route-item span {
+            display: flex;
+            align-items: center;
+        }
+        .custom-route-item span i {
+            margin-right: 5px;
+        }
+        .custom-route-item button {
+            background: none;
+            border: none;
+            color: #f5222d;
+            cursor: pointer;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            color: var(--primary-color);
+        }
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .nearby-section {
+            margin-top: 15px;
+        }
+        .nearby-section h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1em;
+        }
+        .nearby-list {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .nearby-item {
+            width: calc(50% - 5px);
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .nearby-item:hover {
+            background: #f0f0f0;
+        }
+        .nearby-item:nth-child(2n) {
+            margin-right: 0;
+        }
+        .badge {
+            display: inline-block;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 6px;
+            font-size: 12px;
+            line-height: 18px;
+            text-align: center;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                height: 50%;
+            }
+            #sidebar.collapsed {
+                height: 60px;
+                width: 100%;
+            }
+            #sidebar-toggle {
+                left: 50%;
+                top: 50%;
+                transform: translateX(-50%);
+            }
+            #sidebar-toggle.collapsed {
+                top: 60px;
+                left: 50%;
+            }
+            #main-content {
+                height: 50%;
+            }
+            .control-panel {
+                bottom: 10px;
+                top: auto;
+                flex-direction: column;
+                overflow-x: auto;
+                max-height: 50vh;
+                max-width: calc(100vw - 20px);
+                width: auto;
+                right: 10px;
+                left: 10px;
+                background: rgba(255, 255, 255, 0.95);
+                z-index: 200; /* 提高层级 */
+            }
+            .search-box {
+                z-index: 250; /* 确保搜索框在最上层 */
+                position: relative;
+            }
+            .legend {
+                bottom: 80px;
+            }
+            .day-button, .action-button {
+                margin: 5px 2px;
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            .search-results {
+                width: 90%;
+                left: 5%;
+                right: 5%;
+            }
+        }
+        /* 小屏幕手机适配 */
+        @media (max-width: 480px) {
+            #sidebar.collapsed {
+                height: 40px;
+            }
+            #sidebar-toggle.collapsed {
+                top: 40px;
+            }
+            .sidebar-header {
+                padding: 10px;
+            }
+            .weather-info {
+                padding: 10px;
+                margin-bottom: 10px;
+                font-size: 0.9em;
+            }
+            .slideshow-container {
+                height: 150px;
+            }
+            .control-panel {
+                padding: 8px;
+                max-height: 40vh;
+            }
+            .search-box input {
+                padding: 6px;
+                font-size: 14px;
+            }
+            .search-box button {
+                padding: 6px 12px;
+            }
+            .day-button, .action-button {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+            .poi-item {
+                padding: 10px;
+            }
+            .poi-item h3 {
+                font-size: 1em;
+            }
+            .poi-item .poi-image {
+                height: 100px;
+            }
+            .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+                display: flex;
+            }
+            .tab {
+                flex: 1;
+                text-align: center;
+                font-size: 0.9em;
+                padding: 8px;
+            }
+            .legend {
+                bottom: 60px;
+                left: 10px;
+                font-size: 0.9em;
+                padding: 10px;
+            }
+        }
+        /* 竖屏适配 */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #sidebar {
+                height: 40%;
+            }
+            #main-content {
+                height: 60%;
+            }
+        }
+        /* 横屏适配 */
+        @media (max-width: 850px) and (orientation: landscape) {
+            #sidebar {
+                width: 40%;
+                height: 100%;
+            }
+            #sidebar.collapsed {
+                width: 60px;
+                height: 100%;
+            }
+            #main-content {
+                width: 60%;
+                height: 100%;
+            }
+            #sidebar-toggle {
+                top: 15px;
+                left: 40%;
+            }
+            #sidebar-toggle.collapsed {
+                left: 60px;
+                top: 15px;
+            }
+            .control-panel {
+                width: 40%;
+                right: 10px;
+                top: 10px;
+                bottom: auto;
+            }
+        }
+        /* 触控优化 */
+        @media (hover: none) and (pointer: coarse) {
+            /* 触摸屏设备 */
+            .day-button, .action-button, .transport-button, button {
+                min-height: 44px; /* 最小触控区域高度 */
+                min-width: 44px; /* 最小触控区域宽度 */
+            }
+            
+            input[type="checkbox"], input[type="radio"] {
+                transform: scale(1.2);
+            }
+            
+            .poi-item, .custom-route-item, .nearby-item, .search-result-item button {
+                padding: 12px; /* 增大点击区域 */
+            }
+        }
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(20px); }
+        }
+
+        /* 增强滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(24, 144, 255, 0.6);
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(24, 144, 255, 0.8);
+        }
+        .search-results {
+            position: absolute;
+            top: 120px;
+            right: 10px;
+            background: white;
+            width: 300px;
+            max-height: 60vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            z-index: 99;
+        }
+
+        .search-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .search-results-header h3 {
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .search-close {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .search-results-list {
+            padding: 0 15px;
+        }
+
+        .search-result-item {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 15px 0;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+
+        .search-result-item p {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .search-result-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .search-result-actions button {
+            padding: 5px 10px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 4px;
+            color: #333;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .search-result-actions button:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .success-message {
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p>正在加载南京自驾游路线...</p>
+    </div>
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">
+                <i class="fas fa-map-marked-alt"></i>
+                <h1>南京两日自驾游</h1>
+            </div>
+            <div id="weather-container" class="weather-info">
+                <p><i class="fas fa-cloud-sun"></i> 正在加载天气信息...</p>
+            </div>
+            <div class="slideshow-container">
+                <div class="slideshow-slide active" style="background-image: url('https://pic3.zhimg.com/80/v2-5a7f9d7d788b6cceb9c15c999daf6567_1440w.webp')">
+                    <div class="slideshow-caption">南京鸡鸣寺</div>
+                </div>
+                <div class="slideshow-slide" style="background-image: url('https://pic1.zhimg.com/80/v2-ba36bd393a3db87e0c46307f15c2243e_1440w.webp')">
+                    <div class="slideshow-caption">玄武湖公园</div>
+                </div>
+                <div class="slideshow-slide" style="background-image: url('https://pic1.zhimg.com/80/v2-beca02a7b2f65521dae1e5f8df56c9a0_1440w.webp')">
+                    <div class="slideshow-caption">南京明城墙</div>
+                </div>
+                <div class="slideshow-slide" style="background-image: url('https://pic1.zhimg.com/80/v2-e26f11f1b3bb1fbff8b1fe8e53eb6cea_1440w.webp')">
+                    <div class="slideshow-caption">南京大学</div>
+                </div>
+                <div class="slideshow-prev"><i class="fas fa-chevron-left"></i></div>
+                <div class="slideshow-next"><i class="fas fa-chevron-right"></i></div>
+                <div class="slideshow-dots">
+                    <div class="slideshow-dot active"></div>
+                    <div class="slideshow-dot"></div>
+                    <div class="slideshow-dot"></div>
+                    <div class="slideshow-dot"></div>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-content">
+            <div class="tabs">
+                <div class="tab active" data-tab="routes">行程路线</div>
+                <div class="tab" data-tab="attractions">景点介绍</div>
+                <div class="tab" data-tab="custom">自定义行程</div>
+            </div>
+            
+            <div class="tab-content active" id="routes-tab">
+                <div class="transport-mode">
+                    <button class="transport-button active" onclick="switchTransport('DRIVING')"><i class="fas fa-car"></i> 驾车</button>
+                    <button class="transport-button" onclick="switchTransport('WALKING')"><i class="fas fa-walking"></i> 步行</button>
+                    <button class="transport-button" onclick="switchTransport('TRANSIT')"><i class="fas fa-bus"></i> 公交</button>
+                </div>
+                <div class="route-info" id="route-info">
+                    <h2><i class="fas fa-route"></i> 行程详情</h2>
+                    <div id="route-details">
+                        请选择行程日期查看详情
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="attractions-tab">
+                <div class="poi-list" id="poi-list"></div>
+            </div>
+            
+            <div class="tab-content" id="custom-tab">
+                <div class="custom-route-panel">
+                    <h3><i class="fas fa-edit"></i> 创建您的行程</h3>
+                    <p>从下方选择景点，拖放到您的行程中</p>
+                    <div class="custom-route-list" id="custom-route-list">
+                        <div class="custom-route-item">
+                            <span><i class="fas fa-hospital"></i> 南京鼓楼医院</span>
+                            <button onclick="removeFromCustomRoute(0)"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <button class="action-button" onclick="planCustomRoute()"><i class="fas fa-map"></i> 规划路线</button>
+                </div>
+                <div class="nearby-section">
+                    <h3>可添加的景点</h3>
+                    <div class="nearby-list" id="available-pois">
+                        <!-- 动态生成的可用景点列表 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="sidebar-toggle">
+        <i class="fas fa-chevron-left"></i>
+    </div>
+    <div id="main-content">
+        <div id="container"></div>
+        <div class="control-panel">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="搜索景点、餐厅、地铁站..." />
+                <button class="search-button" onclick="searchPOI()"><i class="fas fa-search"></i></button>
+            </div>
+            <button class="day-button active" onclick="showRoute(1)"><i class="fas fa-calendar-day"></i> 第一天行程</button>
+            <button class="day-button" onclick="showRoute(2)"><i class="fas fa-calendar-alt"></i> 第二天行程</button>
+            <button class="action-button" onclick="toggleTraffic()"><i class="fas fa-traffic-light"></i> 实时路况</button>
+            <button class="action-button" onclick="toggleSubway()"><i class="fas fa-subway"></i> 地铁线路</button>
+            <button class="action-button" onclick="zoomToShowAll()"><i class="fas fa-expand"></i> 显示全部</button>
+            <button class="action-button" onclick="addUserMarker()"><i class="fas fa-map-pin"></i> 添加标记</button>
+        </div>
+        <div class="legend">
+            <div class="legend-title">图例</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--primary-color);"></div>
+                <span>第一天路线</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--secondary-color);"></div>
+                <span>第二天路线</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--success-color);"></div>
+                <span>自定义路线</span>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: 'a60a0c6b0e6b322b8b25acf4b889a22f',
+        }
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=e18c549dead50fdf8ac2dfe21b58f048&plugin=AMap.Weather,AMap.Driving,AMap.Walking,AMap.Transfer,AMap.TruckDriving,AMap.Geocoder,AMap.ToolBar,AMap.Scale,AMap.DistrictSearch,AMap.PlaceSearch"></script>
+    <script>
+        // 景点数据
+        const locations = {
+            hospital: [118.783042, 32.056180],
+            nanjingUniv: [118.779613, 32.055085],
+            jiMingTemple: [118.795246, 32.061061],
+            deji: [118.784902, 32.044077],
+            xuanwuLake: [118.799291, 32.070204],
+            mingWall: [118.820191, 32.052993]
+        };
+
+        // 景点图片
+        const poiImages = {
+            hospital: 'https://img1.baidu.com/it/u=1937251579,3344202465&fm=253&app=138&size=w931&n=0&f=JPEG&fmt=auto?sec=1715612400&t=0fc293d4cc3fc5f79ff9acd22a883c2d',
+            nanjingUniv: 'https://pic1.zhimg.com/80/v2-e26f11f1b3bb1fbff8b1fe8e53eb6cea_1440w.webp',
+            jiMingTemple: 'https://pic3.zhimg.com/80/v2-5a7f9d7d788b6cceb9c15c999daf6567_1440w.webp',
+            deji: 'https://img0.baidu.com/it/u=1025858561,2999806294&fm=253&fmt=auto&app=138&f=JPEG?w=889&h=500',
+            xuanwuLake: 'https://pic1.zhimg.com/80/v2-ba36bd393a3db87e0c46307f15c2243e_1440w.webp',
+            mingWall: 'https://pic1.zhimg.com/80/v2-beca02a7b2f65521dae1e5f8df56c9a0_1440w.webp'
+        };
+
+        // 第一天路线点
+        const day1Points = [
+            locations.hospital,
+            locations.nanjingUniv,
+            locations.jiMingTemple,
+            locations.xuanwuLake,
+            locations.hospital
+        ];
+
+        // 第二天路线点
+        const day2Points = [
+            locations.hospital,
+            locations.mingWall,
+            locations.deji,
+            locations.hospital
+        ];
+
+        // 景点信息
+        const poiInfo = {
+            hospital: {
+                title: '南京鼓楼医院',
+                desc: '起点/终点',
+                time: '全天开放',
+                tips: '医院周边停车位紧张，建议使用公共停车场',
+                parking: '医院地下停车场（收费）',
+                nearby: ['南京大排档', '老门东美食街'],
+                features: ['医疗急救', '交通便利', '历史建筑'],
+                icon: 'hospital'
+            },
+            nanjingUniv: {
+                title: '南京大学鼓楼校区',
+                desc: '百年学府，可参观校史博物馆',
+                time: '建议游览时间：2-3小时',
+                tips: '校史馆需要提前预约参观',
+                parking: '校园停车场（限时）',
+                nearby: ['南苑美食广场', '先锋书店'],
+                features: ['历史悠久', '文化教育', '校园环境优美'],
+                icon: 'graduation-cap'
+            },
+            jiMingTemple: {
+                title: '古鸡鸣寺',
+                desc: '著名古寺，明城墙近在咫尺',
+                time: '建议游览时间：1-2小时',
+                tips: '香火旺盛，建议避开节假日',
+                parking: '寺院专用停车场',
+                nearby: ['素食馆', '茶馆'],
+                features: ['历史古迹', '佛教文化', '景色优美'],
+                icon: 'gopuram'
+            },
+            deji: {
+                title: '德基广场',
+                desc: '商业中心，内有艺术博物馆',
+                time: '10:00-22:00',
+                tips: '周末人流量大，建议工作日参观',
+                parking: '地下停车场（免费3小时）',
+                nearby: ['米其林餐厅', '星巴克臻选'],
+                features: ['购物中心', '餐饮美食', '艺术展览'],
+                icon: 'shopping-bag'
+            },
+            xuanwuLake: {
+                title: '玄武湖公园',
+                desc: '江南最大皇家园林，风景秀丽',
+                time: '建议游览时间：2-3小时',
+                tips: '樱花季特别美丽，建议春季前往',
+                parking: '湖边停车场（收费）',
+                nearby: ['湖边茶社', '玄武湖小吃街'],
+                features: ['自然风光', '湖泊景观', '历史遗迹'],
+                icon: 'water'
+            },
+            mingWall: {
+                title: '南京明城墙',
+                desc: '中国现存最长的古城墙',
+                time: '建议游览时间：1-2小时',
+                tips: '建议傍晚前往，可以看日落',
+                parking: '城墙脚下停车场',
+                nearby: ['老门东', '夫子庙'],
+                features: ['历史遗迹', '城市地标', '观景拍照'],
+                icon: 'monument'
+            }
+        };
+
+        let map = null;
+        let day1Route = null;
+        let day2Route = null;
+        let customRoute = null;
+        let customRoutePoints = [locations.hospital];
+        let markers = [];
+        let currentDay = 1;
+        let trafficLayer = null;
+        let currentTransport = 'DRIVING';
+        let weather = null;
+        let driving = null;
+        let walking = null;
+        let transfer = null;
+        let geocoder = null;
+        let placeSearch = null;
+        let userMarkers = [];
+        let activeInfoWindow = null;
+        let currentSlide = 0;
+        let slideInterval = null;
+        let subwayLayer = null;
+        let subwayVisible = false;
+        let searchResultMarkers = [];
+
+        // 初始化地图
+        function initMap() {
+            // 创建地图实例
+            map = new AMap.Map('container', {
+                zoom: 14,
+                center: locations.hospital,
+                resizeEnable: true,
+                viewMode: '3D',
+                mapStyle: 'amap://styles/whitesmoke'
+            });
+
+            // 添加工具条和比例尺
+            map.plugin(['AMap.ToolBar', 'AMap.Scale'], function() {
+                map.addControl(new AMap.ToolBar({
+                    position: 'RB'
+                }));
+                map.addControl(new AMap.Scale());
+            });
+
+            // 初始化交通图层
+            trafficLayer = new AMap.TileLayer.Traffic({
+                zIndex: 10
+            });
+            
+            // 初始化地铁图层
+            initSubwayLayer();
+
+            // 初始化导航
+            driving = new AMap.Driving({
+                map: map,
+                panel: "route-details",
+                hideMarkers: true
+            });
+
+            walking = new AMap.Walking({
+                map: map,
+                panel: "route-details",
+                hideMarkers: true
+            });
+
+            transfer = new AMap.Transfer({
+                map: map,
+                panel: "route-details",
+                hideMarkers: true
+            });
+
+            // 初始化地理编码
+            geocoder = new AMap.Geocoder();
+            
+            // 初始化周边搜索
+            placeSearch = new AMap.PlaceSearch({
+                pageSize: 10,
+                pageIndex: 1,
+                citylimit: true,
+                city: '南京',
+                map: map
+            });
+
+            // 添加所有标记点
+            Object.entries(locations).forEach(([key, position]) => {
+                const info = poiInfo[key];
+                const marker = new AMap.Marker({
+                    position: position,
+                    map: map,
+                    title: info.title,
+                    animation: 'AMAP_ANIMATION_DROP',
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(32, 32),
+                        image: `https://a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-${markers.length + 1}.png`,
+                        imageSize: new AMap.Size(32, 32)
+                    })
+                });
+
+                const content = `
+                    <div class="info-window fade-in">
+                        <img src="${poiImages[key]}" alt="${info.title}">
+                        <h3><i class="fas fa-${info.icon}"></i> ${info.title}</h3>
+                        <p>${info.desc}</p>
+                        <p><i class="far fa-clock"></i> ${info.time}</p>
+                        <p><i class="fas fa-lightbulb"></i> <strong>小贴士：</strong>${info.tips}</p>
+                        <p><i class="fas fa-parking"></i> <strong>停车：</strong>${info.parking}</p>
+                        <div class="poi-features">
+                            ${info.features.map(feature => `
+                                <span class="poi-feature"><i class="fas fa-check"></i> ${feature}</span>
+                            `).join('')}
+                        </div>
+                        <div class="nearby-section">
+                            <h3><i class="fas fa-utensils"></i> 周边美食</h3>
+                            <div class="nearby-list">
+                                ${info.nearby.map(item => `
+                                    <div class="nearby-item" onclick="searchNearby('${item}', ${position})">
+                                        ${item}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="info-window-actions">
+                            <button class="action-button" onclick="startNavigation([${position}])"><i class="fas fa-directions"></i> 导航</button>
+                            <button class="action-button" onclick="addToCustomRoute('${key}')"><i class="fas fa-plus"></i> 添加到行程</button>
+                        </div>
+                    </div>
+                `;
+
+                const infoWindow = new AMap.InfoWindow({
+                    content: content,
+                    offset: new AMap.Pixel(0, -30)
+                });
+
+                marker.on('click', () => {
+                    if (activeInfoWindow) {
+                        activeInfoWindow.close();
+                    }
+                    infoWindow.open(map, marker.getPosition());
+                    activeInfoWindow = infoWindow;
+                    
+                    // 添加动画效果 - 修改为使用CSS动画而非setAnimation
+                    const position = marker.getPosition();
+                    let step = 0;
+                    const bounceInterval = setInterval(() => {
+                        step++;
+                        if (step > 10) {
+                            clearInterval(bounceInterval);
+                            marker.setOffset(new AMap.Pixel(0, 0));
+                            return;
+                        }
+                        
+                        // 使用setOffset模拟弹跳效果
+                        const y = Math.sin(step / 2) * 20;
+                        marker.setOffset(new AMap.Pixel(0, -y));
+                    }, 80);
+                });
+
+                markers.push(marker);
+            });
+
+            // 绘制路线
+            day1Route = new AMap.Polyline({
+                path: day1Points.map(point => new AMap.LngLat(point[0], point[1])),
+                strokeColor: 'var(--primary-color)',
+                strokeWeight: 6,
+                strokeOpacity: 0.8,
+                zIndex: 100,
+                borderWeight: 2,
+                borderColor: '#ffffff'
+            });
+
+            day2Route = new AMap.Polyline({
+                path: day2Points.map(point => new AMap.LngLat(point[0], point[1])),
+                strokeColor: 'var(--secondary-color)',
+                strokeWeight: 6,
+                strokeOpacity: 0.8,
+                zIndex: 100,
+                borderWeight: 2,
+                borderColor: '#ffffff'
+            });
+
+            customRoute = new AMap.Polyline({
+                path: customRoutePoints.map(point => new AMap.LngLat(point[0], point[1])),
+                strokeColor: 'var(--success-color)',
+                strokeWeight: 6,
+                strokeOpacity: 0.8,
+                zIndex: 100,
+                borderWeight: 2,
+                borderColor: '#ffffff'
+            });
+
+            // 默认显示第一天路线
+            showRoute(1);
+
+            // 获取天气信息
+            getWeather();
+
+            // 更新POI列表
+            updatePoiList();
+            
+            // 更新可用景点列表
+            updateAvailablePois();
+            
+            // 添加地图点击事件
+            map.on('click', function(e) {
+                if (activeInfoWindow) {
+                    activeInfoWindow.close();
+                    activeInfoWindow = null;
+                }
+            });
+            
+            // 初始化轮播图
+            startSlideshow();
+            
+            // 监听侧边栏切换
+            document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
+            
+            // 监听选项卡切换
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+            
+            // 隐藏加载层
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }, 1500);
+        }
+        
+        // 切换选项卡
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        }
+        
+        // 切换侧边栏
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebar-toggle');
+            
+            sidebar.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+            
+            const icon = toggle.querySelector('i');
+            if (sidebar.classList.contains('collapsed')) {
+                icon.className = 'fas fa-chevron-right';
+            } else {
+                icon.className = 'fas fa-chevron-left';
+            }
+        }
+        
+        // 轮播图控制
+        function startSlideshow() {
+            const slides = document.querySelectorAll('.slideshow-slide');
+            const dots = document.querySelectorAll('.slideshow-dot');
+            
+            slideInterval = setInterval(() => {
+                slides[currentSlide].classList.remove('active');
+                dots[currentSlide].classList.remove('active');
+                
+                currentSlide = (currentSlide + 1) % slides.length;
+                
+                slides[currentSlide].classList.add('active');
+                dots[currentSlide].classList.add('active');
+            }, 4000);
+            
+            // 添加点击事件
+            document.querySelector('.slideshow-prev').addEventListener('click', function(e) {
+                e.stopPropagation();
+                changeSlide(-1);
+            });
+            
+            document.querySelector('.slideshow-next').addEventListener('click', function(e) {
+                e.stopPropagation();
+                changeSlide(1);
+            });
+            
+            // 点击切换
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showSlide(index);
+                });
+            });
+        }
+        
+        function changeSlide(n) {
+            const slides = document.querySelectorAll('.slideshow-slide');
+            const dots = document.querySelectorAll('.slideshow-dot');
+            
+            slides[currentSlide].classList.remove('active');
+            dots[currentSlide].classList.remove('active');
+            
+            currentSlide = (currentSlide + n + slides.length) % slides.length;
+            
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+            
+            // 重置轮播计时器
+            clearInterval(slideInterval);
+            startSlideshow();
+        }
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slideshow-slide');
+            const dots = document.querySelectorAll('.slideshow-dot');
+            
+            slides[currentSlide].classList.remove('active');
+            dots[currentSlide].classList.remove('active');
+            
+            currentSlide = n;
+            
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+            
+            // 重置轮播计时器
+            clearInterval(slideInterval);
+            startSlideshow();
+        }
+
+        // 切换路线显示
+        function showRoute(day) {
+            currentDay = day;
+            const buttons = document.querySelectorAll('.day-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            buttons[day - 1].classList.add('active');
+
+            if (day === 1) {
+                day1Route.setMap(map);
+                day2Route.setMap(null);
+                customRoute.setMap(null);
+                calculateRoute(day1Points);
+                
+                // 添加路线动画
+                animatePolyline(day1Route);
+            } else {
+                day1Route.setMap(null);
+                day2Route.setMap(map);
+                customRoute.setMap(null);
+                calculateRoute(day2Points);
+                
+                // 添加路线动画
+                animatePolyline(day2Route);
+            }
+            updatePoiList();
+        }
+        
+        // 添加路线动画
+        function animatePolyline(polyline) {
+            const path = polyline.getPath();
+            const totalLength = path.length;
+            let currentIndex = 0;
+            
+            const interval = setInterval(() => {
+                currentIndex++;
+                
+                if (currentIndex >= totalLength) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                const newPath = path.slice(0, currentIndex + 1);
+                polyline.setPath(newPath);
+            }, 100);
+        }
+
+        // 切换交通方式
+        function switchTransport(mode) {
+            currentTransport = mode;
+            const buttons = document.querySelectorAll('.transport-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[onclick="switchTransport('${mode}')"]`).classList.add('active');
+            
+            calculateRoute(currentDay === 1 ? day1Points : day2Points);
+        }
+
+        // 计算路线
+        function calculateRoute(points) {
+            const start = points[0];
+            const end = points[points.length - 1];
+            const waypoints = points.slice(1, -1).map(point => new AMap.LngLat(point[0], point[1]));
+
+            // 清空路线详情区域
+            document.getElementById('route-details').innerHTML = '<p>正在计算路线...</p>';
+            
+            switch(currentTransport) {
+                case 'DRIVING':
+                    driving.search(
+                        new AMap.LngLat(start[0], start[1]),
+                        new AMap.LngLat(end[0], end[1]),
+                        {waypoints: waypoints}
+                    );
+                    break;
+                case 'WALKING':
+                    // 步行无法直接支持多个途经点，需要拆分为多段
+                    if (waypoints.length > 0) {
+                        document.getElementById('route-details').innerHTML = '<p>正在计算步行路线(分段计算)...</p>';
+                        const allPoints = [new AMap.LngLat(start[0], start[1]), ...waypoints, new AMap.LngLat(end[0], end[1])];
+                        let routeSegments = '';
+                        let segmentCount = 0;
+                        
+                        // 逐段计算
+                        function calculateSegment(index) {
+                            if (index >= allPoints.length - 1) {
+                                // 所有段落计算完成
+                                if (segmentCount === 0) {
+                                    document.getElementById('route-details').innerHTML = '<p>未能找到合适的步行路线</p>';
+                                }
+                                return;
+                            }
+                            
+                            walking.search(
+                                allPoints[index],
+                                allPoints[index + 1],
+                                function(status, result) {
+                                    if (status === 'complete' && result.routes && result.routes.length) {
+                                        segmentCount++;
+                                        const route = result.routes[0];
+                                        routeSegments += `
+                                            <div class="route-segment">
+                                                <h4>段落 ${segmentCount}: ${route.steps[0].start_location} → ${route.steps[route.steps.length-1].end_location}</h4>
+                                                <p>距离: ${route.distance}米, 预计时间: ${Math.ceil(route.time/60)}分钟</p>
+                                                <div class="segment-details">
+                                                    ${route.steps.map(step => `<p>${step.instruction}</p>`).join('')}
+                                                </div>
+                                            </div>
+                                        `;
+                                        document.getElementById('route-details').innerHTML = `
+                                            <h3>步行路线 (共${allPoints.length-1}段)</h3>
+                                            ${routeSegments}
+                                        `;
+                                    }
+                                    // 计算下一段
+                                    calculateSegment(index + 1);
+                                }
+                            );
+                        }
+                        
+                        // 开始计算第一段
+                        calculateSegment(0);
+                    } else {
+                        walking.search(
+                            new AMap.LngLat(start[0], start[1]),
+                            new AMap.LngLat(end[0], end[1])
+                        );
+                    }
+                    break;
+                case 'TRANSIT':
+                    // 公交只能计算起点和终点，不支持途经点
+                    transfer.search({
+                        origin: new AMap.LngLat(start[0], start[1]),
+                        destination: new AMap.LngLat(end[0], end[1]),
+                        city: '南京',
+                        policy: AMap.TransferPolicy.LEAST_TIME
+                    });
+                    
+                    // 如果有途经点，提示用户
+                    if (waypoints.length > 0) {
+                        const warningDiv = document.createElement('div');
+                        warningDiv.style.cssText = 'margin-top:10px;padding:5px;background:#fff3cd;color:#856404;border-radius:4px;';
+                        warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 注意：公交路线规划不支持途经点，只计算起点到终点的路线。';
+                        
+                        setTimeout(() => {
+                            const routeDetails = document.getElementById('route-details');
+                            if (routeDetails) {
+                                routeDetails.appendChild(warningDiv);
+                            }
+                        }, 1000);
+                    }
+                    break;
+            }
+        }
+
+        // 开始导航
+        function startNavigation(position) {
+            const url = `https://uri.amap.com/navigation?to=${position[0]},${position[1]},目的地&mode=car&coordinate=gaode`;
+            window.open(url, '_blank');
+        }
+
+        // 切换路况显示
+        function toggleTraffic() {
+            if (trafficLayer.getMap()) {
+                trafficLayer.setMap(null);
+            } else {
+                trafficLayer.setMap(map);
+            }
+        }
+
+        // 获取天气信息
+        function getWeather() {
+            const weather = new AMap.Weather();
+            weather.getLive('南京市', function(err, data) {
+                if (!err) {
+                    let weatherIcon = 'sun';
+                    
+                    // 根据天气状况选择对应图标
+                    if (data.weather.includes('雨')) {
+                        weatherIcon = 'cloud-rain';
+                    } else if (data.weather.includes('云') || data.weather.includes('阴')) {
+                        weatherIcon = 'cloud';
+                    } else if (data.weather.includes('晴')) {
+                        weatherIcon = 'sun';
+                    } else if (data.weather.includes('雪')) {
+                        weatherIcon = 'snowflake';
+                    }
+                    
+                    document.getElementById('weather-container').innerHTML = `
+                        <p><i class="fas fa-${weatherIcon}"></i> 实时天气：${data.weather}</p>
+                        <p><i class="fas fa-temperature-high"></i> 温度：${data.temperature}℃</p>
+                        <p><i class="fas fa-wind"></i> 风力：${data.windPower}</p>
+                        <p><i class="fas fa-tint"></i> 湿度：${data.humidity}%</p>
+                        <p class="weather-date"><i class="far fa-clock"></i> 更新时间：${new Date().toLocaleString()}</p>
+                    `;
+                }
+            });
+        }
+
+        // 更新POI列表
+        function updatePoiList() {
+            const points = currentDay === 1 ? day1Points : day2Points;
+            const poiKeys = Object.keys(locations).filter(key => 
+                points.some(point => 
+                    point[0] === locations[key][0] && point[1] === locations[key][1]
+                )
+            );
+
+            const poiListHtml = poiKeys.map(key => {
+                const poi = poiInfo[key];
+                return `
+                    <div class="poi-item" onclick="map.setCenter(locations.${key}); highlightMarker('${key}');">
+                        <img src="${poiImages[key]}" class="poi-image" alt="${poi.title}">
+                        <h3><i class="fas fa-${poi.icon}"></i> ${poi.title}</h3>
+                        <p>${poi.desc}</p>
+                        <p><i class="far fa-clock"></i> ${poi.time}</p>
+                        <div class="poi-features">
+                            ${poi.features.map(feature => `
+                                <span class="poi-feature"><i class="fas fa-check"></i> ${feature}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('poi-list').innerHTML = poiListHtml;
+        }
+        
+        // 更新可用景点列表
+        function updateAvailablePois() {
+            const poiKeys = Object.keys(locations);
+            const usedKeys = customRoutePoints.map(point => 
+                poiKeys.find(key => 
+                    locations[key][0] === point[0] && locations[key][1] === point[1]
+                )
+            );
+            
+            const availableKeys = poiKeys.filter(key => !usedKeys.includes(key));
+            
+            const availablePoiHtml = availableKeys.map(key => {
+                const poi = poiInfo[key];
+                return `
+                    <div class="nearby-item" onclick="addToCustomRoute('${key}')">
+                        <i class="fas fa-${poi.icon}"></i> ${poi.title}
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('available-pois').innerHTML = availablePoiHtml;
+        }
+        
+        // 搜索周边设施
+        function searchNearby(keyword, position) {
+            placeSearch.searchNearBy(keyword, position, 1000, function(status, result) {
+                if (status === 'complete') {
+                    placeSearch.setMap(map);
+                }
+            });
+        }
+        
+        // 高亮显示标记
+        function highlightMarker(key) {
+            try {
+                const keyIndex = Object.keys(locations).indexOf(key);
+                if (keyIndex >= 0 && keyIndex < markers.length) {
+                    const marker = markers[keyIndex];
+                    
+                    // 移动地图中心到标记
+                    map.setCenter(marker.getPosition());
+                    
+                    // 创建跳动效果（不使用setAnimation）
+                    const position = marker.getPosition();
+                    const originalPixel = map.lngLatToContainer(position);
+                    
+                    let step = 0;
+                    const interval = setInterval(() => {
+                        step++;
+                        if (step > 10) {
+                            clearInterval(interval);
+                            return;
+                        }
+                        
+                        // 使用CSS transform模拟跳动
+                        const y = Math.sin(step / 2) * 20;
+                        marker.setOffset(new AMap.Pixel(0, -y));
+                        
+                        if (step === 10) {
+                            marker.setOffset(new AMap.Pixel(0, 0));
+                        }
+                    }, 80);
+                }
+            } catch (error) {
+                console.log('标记高亮效果不可用:', error);
+            }
+        }
+        
+        // 显示所有标记点
+        function zoomToShowAll() {
+            map.setFitView(markers);
+        }
+        
+        // 初始化地铁图层
+        function initSubwayLayer() {
+            const subwayLines = [
+                {
+                    name: '1号线',
+                    color: '#0066CC',
+                    stations: [
+                        [118.798772, 32.084739, '迈皋桥站'],
+                        [118.792678, 32.073211, '红山动物园站'],
+                        [118.781577, 32.065729, '南京站'],
+                        [118.786813, 32.055458, '新模范马路站'],
+                        [118.790461, 32.043883, '玄武门站'],
+                        [118.784968, 32.037022, '鼓楼站'],
+                        [118.780419, 32.025287, '珠江路站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.772179, 32.00324, '张府园站'],
+                        [118.769712, 31.993619, '三山街站'],
+                        [118.771686, 31.984539, '中华门站'],
+                        [118.781534, 31.968617, '安德门站'],
+                        [118.783937, 31.961108, '天隆寺站'],
+                        [118.787027, 31.950395, '软件大道站'],
+                        [118.800116, 31.937698, '花神庙站'],
+                        [118.812561, 31.932119, '南京南站'],
+                        [118.822947, 31.920467, '双龙大道站'],
+                        [118.832818, 31.910887, '河定桥站'],
+                        [118.846207, 31.899767, '胜太路站'],
+                        [118.861013, 31.892339, '百家湖站'],
+                        [118.872128, 31.878977, '小龙湾站'],
+                        [118.884659, 31.870382, '竹山路站'],
+                        [118.898349, 31.866152, '天印大道站'],
+                        [118.911181, 31.860123, '龙眠大道站'],
+                        [118.919935, 31.851486, '南医大·江苏经贸学院站'],
+                        [118.927617, 31.840733, '南京交院站'],
+                        [118.928089, 31.829764, '中国药科大学站']
+                    ]
+                },
+                {
+                    name: '2号线',
+                    color: '#FF0000',
+                    stations: [
+                        [118.751088, 32.111025, '油坊桥站'],
+                        [118.741389, 32.100258, '雨润大街站'],
+                        [118.738599, 32.085196, '元通站'],
+                        [118.741132, 32.074553, '奥体东站'],
+                        [118.753406, 32.057559, '兴隆大街站'],
+                        [118.764178, 32.05061, '集庆门大街站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.786256, 32.019053, '大行宫站'],
+                        [118.794367, 32.01351, '西安门站'],
+                        [118.806641, 32.004863, '明故宫站'],
+                        [118.817156, 31.996639, '苜蓿园站'],
+                        [118.8268, 31.986673, '下马坊站'],
+                        [118.825384, 31.97535, '孝陵卫站'],
+                        [118.81266, 31.966, '钟灵街站'],
+                        [118.812561, 31.932119, '南京南站'],
+                        [118.802347, 31.919336, '经天路站'],
+                        [118.788184, 31.904498, '集聚路站'],
+                        [118.775909, 31.887939, '云锦路站'],
+                        [118.760674, 31.872308, '莫愁湖站'],
+                        [118.743465, 31.863641, '汉中门站'],
+                        [118.721834, 31.848923, '上新河站'],
+                        [118.718616, 31.834307, '小市站'],
+                        [118.726597, 31.825202, '葛塘站'],
+                        [118.731413, 31.810629, '桥北站'],
+                        [118.738599, 31.79914, '和燕路站'],
+                        [118.745785, 31.785847, '铁心桥站'],
+                        [118.760824, 31.76931, '严华路站'],
+                        [118.770266, 31.758639, '泥洼站'],
+                        [118.782189, 31.742972, '梅山站']
+                    ]
+                },
+                {
+                    name: '3号线',
+                    color: '#00BB00',
+                    stations: [
+                        [118.815425, 32.104264, '林场站'],
+                        [118.810361, 32.085456, '星火路站'],
+                        [118.802422, 32.072987, '东大成贤学院站'],
+                        [118.798969, 32.061517, '泰冯路站'],
+                        [118.789871, 32.056587, '天润城站'],
+                        [118.779915, 32.05595, '龙江站'],
+                        [118.773435, 32.055458, '南京工业大学站'],
+                        [118.765196, 32.055892, '浮桥站'],
+                        [118.755855, 32.057559, '江东中路站'],
+                        [118.746757, 32.057602, '双和园站'],
+                        [118.735899, 32.057731, '胜太西路站'],
+                        [118.721695, 32.052981, '天保街站'],
+                        [118.712983, 32.052336, '江东门站'],
+                        [118.696675, 32.053453, '常府街站'],
+                        [118.686075, 32.044528, '夫子庙站'],
+                        [118.684872, 32.028493, '武定门站'],
+                        [118.680581, 32.015992, '雨花门站'],
+                        [118.672341, 32.005422, '卡子门站'],
+                        [118.65575, 31.995972, '大明路站'],
+                        [118.64315, 31.988797, '明发广场站'],
+                        [118.634567, 31.979342, '南京南站'],
+                        [118.627872, 31.969798, '宏运大道站'],
+                        [118.623581, 31.959994, '胜太东路站'],
+                        [118.617487, 31.947702, '天元西路站'],
+                        [118.609932, 31.936737, '九龙湖站'],
+                        [118.605127, 31.924529, '诚信大道站'],
+                        [118.602982, 31.910929, '东大九龙湖校区站'],
+                        [118.602553, 31.900945, '秣周东路站']
+                    ]
+                },
+                {
+                    name: '10号线',
+                    color: '#CC66FF',
+                    stations: [
+                        [118.814823, 32.043797, '雨山路站'],
+                        [118.817398, 32.033319, '元通站'],
+                        [118.792079, 32.02467, '奥体中心站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.763363, 31.99833, '云南路站'],
+                        [118.768256, 31.983538, '上海路站'],
+                        [118.769887, 31.970389, '小行站'],
+                        [118.769028, 31.956036, '安德门站'],
+                        [118.766754, 31.946528, '中胜站'],
+                        [118.765767, 31.936329, '天印大道站'],
+                        [118.776712, 31.920467, '龙华路站'],
+                        [118.78765, 31.908137, '南京工程学院站'],
+                        [118.782358, 31.891551, '雨山新村站'],
+                        [118.787563, 31.878977, '灵山北路站'],
+                        [118.798321, 31.874358, '周岗站'],
+                        [118.81059, 31.859461, '化工园站'],
+                        [118.815741, 31.843677, '殷华街站'],
+                        [118.816028, 31.829185, '葛塘站']
+                    ]
+                }
+            ];
+            
+            // 创建地铁线路和站点
+            const subwayElements = [];
+            
+            subwayLines.forEach(line => {
+                // 创建线路
+                const path = line.stations.map(station => new AMap.LngLat(station[0], station[1]));
+                const polyline = new AMap.Polyline({
+                    path: path,
+                    strokeColor: line.color,
+                    strokeWeight: 8,
+                    strokeOpacity: 0.8,
+                    isOutline: true,
+                    outlineColor: '#ffffff',
+                    borderWeight: 2
+                });
+                
+                subwayElements.push(polyline);
+                
+                // 创建站点标记
+                line.stations.forEach(station => {
+                    const marker = new AMap.Marker({
+                        position: new AMap.LngLat(station[0], station[1]),
+                        content: `<div style="background-color:white;width:10px;height:10px;border:3px solid ${line.color};border-radius:50%;"></div>`,
+                        offset: new AMap.Pixel(-8, -8)
+                    });
+                    
+                    const content = `
+                        <div class="info-window fade-in">
+                            <h3><i class="fas fa-subway"></i> ${station[2]}</h3>
+                            <p>${line.name}</p>
+                            <div class="info-window-actions">
+                                <button class="action-button" onclick="startNavigation([${station[0]}, ${station[1]}])">
+                                    <i class="fas fa-directions"></i> 导航
+                                </button>
+                                <button class="action-button" onclick="addCustomPointToRoute([${station[0]}, ${station[1]}], '${station[2]}')">
+                                    <i class="fas fa-plus"></i> 添加到行程
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    const infoWindow = new AMap.InfoWindow({
+                        content: content,
+                        offset: new AMap.Pixel(0, -15)
+                    });
+                    
+                    marker.on('click', () => {
+                        infoWindow.open(map, marker.getPosition());
+                    });
+                    
+                    subwayElements.push(marker);
+                });
+            });
+            
+            // 创建地铁图层组
+            subwayLayer = new AMap.OverlayGroup(subwayElements);
+        }
+        
+        // 切换地铁线路显示
+        function toggleSubway() {
+            if (subwayVisible) {
+                subwayLayer.setMap(null);
+                subwayVisible = false;
+                const toggleBtn = document.querySelector('[onclick="toggleSubway()"]');
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="fas fa-subway"></i> 显示地铁';
+                }
+                
+                // 关闭地铁信息面板
+                const subwayInfoPanel = document.getElementById('subway-info-panel');
+                if (subwayInfoPanel) {
+                    subwayInfoPanel.style.animation = 'fadeOut 0.6s ease forwards';
+                    setTimeout(() => {
+                        subwayInfoPanel.style.display = 'none';
+                    }, 600);
+                }
+                
+                // 关闭最近地铁站面板
+                const nearestSubwayPanel = document.getElementById('nearest-subway-panel');
+                if (nearestSubwayPanel) {
+                    nearestSubwayPanel.remove();
+                }
+            } else {
+                // 确保地铁图层已初始化
+                if (!subwayLayer) {
+                    initSubwayLayer();
+                }
+                
+                subwayLayer.setMap(map);
+                subwayVisible = true;
+                const toggleBtn = document.querySelector('[onclick="toggleSubway()"]');
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="fas fa-subway"></i> 隐藏地铁';
+                }
+                
+                // 创建或显示地铁信息面板
+                createOrShowSubwayInfoPanel();
+            }
+        }
+        
+        // 创建或显示地铁信息面板
+        function createOrShowSubwayInfoPanel() {
+            if (!document.getElementById('subway-info-panel')) {
+                const subwayInfoPanel = document.createElement('div');
+                subwayInfoPanel.id = 'subway-info-panel';
+                subwayInfoPanel.className = 'custom-route-panel';
+                subwayInfoPanel.style.cssText = 'position:absolute;bottom:20px;right:20px;width:300px;max-height:300px;overflow-y:auto;z-index:90;';
+                subwayInfoPanel.innerHTML = `
+                    <h3><i class="fas fa-subway"></i> 南京地铁信息</h3>
+                    <p>点击地铁站点查看详细信息</p>
+                    <div class="subway-search" style="margin:10px 0;">
+                        <input type="text" id="subway-search-input" placeholder="搜索地铁线路或站点..." style="width:70%;padding:5px;border-radius:4px;border:1px solid #ddd;">
+                        <button onclick="searchSubway()" style="padding:5px 10px;border:none;background:var(--primary-color);color:white;border-radius:4px;cursor:pointer;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="subway-actions" style="display:flex;justify-content:space-between;margin-top:10px;">
+                        <button class="action-button" onclick="findNearestSubway()" style="flex:1;margin-right:5px;">
+                            <i class="fas fa-search-location"></i> 最近站点
+                        </button>
+                        <button class="action-button" onclick="showAllSubwayLines()" style="flex:1;">
+                            <i class="fas fa-project-diagram"></i> 查看线路
+                        </button>
+                    </div>
+                `;
+                document.getElementById('main-content').appendChild(subwayInfoPanel);
+                
+                // 添加搜索框按键事件
+                setTimeout(() => {
+                    const searchInput = document.getElementById('subway-search-input');
+                    if (searchInput) {
+                        searchInput.addEventListener('keypress', function(e) {
+                            if (e.key === 'Enter') {
+                                searchSubway();
+                            }
+                        });
+                    }
+                }, 100);
+                
+                // 添加地铁信息面板的显示动画
+                subwayInfoPanel.style.display = 'block';
+                subwayInfoPanel.style.animation = 'fadeIn 0.6s ease forwards';
+            } else {
+                const subwayInfoPanel = document.getElementById('subway-info-panel');
+                subwayInfoPanel.style.display = 'block';
+                subwayInfoPanel.style.animation = 'fadeIn 0.6s ease forwards';
+            }
+        }
+        
+        // 搜索地铁线路或站点
+        function searchSubway() {
+            const keyword = document.getElementById('subway-search-input').value.trim();
+            if (!keyword) {
+                alert('请输入搜索关键词');
+                return;
+            }
+            
+            // 获取所有地铁线路和站点
+            const searchResults = [];
+            const subwayLines = [
+                {
+                    name: '1号线',
+                    color: '#0066CC',
+                    stations: [
+                        [118.798772, 32.084739, '迈皋桥站'],
+                        [118.792678, 32.073211, '红山动物园站'],
+                        [118.781577, 32.065729, '南京站'],
+                        [118.786813, 32.055458, '新模范马路站'],
+                        [118.790461, 32.043883, '玄武门站'],
+                        [118.784968, 32.037022, '鼓楼站'],
+                        [118.780419, 32.025287, '珠江路站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.772179, 32.00324, '张府园站'],
+                        [118.769712, 31.993619, '三山街站'],
+                        [118.771686, 31.984539, '中华门站'],
+                        [118.781534, 31.968617, '安德门站'],
+                        [118.783937, 31.961108, '天隆寺站'],
+                        [118.787027, 31.950395, '软件大道站'],
+                        [118.800116, 31.937698, '花神庙站'],
+                        [118.812561, 31.932119, '南京南站'],
+                        [118.822947, 31.920467, '双龙大道站'],
+                        [118.832818, 31.910887, '河定桥站'],
+                        [118.846207, 31.899767, '胜太路站'],
+                        [118.861013, 31.892339, '百家湖站'],
+                        [118.872128, 31.878977, '小龙湾站'],
+                        [118.884659, 31.870382, '竹山路站'],
+                        [118.898349, 31.866152, '天印大道站'],
+                        [118.911181, 31.860123, '龙眠大道站'],
+                        [118.919935, 31.851486, '南医大·江苏经贸学院站'],
+                        [118.927617, 31.840733, '南京交院站'],
+                        [118.928089, 31.829764, '中国药科大学站']
+                    ]
+                },
+                {
+                    name: '2号线',
+                    color: '#FF0000',
+                    stations: [
+                        [118.751088, 32.111025, '油坊桥站'],
+                        [118.741389, 32.100258, '雨润大街站'],
+                        [118.738599, 32.085196, '元通站'],
+                        [118.741132, 32.074553, '奥体东站'],
+                        [118.753406, 32.057559, '兴隆大街站'],
+                        [118.764178, 32.05061, '集庆门大街站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.786256, 32.019053, '大行宫站'],
+                        [118.794367, 32.01351, '西安门站'],
+                        [118.806641, 32.004863, '明故宫站'],
+                        [118.817156, 31.996639, '苜蓿园站'],
+                        [118.8268, 31.986673, '下马坊站'],
+                        [118.825384, 31.97535, '孝陵卫站'],
+                        [118.81266, 31.966, '钟灵街站'],
+                        [118.812561, 31.932119, '南京南站'],
+                        [118.802347, 31.919336, '经天路站'],
+                        [118.788184, 31.904498, '集聚路站'],
+                        [118.775909, 31.887939, '云锦路站'],
+                        [118.760674, 31.872308, '莫愁湖站'],
+                        [118.743465, 31.863641, '汉中门站'],
+                        [118.721834, 31.848923, '上新河站'],
+                        [118.718616, 31.834307, '小市站'],
+                        [118.726597, 31.825202, '葛塘站'],
+                        [118.731413, 31.810629, '桥北站'],
+                        [118.738599, 31.79914, '和燕路站'],
+                        [118.745785, 31.785847, '铁心桥站'],
+                        [118.760824, 31.76931, '严华路站'],
+                        [118.770266, 31.758639, '泥洼站'],
+                        [118.782189, 31.742972, '梅山站']
+                    ]
+                },
+                {
+                    name: '3号线',
+                    color: '#00BB00',
+                    stations: [
+                        [118.815425, 32.104264, '林场站'],
+                        [118.810361, 32.085456, '星火路站'],
+                        [118.802422, 32.072987, '东大成贤学院站'],
+                        [118.798969, 32.061517, '泰冯路站'],
+                        [118.789871, 32.056587, '天润城站'],
+                        [118.779915, 32.05595, '龙江站'],
+                        [118.773435, 32.055458, '南京工业大学站'],
+                        [118.765196, 32.055892, '浮桥站'],
+                        [118.755855, 32.057559, '江东中路站'],
+                        [118.746757, 32.057602, '双和园站'],
+                        [118.735899, 32.057731, '胜太西路站'],
+                        [118.721695, 32.052981, '天保街站'],
+                        [118.712983, 32.052336, '江东门站'],
+                        [118.696675, 32.053453, '常府街站'],
+                        [118.686075, 32.044528, '夫子庙站'],
+                        [118.684872, 32.028493, '武定门站'],
+                        [118.680581, 32.015992, '雨花门站'],
+                        [118.672341, 32.005422, '卡子门站'],
+                        [118.65575, 31.995972, '大明路站'],
+                        [118.64315, 31.988797, '明发广场站'],
+                        [118.634567, 31.979342, '南京南站'],
+                        [118.627872, 31.969798, '宏运大道站'],
+                        [118.623581, 31.959994, '胜太东路站'],
+                        [118.617487, 31.947702, '天元西路站'],
+                        [118.609932, 31.936737, '九龙湖站'],
+                        [118.605127, 31.924529, '诚信大道站'],
+                        [118.602982, 31.910929, '东大九龙湖校区站'],
+                        [118.602553, 31.900945, '秣周东路站']
+                    ]
+                },
+                {
+                    name: '10号线',
+                    color: '#CC66FF',
+                    stations: [
+                        [118.814823, 32.043797, '雨山路站'],
+                        [118.817398, 32.033319, '元通站'],
+                        [118.792079, 32.02467, '奥体中心站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.763363, 31.99833, '云南路站'],
+                        [118.768256, 31.983538, '上海路站'],
+                        [118.769887, 31.970389, '小行站'],
+                        [118.769028, 31.956036, '安德门站'],
+                        [118.766754, 31.946528, '中胜站'],
+                        [118.765767, 31.936329, '天印大道站'],
+                        [118.776712, 31.920467, '龙华路站'],
+                        [118.78765, 31.908137, '南京工程学院站'],
+                        [118.782358, 31.891551, '雨山新村站'],
+                        [118.787563, 31.878977, '灵山北路站'],
+                        [118.798321, 31.874358, '周岗站'],
+                        [118.81059, 31.859461, '化工园站'],
+                        [118.815741, 31.843677, '殷华街站'],
+                        [118.816028, 31.829185, '葛塘站']
+                    ]
+                }
+            ];
+            
+            // 搜索线路
+            subwayLines.forEach(line => {
+                if (line.name.includes(keyword)) {
+                    searchResults.push({
+                        type: 'line',
+                        name: line.name,
+                        color: line.color,
+                        stations: line.stations.length,
+                        data: line
+                    });
+                }
+                
+                // 搜索站点
+                line.stations.forEach(station => {
+                    if (station[2].includes(keyword)) {
+                        searchResults.push({
+                            type: 'station',
+                            name: station[2],
+                            line: line.name,
+                            color: line.color,
+                            position: station,
+                            data: station
+                        });
+                    }
+                });
+            });
+            
+            // 显示搜索结果
+            showSubwaySearchResults(searchResults, keyword);
+        }
+        
+        // 显示地铁搜索结果
+        function showSubwaySearchResults(results, keyword) {
+            // 关闭已有的搜索结果面板
+            const existingPanel = document.getElementById('subway-search-results');
+            if (existingPanel) {
+                existingPanel.remove();
+            }
+            
+            // 创建搜索结果面板
+            const resultsPanel = document.createElement('div');
+            resultsPanel.id = 'subway-search-results';
+            resultsPanel.className = 'search-results';
+            resultsPanel.style.top = '80px';
+            
+            if (results.length === 0) {
+                resultsPanel.innerHTML = `
+                    <div class="search-results-header">
+                        <h3>搜索结果</h3>
+                        <button onclick="document.getElementById('subway-search-results').remove()" class="search-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="search-results-list" style="padding:15px;text-align:center;">
+                        未找到与"${keyword}"相关的地铁线路或站点
+                    </div>
+                `;
+            } else {
+                let resultsList = '';
+                
+                // 分类显示结果
+                const lines = results.filter(r => r.type === 'line');
+                const stations = results.filter(r => r.type === 'station');
+                
+                if (lines.length > 0) {
+                    resultsList += `<div style="padding:10px;border-bottom:1px solid #eee;"><strong>地铁线路</strong></div>`;
+                    lines.forEach(line => {
+                        resultsList += `
+                            <div class="search-result-item">
+                                <h4 style="color:${line.color}">${line.name}</h4>
+                                <p>共${line.stations}个站点</p>
+                                <div class="search-result-actions">
+                                    <button onclick="showSubwayLine('${line.name}')">
+                                        <i class="fas fa-eye"></i> 查看线路
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                if (stations.length > 0) {
+                    resultsList += `<div style="padding:10px;border-bottom:1px solid #eee;"><strong>地铁站点</strong></div>`;
+                    stations.forEach(station => {
+                        resultsList += `
+                            <div class="search-result-item">
+                                <h4>${station.name}</h4>
+                                <p style="color:${station.color}">${station.line}</p>
+                                <div class="search-result-actions">
+                                    <button onclick="map.setCenter([${station.position[0]}, ${station.position[1]}]);map.setZoom(16);">
+                                        <i class="fas fa-map-marker-alt"></i> 查看位置
+                                    </button>
+                                    <button onclick="addCustomPointToRoute([${station.position[0]}, ${station.position[1]}], '${station.name}')">
+                                        <i class="fas fa-plus"></i> 添加到行程
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                resultsPanel.innerHTML = `
+                    <div class="search-results-header">
+                        <h3>搜索结果 (${results.length})</h3>
+                        <button onclick="document.getElementById('subway-search-results').remove()" class="search-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="search-results-list">
+                        ${resultsList}
+                    </div>
+                `;
+            }
+            
+            document.getElementById('main-content').appendChild(resultsPanel);
+            resultsPanel.style.animation = 'fadeIn 0.3s ease forwards';
+        }
+        
+        // 显示指定地铁线路
+        function showSubwayLine(lineName) {
+            // 确保地铁图层已显示
+            if (!subwayVisible) {
+                toggleSubway();
+            }
+            
+            // 获取线路数据
+            const subwayLines = [
+                {
+                    name: '1号线',
+                    color: '#0066CC',
+                    stations: [
+                        [118.798772, 32.084739, '迈皋桥站'],
+                        [118.792678, 32.073211, '红山动物园站'],
+                        [118.781577, 32.065729, '南京站'],
+                        [118.786813, 32.055458, '新模范马路站'],
+                        [118.790461, 32.043883, '玄武门站'],
+                        [118.784968, 32.037022, '鼓楼站'],
+                        [118.780419, 32.025287, '珠江路站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.772179, 32.00324, '张府园站'],
+                        [118.769712, 31.993619, '三山街站'],
+                        [118.771686, 31.984539, '中华门站'],
+                        [118.781534, 31.968617, '安德门站'],
+                        [118.783937, 31.961108, '天隆寺站'],
+                        [118.787027, 31.950395, '软件大道站'],
+                        [118.800116, 31.937698, '花神庙站'],
+                        [118.812561, 31.932119, '南京南站'],
+                        [118.822947, 31.920467, '双龙大道站'],
+                        [118.832818, 31.910887, '河定桥站'],
+                        [118.846207, 31.899767, '胜太路站'],
+                        [118.861013, 31.892339, '百家湖站'],
+                        [118.872128, 31.878977, '小龙湾站'],
+                        [118.884659, 31.870382, '竹山路站'],
+                        [118.898349, 31.866152, '天印大道站'],
+                        [118.911181, 31.860123, '龙眠大道站'],
+                        [118.919935, 31.851486, '南医大·江苏经贸学院站'],
+                        [118.927617, 31.840733, '南京交院站'],
+                        [118.928089, 31.829764, '中国药科大学站']
+                    ]
+                },
+                {
+                    name: '2号线',
+                    color: '#FF0000',
+                    stations: [
+                        [118.751088, 32.111025, '油坊桥站'],
+                        [118.741389, 32.100258, '雨润大街站'],
+                        [118.738599, 32.085196, '元通站'],
+                        [118.741132, 32.074553, '奥体东站'],
+                        [118.753406, 32.057559, '兴隆大街站'],
+                        [118.764178, 32.05061, '集庆门大街站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.786256, 32.019053, '大行宫站'],
+                        [118.794367, 32.01351, '西安门站'],
+                        [118.806641, 32.004863, '明故宫站'],
+                        [118.817156, 31.996639, '苜蓿园站'],
+                        [118.8268, 31.986673, '下马坊站'],
+                        [118.825384, 31.97535, '孝陵卫站'],
+                        [118.81266, 31.966, '钟灵街站'],
+                        [118.812561, 31.932119, '南京南站'],
+                        [118.802347, 31.919336, '经天路站'],
+                        [118.788184, 31.904498, '集聚路站'],
+                        [118.775909, 31.887939, '云锦路站'],
+                        [118.760674, 31.872308, '莫愁湖站'],
+                        [118.743465, 31.863641, '汉中门站'],
+                        [118.721834, 31.848923, '上新河站'],
+                        [118.718616, 31.834307, '小市站'],
+                        [118.726597, 31.825202, '葛塘站'],
+                        [118.731413, 31.810629, '桥北站'],
+                        [118.738599, 31.79914, '和燕路站'],
+                        [118.745785, 31.785847, '铁心桥站'],
+                        [118.760824, 31.76931, '严华路站'],
+                        [118.770266, 31.758639, '泥洼站'],
+                        [118.782189, 31.742972, '梅山站']
+                    ]
+                },
+                {
+                    name: '3号线',
+                    color: '#00BB00',
+                    stations: [
+                        [118.815425, 32.104264, '林场站'],
+                        [118.810361, 32.085456, '星火路站'],
+                        [118.802422, 32.072987, '东大成贤学院站'],
+                        [118.798969, 32.061517, '泰冯路站'],
+                        [118.789871, 32.056587, '天润城站'],
+                        [118.779915, 32.05595, '龙江站'],
+                        [118.773435, 32.055458, '南京工业大学站'],
+                        [118.765196, 32.055892, '浮桥站'],
+                        [118.755855, 32.057559, '江东中路站'],
+                        [118.746757, 32.057602, '双和园站'],
+                        [118.735899, 32.057731, '胜太西路站'],
+                        [118.721695, 32.052981, '天保街站'],
+                        [118.712983, 32.052336, '江东门站'],
+                        [118.696675, 32.053453, '常府街站'],
+                        [118.686075, 32.044528, '夫子庙站'],
+                        [118.684872, 32.028493, '武定门站'],
+                        [118.680581, 32.015992, '雨花门站'],
+                        [118.672341, 32.005422, '卡子门站'],
+                        [118.65575, 31.995972, '大明路站'],
+                        [118.64315, 31.988797, '明发广场站'],
+                        [118.634567, 31.979342, '南京南站'],
+                        [118.627872, 31.969798, '宏运大道站'],
+                        [118.623581, 31.959994, '胜太东路站'],
+                        [118.617487, 31.947702, '天元西路站'],
+                        [118.609932, 31.936737, '九龙湖站'],
+                        [118.605127, 31.924529, '诚信大道站'],
+                        [118.602982, 31.910929, '东大九龙湖校区站'],
+                        [118.602553, 31.900945, '秣周东路站']
+                    ]
+                },
+                {
+                    name: '10号线',
+                    color: '#CC66FF',
+                    stations: [
+                        [118.814823, 32.043797, '雨山路站'],
+                        [118.817398, 32.033319, '元通站'],
+                        [118.792079, 32.02467, '奥体中心站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.763363, 31.99833, '云南路站'],
+                        [118.768256, 31.983538, '上海路站'],
+                        [118.769887, 31.970389, '小行站'],
+                        [118.769028, 31.956036, '安德门站'],
+                        [118.766754, 31.946528, '中胜站'],
+                        [118.765767, 31.936329, '天印大道站'],
+                        [118.776712, 31.920467, '龙华路站'],
+                        [118.78765, 31.908137, '南京工程学院站'],
+                        [118.782358, 31.891551, '雨山新村站'],
+                        [118.787563, 31.878977, '灵山北路站'],
+                        [118.798321, 31.874358, '周岗站'],
+                        [118.81059, 31.859461, '化工园站'],
+                        [118.815741, 31.843677, '殷华街站'],
+                        [118.816028, 31.829185, '葛塘站']
+                    ]
+                }
+            ];
+            
+            const line = subwayLines.find(line => line.name === lineName);
+            if (!line) return;
+            
+            // 提取站点位置
+            const positions = line.stations.map(station => new AMap.LngLat(station[0], station[1]));
+            
+            // 调整地图视野以显示整条线路
+            map.setFitView(positions.map(pos => new AMap.Marker({
+                position: pos,
+                visible: false,
+                map: map
+            })));
+            
+            // 高亮显示线路
+            highlightSubwayLine(line);
+        }
+        
+        // 高亮显示地铁线路
+        function highlightSubwayLine(line) {
+            try {
+                // 如果有已有高亮线路，先移除
+                if (window.highlightedLine) {
+                    window.highlightedLine.setMap(null);
+                }
+                
+                // 创建高亮线路
+                const path = line.stations.map(station => new AMap.LngLat(station[0], station[1]));
+                const highlightLine = new AMap.Polyline({
+                    path: path,
+                    strokeColor: line.color,
+                    strokeWeight: 10,
+                    strokeOpacity: 0.9,
+                    strokeStyle: 'solid',
+                    lineJoin: 'round',
+                    lineCap: 'round',
+                    zIndex: 101
+                });
+                
+                highlightLine.setMap(map);
+                window.highlightedLine = highlightLine;
+                
+                // 创建线路信息面板
+                const lineInfoPanel = document.createElement('div');
+                lineInfoPanel.id = 'subway-line-info';
+                lineInfoPanel.className = 'custom-route-panel';
+                lineInfoPanel.style.cssText = 'position:absolute;bottom:80px;left:20px;width:270px;max-height:300px;overflow-y:auto;z-index:91;animation:fadeIn 0.3s ease forwards;';
+                
+                let stationsList = '';
+                line.stations.forEach((station, index) => {
+                    stationsList += `
+                        <div class="subway-station-item" style="padding:8px;border-bottom:1px solid #eee;display:flex;align-items:center;cursor:pointer;" 
+                            onclick="map.setCenter([${station[0]}, ${station[1]}]);map.setZoom(16);">
+                            <div style="width:18px;height:18px;border-radius:50%;background:${line.color};margin-right:10px;display:flex;justify-content:center;align-items:center;color:white;font-size:12px;">
+                                ${index + 1}
+                            </div>
+                            <span>${station[2]}</span>
+                        </div>
+                    `;
+                });
+                
+                lineInfoPanel.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h3 style="color:${line.color};margin:0;"><i class="fas fa-subway"></i> ${line.name}</h3>
+                        <button onclick="closeSubwayLineInfo()" 
+                                style="background:none;border:none;color:#999;cursor:pointer;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <p>共${line.stations.length}个站点</p>
+                    <div class="subway-stations-list" style="margin-top:10px;">
+                        ${stationsList}
+                    </div>
+                `;
+                
+                document.getElementById('main-content').appendChild(lineInfoPanel);
+            } catch (error) {
+                console.error("高亮地铁线路时出错:", error);
+            }
+        }
+        
+        // 关闭地铁线路信息面板
+        function closeSubwayLineInfo() {
+            const panel = document.getElementById('subway-line-info');
+            if (panel) {
+                panel.remove();
+            }
+            
+            if (window.highlightedLine) {
+                window.highlightedLine.setMap(null);
+                window.highlightedLine = null;
+            }
+        }
+        
+        // 显示所有地铁线路
+        function showAllSubwayLines() {
+            // 获取所有线路
+            const subwayLines = [
+                { name: '1号线', color: '#0066CC' },
+                { name: '2号线', color: '#FF0000' },
+                { name: '3号线', color: '#00BB00' },
+                { name: '10号线', color: '#CC66FF' }
+            ];
+            
+            // 创建线路列表面板
+            const linesPanel = document.createElement('div');
+            linesPanel.id = 'subway-lines-panel';
+            linesPanel.className = 'search-results';
+            linesPanel.style.top = '80px';
+            
+            let linesList = '';
+            subwayLines.forEach(line => {
+                linesList += `
+                    <div class="search-result-item">
+                        <h4 style="color:${line.color}">${line.name}</h4>
+                        <div class="search-result-actions">
+                            <button onclick="showSubwayLine('${line.name}')">
+                                <i class="fas fa-eye"></i> 查看线路
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            linesPanel.innerHTML = `
+                <div class="search-results-header">
+                    <h3>南京地铁线路</h3>
+                    <button onclick="document.getElementById('subway-lines-panel').remove()" class="search-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="search-results-list">
+                    ${linesList}
+                </div>
+            `;
+            
+            document.getElementById('main-content').appendChild(linesPanel);
+            linesPanel.style.animation = 'fadeIn 0.3s ease forwards';
+        }
+        
+        // 查找最近的地铁站
+        function findNearestSubway() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const userLocation = [position.coords.longitude, position.coords.latitude];
+                    findNearestSubwayStation(userLocation);
+                }, () => {
+                    // 如果获取位置失败，使用地图中心点
+                    const center = map.getCenter();
+                    findNearestSubwayStation([center.getLng(), center.getLat()]);
+                });
+            } else {
+                const center = map.getCenter();
+                findNearestSubwayStation([center.getLng(), center.getLat()]);
+            }
+        }
+        
+        // 查找离指定位置最近的地铁站
+        function findNearestSubwayStation(location) {
+            // 所有地铁站集合
+            const allStations = [];
+            
+            // 收集所有地铁站
+            const subwayLines = [
+                {
+                    name: '1号线',
+                    color: '#0066CC',
+                    stations: [
+                        [118.798772, 32.084739, '迈皋桥站'],
+                        [118.792678, 32.073211, '红山动物园站'],
+                        [118.781577, 32.065729, '南京站'],
+                        [118.786813, 32.055458, '新模范马路站'],
+                        [118.790461, 32.043883, '玄武门站'],
+                        [118.784968, 32.037022, '鼓楼站'],
+                        [118.780419, 32.025287, '珠江路站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.772179, 32.00324, '张府园站'],
+                        [118.769712, 31.993619, '三山街站'],
+                        [118.771686, 31.984539, '中华门站'],
+                        [118.781534, 31.968617, '安德门站'],
+                        [118.783937, 31.961108, '天隆寺站'],
+                        [118.787027, 31.950395, '软件大道站'],
+                        [118.800116, 31.937698, '花神庙站'],
+                        [118.812561, 31.932119, '南京南站'],
+                        [118.822947, 31.920467, '双龙大道站'],
+                        [118.832818, 31.910887, '河定桥站'],
+                        [118.846207, 31.899767, '胜太路站'],
+                        [118.861013, 31.892339, '百家湖站'],
+                        [118.872128, 31.878977, '小龙湾站'],
+                        [118.884659, 31.870382, '竹山路站'],
+                        [118.898349, 31.866152, '天印大道站'],
+                        [118.911181, 31.860123, '龙眠大道站'],
+                        [118.919935, 31.851486, '南医大·江苏经贸学院站'],
+                        [118.927617, 31.840733, '南京交院站'],
+                        [118.928089, 31.829764, '中国药科大学站']
+                    ]
+                },
+                {
+                    name: '2号线',
+                    color: '#FF0000',
+                    stations: [
+                        [118.751088, 32.111025, '油坊桥站'],
+                        [118.741389, 32.100258, '雨润大街站'],
+                        [118.738599, 32.085196, '元通站'],
+                        [118.741132, 32.074553, '奥体东站'],
+                        [118.753406, 32.057559, '兴隆大街站'],
+                        [118.764178, 32.05061, '集庆门大街站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.786256, 32.019053, '大行宫站'],
+                        [118.794367, 32.01351, '西安门站'],
+                        [118.806641, 32.004863, '明故宫站'],
+                        [118.817156, 31.996639, '苜蓿园站'],
+                        [118.8268, 31.986673, '下马坊站'],
+                        [118.825384, 31.97535, '孝陵卫站'],
+                        [118.81266, 31.966, '钟灵街站'],
+                        [118.812561, 31.932119, '南京南站'],
+                        [118.802347, 31.919336, '经天路站'],
+                        [118.788184, 31.904498, '集聚路站'],
+                        [118.775909, 31.887939, '云锦路站'],
+                        [118.760674, 31.872308, '莫愁湖站'],
+                        [118.743465, 31.863641, '汉中门站'],
+                        [118.721834, 31.848923, '上新河站'],
+                        [118.718616, 31.834307, '小市站'],
+                        [118.726597, 31.825202, '葛塘站'],
+                        [118.731413, 31.810629, '桥北站'],
+                        [118.738599, 31.79914, '和燕路站'],
+                        [118.745785, 31.785847, '铁心桥站'],
+                        [118.760824, 31.76931, '严华路站'],
+                        [118.770266, 31.758639, '泥洼站'],
+                        [118.782189, 31.742972, '梅山站']
+                    ]
+                },
+                {
+                    name: '3号线',
+                    color: '#00BB00',
+                    stations: [
+                        [118.815425, 32.104264, '林场站'],
+                        [118.810361, 32.085456, '星火路站'],
+                        [118.802422, 32.072987, '东大成贤学院站'],
+                        [118.798969, 32.061517, '泰冯路站'],
+                        [118.789871, 32.056587, '天润城站'],
+                        [118.779915, 32.05595, '龙江站'],
+                        [118.773435, 32.055458, '南京工业大学站'],
+                        [118.765196, 32.055892, '浮桥站'],
+                        [118.755855, 32.057559, '江东中路站'],
+                        [118.746757, 32.057602, '双和园站'],
+                        [118.735899, 32.057731, '胜太西路站'],
+                        [118.721695, 32.052981, '天保街站'],
+                        [118.712983, 32.052336, '江东门站'],
+                        [118.696675, 32.053453, '常府街站'],
+                        [118.686075, 32.044528, '夫子庙站'],
+                        [118.684872, 32.028493, '武定门站'],
+                        [118.680581, 32.015992, '雨花门站'],
+                        [118.672341, 32.005422, '卡子门站'],
+                        [118.65575, 31.995972, '大明路站'],
+                        [118.64315, 31.988797, '明发广场站'],
+                        [118.634567, 31.979342, '南京南站'],
+                        [118.627872, 31.969798, '宏运大道站'],
+                        [118.623581, 31.959994, '胜太东路站'],
+                        [118.617487, 31.947702, '天元西路站'],
+                        [118.609932, 31.936737, '九龙湖站'],
+                        [118.605127, 31.924529, '诚信大道站'],
+                        [118.602982, 31.910929, '东大九龙湖校区站'],
+                        [118.602553, 31.900945, '秣周东路站']
+                    ]
+                },
+                {
+                    name: '10号线',
+                    color: '#CC66FF',
+                    stations: [
+                        [118.814823, 32.043797, '雨山路站'],
+                        [118.817398, 32.033319, '元通站'],
+                        [118.792079, 32.02467, '奥体中心站'],
+                        [118.775827, 32.01489, '新街口站'],
+                        [118.763363, 31.99833, '云南路站'],
+                        [118.768256, 31.983538, '上海路站'],
+                        [118.769887, 31.970389, '小行站'],
+                        [118.769028, 31.956036, '安德门站'],
+                        [118.766754, 31.946528, '中胜站'],
+                        [118.765767, 31.936329, '天印大道站'],
+                        [118.776712, 31.920467, '龙华路站'],
+                        [118.78765, 31.908137, '南京工程学院站'],
+                        [118.782358, 31.891551, '雨山新村站'],
+                        [118.787563, 31.878977, '灵山北路站'],
+                        [118.798321, 31.874358, '周岗站'],
+                        [118.81059, 31.859461, '化工园站'],
+                        [118.815741, 31.843677, '殷华街站'],
+                        [118.816028, 31.829185, '葛塘站']
+                    ]
+                }
+            ];
+            
+            subwayLines.forEach(line => {
+                line.stations.forEach(station => {
+                    allStations.push({
+                        position: station,
+                        name: station[2],
+                        line: line.name,
+                        color: line.color
+                    });
+                });
+            });
+            
+            // 计算距离并排序
+            const stationsWithDistance = allStations.map(station => {
+                const distance = calculateDistance(
+                    location[0], location[1],
+                    station.position[0], station.position[1]
+                );
+                return { ...station, distance };
+            }).sort((a, b) => a.distance - b.distance);
+            
+            // 取最近的5个站点
+            const nearestStations = stationsWithDistance.slice(0, 5);
+            
+            // 显示最近的地铁站信息
+            showNearestSubwayStations(nearestStations, location);
+        }
+        
+        // 显示最近的地铁站
+        function showNearestSubwayStations(stations, location) {
+            if (!document.getElementById('nearest-subway-panel')) {
+                const panel = document.createElement('div');
+                panel.id = 'nearest-subway-panel';
+                panel.className = 'search-results';
+                panel.style.top = '80px';
+                panel.innerHTML = `
+                    <div class="search-results-header">
+                        <h3>最近的地铁站</h3>
+                        <button onclick="document.getElementById('nearest-subway-panel').remove()" class="search-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="nearest-subway-list" class="search-results-list"></div>
+                `;
+                document.getElementById('main-content').appendChild(panel);
+            }
+            
+            const list = document.getElementById('nearest-subway-list');
+            list.innerHTML = '';
+            
+            stations.forEach(station => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `
+                    <h4 style="color:${station.color}">${station.name}</h4>
+                    <p>${station.line} - 距离约 ${(station.distance/1000).toFixed(1)}公里</p>
+                    <div class="search-result-actions">
+                        <button onclick="map.setCenter([${station.position[0]}, ${station.position[1]}]);map.setZoom(16);">
+                            <i class="fas fa-map-marker-alt"></i> 查看位置
+                        </button>
+                        <button onclick="addCustomPointToRoute([${station.position[0]}, ${station.position[1]}], '${station.name}')">
+                            <i class="fas fa-plus"></i> 添加到行程
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        // 计算两点之间的直线距离（单位：米）
+        function calculateDistance(lng1, lat1, lng2, lat2) {
+            const radLat1 = lat1 * Math.PI / 180.0;
+            const radLat2 = lat2 * Math.PI / 180.0;
+            const a = radLat1 - radLat2;
+            const b = lng1 * Math.PI / 180.0 - lng2 * Math.PI / 180.0;
+            let s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a/2), 2) + 
+                Math.cos(radLat1) * Math.cos(radLat2) * Math.pow(Math.sin(b/2), 2)));
+            s = s * 6378137.0; // 地球半径
+            s = Math.round(s * 10000) / 10000;
+            return s;
+        }
+        
+        // 规划去往地铁站的路线
+        function calculateSubwayRoute(from, to) {
+            const transport = currentTransport;
+            currentTransport = 'WALKING'; // 先用步行到地铁站
+            
+            // 规划路线
+            const points = [from, to];
+            calculateRoute(points);
+            
+            // 恢复原来的交通方式
+            setTimeout(() => {
+                currentTransport = transport;
+                // 更新交通方式按钮
+                document.querySelectorAll('.transport-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[onclick="switchTransport('${transport}')"]`).classList.add('active');
+            }, 500);
+            
+            // 切换到路线选项卡
+            switchTab('routes');
+        }
+        
+        // 规划自定义路线
+        function planCustomRoute() {
+            if (customRoutePoints.length < 2) {
+                alert('请至少添加一个目的地！');
+                return;
+            }
+            
+            // 检查是否需要优化路线
+            const needOptimize = document.getElementById('optimize-route') && 
+                                 document.getElementById('optimize-route').checked;
+            
+            if (needOptimize) {
+                // 获取优化类型
+                const optimizeType = document.querySelector('input[name="optimize-type"]:checked').value;
+                
+                // 显示加载提示
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = 'route-optimizing';
+                loadingDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:white;padding:20px;border-radius:8px;z-index:9999;';
+                loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:10px;"></i> 正在计算最优路径...';
+                document.body.appendChild(loadingDiv);
+                
+                // 延迟执行，让UI有时间更新
+                setTimeout(() => {
+                    // 优化路线顺序
+                    optimizeRouteOrder(optimizeType, function(optimizedPoints) {
+                        // 移除加载提示
+                        document.getElementById('route-optimizing').remove();
+                        
+                        if (!optimizedPoints) {
+                            alert('路线优化失败，使用原始顺序');
+                            drawAndCalculateCustomRoute();
+                            return;
+                        }
+                        
+                        // 更新路线点
+                        customRoutePoints = optimizedPoints;
+                        
+                        // 更新界面上的路线列表
+                        updateCustomRouteList();
+                        
+                        // 绘制路线并计算
+                        drawAndCalculateCustomRoute();
+                    });
+                }, 100);
+            } else {
+                // 不需要优化，直接绘制和计算
+                drawAndCalculateCustomRoute();
+            }
+        }
+
+        // 绘制和计算自定义路线
+        function drawAndCalculateCustomRoute() {
+            // 清除现有路线
+            day1Route.setMap(null);
+            day2Route.setMap(null);
+            
+            // 绘制自定义路线
+            customRoute = new AMap.Polyline({
+                path: customRoutePoints.map(point => new AMap.LngLat(point[0], point[1])),
+                strokeColor: 'var(--success-color)',
+                strokeWeight: 6,
+                strokeOpacity: 0.8,
+                zIndex: 100,
+                borderWeight: 2,
+                borderColor: '#ffffff'
+            });
+            
+            customRoute.setMap(map);
+            
+            // 计算路线
+            calculateRoute(customRoutePoints);
+            
+            // 切换到路线选项卡
+            switchTab('routes');
+            
+            // 添加路线动画
+            animatePolyline(customRoute);
+        }
+
+        // 优化路线顺序
+        function optimizeRouteOrder(optimizeType, callback) {
+            if (customRoutePoints.length <= 2) {
+                // 不需要优化
+                callback(customRoutePoints);
+                return;
+            }
+            
+            // 第一个点（起点）和最后一个点（终点）保持不变
+            const start = customRoutePoints[0];
+            const waypoints = customRoutePoints.slice(1);
+            
+            // 计算距离矩阵
+            calculateDistanceMatrix(customRoutePoints, optimizeType, function(matrix) {
+                if (!matrix) {
+                    callback(null);
+                    return;
+                }
+                
+                // 使用贪心算法计算近似最优路线
+                // 注意：真正的TSP问题是NP难问题，这里使用贪心算法快速求近似解
+                const optimizedIndices = [0]; // 从起点开始
+                const remainingIndices = Array.from({length: waypoints.length}, (_, i) => i + 1);
+                
+                while (remainingIndices.length > 0) {
+                    const lastIndex = optimizedIndices[optimizedIndices.length - 1];
+                    
+                    // 找出距离最后一个点最近的点
+                    let nearestIndex = -1;
+                    let minDistance = Infinity;
+                    
+                    for (let i = 0; i < remainingIndices.length; i++) {
+                        const index = remainingIndices[i];
+                        // 确保矩阵中对应元素存在
+                        if (matrix[lastIndex] && typeof matrix[lastIndex][index] === 'number') {
+                            const distance = matrix[lastIndex][index];
+                            
+                            if (distance < minDistance) {
+                                minDistance = distance;
+                                nearestIndex = index;
+                            }
+                        }
+                    }
+                    
+                    if (nearestIndex !== -1) {
+                        optimizedIndices.push(nearestIndex);
+                        const indexToRemove = remainingIndices.indexOf(nearestIndex);
+                        if (indexToRemove !== -1) {
+                            remainingIndices.splice(indexToRemove, 1);
+                        }
+                    } else {
+                        // 如果找不到最近的点（可能是数据问题），就按原顺序添加剩余点
+                        optimizedIndices.push(...remainingIndices);
+                        break;
+                    }
+                }
+                
+                // 根据优化后的顺序重组路线点
+                const optimizedPoints = optimizedIndices.map(index => {
+                    if (index >= 0 && index < customRoutePoints.length) {
+                        return customRoutePoints[index];
+                    } else {
+                        console.error("无效的索引:", index);
+                        return customRoutePoints[0]; // 默认使用起点
+                    }
+                });
+                
+                // 返回优化后的路线
+                callback(optimizedPoints);
+            });
+        }
+
+        // 计算距离矩阵
+        function calculateDistanceMatrix(points, type, callback) {
+            const n = points.length;
+            const matrix = Array(n).fill().map(() => Array(n).fill(0));
+            let completedCount = 0;
+            const totalCalculations = n * (n - 1) / 2; // 对称矩阵，只需计算上三角部分
+            
+            // 如果点太多，计算会很慢，这里限制一下
+            if (n > 10) {
+                alert('优化路线点过多，可能需要较长时间计算');
+            }
+            
+            // 如果没有点或只有一个点，直接返回空矩阵
+            if (n <= 1) {
+                callback(matrix);
+                return;
+            }
+            
+            let errorCount = 0;
+            const maxErrors = 3; // 最大容许错误次数
+            
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    calculatePointsDistance(points[i], points[j], type, function(distance) {
+                        if (distance === null) {
+                            errorCount++;
+                            // 使用直线距离作为后备方案
+                            const directDistance = calculateDistance(
+                                points[i][0], points[i][1], 
+                                points[j][0], points[j][1]
+                            );
+                            matrix[i][j] = directDistance;
+                            matrix[j][i] = directDistance;
+                        } else {
+                            matrix[i][j] = distance;
+                            matrix[j][i] = distance; // 对称矩阵
+                        }
+                        
+                        completedCount++;
+                        if (completedCount === totalCalculations) {
+                            if (errorCount > maxErrors) {
+                                console.warn(`计算距离矩阵时发生${errorCount}个错误，结果可能不准确`);
+                            }
+                            callback(matrix);
+                        }
+                    });
+                }
+            }
+        }
+
+        // 计算两点之间的距离
+        function calculatePointsDistance(point1, point2, type, callback) {
+            // 检查点坐标的有效性
+            if (!point1 || !point2 || !Array.isArray(point1) || !Array.isArray(point2) || 
+                point1.length < 2 || point2.length < 2) {
+                console.error("无效的点坐标:", point1, point2);
+                callback(null);
+                return;
+            }
+            
+            // 创建Driving实例但不添加到地图上，避免显示不必要的路线
+            const driving = new AMap.Driving({
+                hideMarkers: true,
+                showTraffic: false
+            });
+            
+            // 路线规划策略
+            const policy = type === 'time' ? 
+                          AMap.DrivingPolicy.LEAST_TIME : 
+                          AMap.DrivingPolicy.LEAST_DISTANCE;
+            
+            try {
+                driving.search(
+                    new AMap.LngLat(point1[0], point1[1]),
+                    new AMap.LngLat(point2[0], point2[1]),
+                    { policy: policy },
+                    function(status, result) {
+                        if (status === 'complete' && result.routes && result.routes.length) {
+                            // 返回距离或时间
+                            const value = type === 'time' ? result.routes[0].time : result.routes[0].distance;
+                            callback(value);
+                        } else {
+                            // 如果路线规划失败，使用直线距离
+                            console.warn("路线规划失败，使用直线距离:", status, result);
+                            const distance = calculateDistance(point1[0], point1[1], point2[0], point2[1]);
+                            callback(distance);
+                        }
+                    }
+                );
+            } catch (error) {
+                console.error("计算距离时发生错误:", error);
+                // 使用直线距离作为后备方案
+                const distance = calculateDistance(point1[0], point1[1], point2[0], point2[1]);
+                callback(distance);
+            }
+        }
+
+        // 更新自定义路线列表
+        function updateCustomRouteList() {
+            const poiKeys = Object.keys(locations);
+            
+            // 获取已知景点
+            const listItems = customRoutePoints.map((point, index) => {
+                const key = poiKeys.find(k => 
+                    locations[k] && locations[k][0] === point[0] && locations[k][1] === point[1]
+                );
+                
+                if (key) {
+                    const poi = poiInfo[key];
+                    return `
+                        <div class="custom-route-item">
+                            <span><i class="fas fa-${poi.icon}"></i> ${poi.title}</span>
+                            ${index === 0 ? '' : `<button onclick="removeFromCustomRoute(${index})"><i class="fas fa-times"></i></button>`}
+                        </div>
+                    `;
+                } else {
+                    // 处理自定义点
+                    const userMarker = userMarkers.find(m => 
+                        m.position[0] === point[0] && m.position[1] === point[1]
+                    );
+                    
+                    let name = '自定义位置';
+                    if (userMarker && userMarker.address) {
+                        name = userMarker.address.length > 15 ? 
+                               userMarker.address.substring(0, 15) + '...' : 
+                               userMarker.address;
+                    }
+                    
+                    return `
+                        <div class="custom-route-item">
+                            <span><i class="fas fa-map-marker-alt"></i> ${name}</span>
+                            ${index === 0 ? '' : `<button onclick="removeFromCustomRoute(${index})"><i class="fas fa-times"></i></button>`}
+                        </div>
+                    `;
+                }
+            }).join('');
+            
+            document.getElementById('custom-route-list').innerHTML = listItems;
+        }
+    </script>
+</body>
+</html>
