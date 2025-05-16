@@ -1,12 +1,56 @@
-<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta charset="UTF-8">
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
     <script>
+      const setupVideoControls = (videoElement, controlButtonId) => {
+        const controlButton = document.querySelector(controlButtonId);
+        let isPlaying = false;
+        
+        controlButton.addEventListener('click', function(evt) {
+          if (isPlaying) {
+            videoElement.pause();
+            controlButton.setAttribute("src", "#icon-play");
+          } else {
+            videoElement.play();
+            controlButton.setAttribute("src", "#icon-pause");
+          }
+          isPlaying = !isPlaying;
+          evt.stopPropagation();
+        });
+      };
+
+      const setupImageAspectRatio = () => {
+        const images = [
+          "#paintandquest-preview",
+          "#coffeemachine-preview",
+          "#peak-preview"
+        ];
+        
+        images.forEach(imgId => {
+          const img = document.querySelector(imgId);
+          if (img) {
+            img.addEventListener('load', function() {
+              const naturalWidth = this.naturalWidth;
+              const naturalHeight = this.naturalHeight;
+              const aspectRatio = naturalWidth / naturalHeight;
+              
+              const aImages = document.querySelectorAll(`a-image[src="${imgId}"]`);
+              aImages.forEach(aImage => {
+                const currentWidth = parseFloat(aImage.getAttribute("width") || 1);
+                aImage.setAttribute("height", currentWidth / aspectRatio);
+              });
+            });
+          }
+        });
+      };
+
+      document.addEventListener('DOMContentLoaded', setupImageAspectRatio);
+
       const showInfo = () => {
         let y = 0;
         const profileButton = document.querySelector("#profile-button");
@@ -85,20 +129,17 @@
 
             paintandquestPreviewButton.addEventListener('click', () => {
               paintandquestPreviewButton.setAttribute("visible", false);
-              const testVideo = document.createElement("video");
-              const canplayWebm = testVideo.canPlayType('video/webm; codecs="vp8, vorbis"');
-              let videoElement;
-              
+              const testVideo = document.createElement( "video" );
+              const canplayWebm = testVideo.canPlayType( 'video/webm; codecs="vp8, vorbis"' );
               if (canplayWebm == "") {
                 document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-mp4");
-                videoElement = document.querySelector("#paintandquest-video-mp4");
+                document.querySelector("#video-control-button").setAttribute("visible", true);
+                setupVideoControls(document.querySelector("#paintandquest-video-mp4"), "#video-control-button");
               } else {
                 document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-webm");
-                videoElement = document.querySelector("#paintandquest-video-webm");
+                document.querySelector("#video-control-button").setAttribute("visible", true);
+                setupVideoControls(document.querySelector("#paintandquest-video-webm"), "#video-control-button");
               }
-              
-              // 显示视频控制按钮
-              document.querySelector("#video-controls").setAttribute("visible", true);
             });
 
             setTimeout(() => {
@@ -109,13 +150,7 @@
         }, 10);
       }
 
-      // Modified showAvatar function
-      // It no longer animates a GLTF model.
-      // Instead, it waits for approximately the same duration as the original animation
-      // before calling onDone, to maintain the timing of subsequent operations.
       const showAvatar = (onDone) => {
-        // The original avatar animation took roughly (0.3 - (-0.3)) / 0.008 * 10ms = 750ms.
-        // We use a setTimeout to simulate this delay.
         setTimeout(onDone, 750);
       }
 
@@ -123,7 +158,7 @@
         init: function () {
           this.el.addEventListener('targetFound', event => {
             console.log("target found");
-            showAvatar(() => { // Call the modified showAvatar
+            showAvatar(() => {
               setTimeout(() => {
                 showPortfolio(() => {
                   setTimeout(() => {
@@ -134,61 +169,8 @@
             });
           });
           this.el.addEventListener('targetLost', event => {
-            // It's good practice to also handle targetLost, e.g., hide elements.
-            // For now, just logging as in the original code.
             console.log("target lost"); 
           });
-          //this.el.emit('targetFound'); // Uncomment for testing without a physical target
-        }
-      });
-      
-      // 添加视频控制功能
-      AFRAME.registerComponent('video-controls', {
-        init: function() {
-          this.playPauseButton = document.querySelector("#play-pause-button");
-          this.videoMP4 = document.querySelector("#paintandquest-video-mp4");
-          this.videoWebM = document.querySelector("#paintandquest-video-webm");
-          this.videoText = document.querySelector("#video-text");
-          
-          // 为文本添加点击事件
-          this.videoText.addEventListener('click', () => {
-            this.toggleVideo();
-          });
-          
-          // 为播放按钮添加点击事件
-          this.playPauseButton.addEventListener('click', () => {
-            this.toggleVideo();
-          });
-        },
-        
-        toggleVideo: function() {
-          const testVideo = document.createElement("video");
-          const canplayWebm = testVideo.canPlayType('video/webm; codecs="vp8, vorbis"');
-          let videoElement;
-          
-          if (canplayWebm == "") {
-            document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-mp4");
-            videoElement = this.videoMP4;
-          } else {
-            document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-webm");
-            videoElement = this.videoWebM;
-          }
-          
-          const isPlaying = !videoElement.paused;
-          
-          if (isPlaying) {
-            videoElement.pause();
-            this.playPauseButton.setAttribute("src", "#icon-play");
-            this.videoText.setAttribute("value", "点击播放视频");
-          } else {
-            videoElement.play();
-            this.playPauseButton.setAttribute("src", "#icon-pause");
-            this.videoText.setAttribute("value", "点击暂停视频");
-          }
-          
-          // 显示视频和控制按钮
-          document.querySelector("#paintandquest-video-link").setAttribute("visible", true);
-          document.querySelector("#video-controls").setAttribute("visible", true);
         }
       });
     </script>
@@ -196,6 +178,7 @@
     <style>
       body {
         margin: 0;
+        font-family: 'Noto Sans SC', sans-serif;
       }
       .example-container {
         overflow: hidden;
@@ -269,24 +252,105 @@
         0%, 100% { top: 0% }
         50% { top: calc(100% - 10px) }
       }
-      
-      /* 添加适应性图片样式 */
-      .responsive-image {
-        object-fit: contain;
+
+      /* 加载指示器样式 */
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
       }
-      
-      /* 添加视频控制样式 */
-      .video-control-button {
-        cursor: pointer;
-        background-color: rgba(255, 255, 255, 0.5);
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
         border-radius: 50%;
-        padding: 5px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* 帮助提示样式 */
+      #help-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 20px;
+        cursor: pointer;
+        z-index: 100;
+      }
+
+      #help-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9998;
+      }
+
+      #help-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 80%;
+        max-height: 80%;
+        overflow-y: auto;
+      }
+
+      #close-help {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        font-size: 24px;
+        color: white;
       }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC&display=swap" rel="stylesheet">
   </head>
   <body>
+    <!-- 加载指示器 -->
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- 帮助按钮和内容 -->
+    <div id="help-button">?</div>
+    <div id="help-overlay">
+      <div id="close-help">×</div>
+      <div id="help-content">
+        <h2>使用帮助</h2>
+        <p>1. 请将相机对准目标图像以激活AR体验</p>
+        <p>2. 点击视频中央的播放按钮控制视频播放/暂停</p>
+        <p>3. 使用左右箭头按钮浏览不同内容</p>
+        <p>4. 点击底部的图标查看更多信息</p>
+      </div>
+    </div>
+
     <div class="example-container">
       <div id="example-scanning-overlay" class="hidden">
         <div class="inner">
@@ -304,15 +368,16 @@
           <img id="icon-phone" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/phone.png" />
           <img id="icon-email" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/email.png" />
           <img id="icon-play" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/play.png" />
-          <img id="icon-pause" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js-doc@main/assets/images/pause-icon.png" />
+          <img id="icon-pause" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJmZWF0aGVyIGZlYXRoZXItcGF1c2UiPjxyZWN0IHg9IjYiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjE2Ij48L3JlY3Q+PHJlY3QgeD0iMTQiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjE2Ij48L3JlY3Q+PC9zdmc+" />
           <img id="icon-left" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/left.png" />
           <img id="icon-right" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/right.png" />
           <img id="paintandquest-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
-          <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4" playsinline webkit-playsinline></video>
-          <video id="paintandquest-video-webm" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4" playsinline webkit-playsinline></video>
+          <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
+          <video id="paintandquest-video-webm" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
           <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
           <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
-        </a-assets>
+          
+          </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable">
         </a-camera>
@@ -321,27 +386,20 @@
           <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
 
           <a-entity visible=false id="portfolio-panel" position="0 0 -0.01">
-            <!-- 修复中文显示问题 -->
             <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0.4 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
-            
             <a-entity id="portfolio-item0">
-              <!-- 添加可点击的文本区域 -->
-              <a-text id="video-text" class="clickable" value="点击播放视频" color="black" align="center" width="2" position="0 0 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
-              <!-- 添加视频元素，默认隐藏 -->
-              <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0" visible="false"></a-video>
-              <a-entity id="video-controls" visible="false" video-controls position="0 -0.3 0.01">
-                <a-image id="play-pause-button" class="clickable" src="#icon-play" position="0 0 0" height="0.15" width="0.15"></a-image>
-              </a-entity>
+              <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0"></a-video>
+              <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
+              </a-image>
+              <a-image visible=false id="video-control-button" class="clickable" src="#icon-play" position="0 0 0.001" height="0.15" width="0.15"></a-image>
             </a-entity>
-            
             <a-entity id="portfolio-item1" visible=false>
-              <!-- 将图片改为文本显示 -->
-              <a-text value="示例内容 1" color="black" align="center" width="2" position="0 0 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+              <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
+              </a-image>
             </a-entity>
-            
             <a-entity id="portfolio-item2" visible=false>
-              <!-- 将图片改为文本显示 -->
-              <a-text value="示例内容 2" color="black" align="center" width="2" position="0 0 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+              <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
+              </a-image>
             </a-entity>
 
             <a-image visible=false id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
@@ -364,9 +422,27 @@
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
 
-          <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+          <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5"></a-text>
         </a-entity>
       </a-scene>
     </div>
+
+    <script>
+      // 页面加载完成后隐藏加载指示器
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          document.getElementById('loading-overlay').style.display = 'none';
+        }, 1000);
+      });
+
+      // 帮助按钮功能
+      document.getElementById('help-button').addEventListener('click', function() {
+        document.getElementById('help-overlay').style.display = 'flex';
+      });
+
+      document.getElementById('close-help').addEventListener('click', function() {
+        document.getElementById('help-overlay').style.display = 'none';
+      });
+    </script>
   </body>
 </html>
