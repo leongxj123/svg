@@ -83,7 +83,8 @@
         const emailButton = document.querySelector("#email-button");
         const locationButton = document.querySelector("#location-button");
         const text = document.querySelector("#text");
-
+        const textContainer = document.querySelector("#text-container");
+        
         profileButton.setAttribute("visible", true);
         setTimeout(() => {
           webButton.setAttribute("visible", true);
@@ -94,6 +95,9 @@
         setTimeout(() => {
           locationButton.setAttribute("visible", true);
         }, 900);
+        setTimeout(() => {
+          textContainer.setAttribute("visible", true);
+        }, 1200);
 
         let currentTab = '';
         webButton.addEventListener('click', function (evt) {
@@ -437,16 +441,12 @@
               <a-image visible=false id="video-control-button" class="clickable" src="#icon-play" position="0.4 -0.2 0.001" height="0.08" width="0.08" opacity="0.7" animation="property: opacity; to: 1; dur: 200; startEvents: mouseenter; dir: alternate" animation__2="property: opacity; to: 0.7; dur: 200; startEvents: mouseleave; dir: alternate"></a-image>
             </a-entity>
             <a-entity id="portfolio-item1" visible=false>
-              <a-plane color="#FFF8E1" opacity="0.9" position="0 0 0" height="0.552" width="1">
-              </a-plane>
-              <a-text value="咖啡机AR演示" color="black" align="center" width="2" position="0 0.1 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
-              <a-text value="扫描咖啡机图像，展示AR交互功能" color="black" align="center" width="2" position="0 -0.1 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json" scale="0.5 0.5 0.5"></a-text>
+              <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
+              </a-image>
             </a-entity>
             <a-entity id="portfolio-item2" visible=false>
-              <a-plane color="#FFF8E1" opacity="0.9" position="0 0 0" height="0.552" width="1">
-              </a-plane>
-              <a-text value="高级AR展示" color="black" align="center" width="2" position="0 0.1 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
-              <a-text value="未来技术展示与交互体验" color="black" align="center" width="2" position="0 -0.1 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json" scale="0.5 0.5 0.5"></a-text>
+              <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
+              </a-image>
             </a-entity>
 
             <a-image visible=false id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
@@ -469,7 +469,10 @@
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
 
-          <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5"></a-text>
+          <a-entity visible=false id="text-container" position="0 -1 0">
+            <a-plane id="text-background" color="#FFF8E1" width="2" height="0.15" opacity="0.9"></a-plane>
+            <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 0 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+          </a-entity>
         </a-entity>
       </a-scene>
     </div>
