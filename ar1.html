@@ -7,15 +7,14 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
     <script>
-      // Shows the information buttons and sets up their click handlers
       const showInfo = () => {
+        let y = 0;
         const profileButton = document.querySelector("#profile-button");
         const webButton = document.querySelector("#web-button");
         const emailButton = document.querySelector("#email-button");
         const locationButton = document.querySelector("#location-button");
-        const textDisplay = document.querySelector("#info-text-display"); // Updated ID for clarity
+        const text = document.querySelector("#text");
 
-        // Sequentially make buttons visible
         profileButton.setAttribute("visible", true);
         setTimeout(() => {
           webButton.setAttribute("visible", true);
@@ -27,202 +26,169 @@
           locationButton.setAttribute("visible", true);
         }, 900);
 
-        let currentTab = ''; // Stores the currently active information tab
-
-        // Event listeners for information buttons
+        let currentTab = '';
         webButton.addEventListener('click', function (evt) {
-          textDisplay.setAttribute("value", "https://svg.2023gpt.top/AD.html");
+          text.setAttribute("value", "https://svg.2023gpt.top/AD.html");
           currentTab = 'web';
         });
         emailButton.addEventListener('click', function (evt) {
-          textDisplay.setAttribute("value", "leongxj@icloud.com");
+          text.setAttribute("value", "leongxj@icloud.com");
           currentTab = 'email';
         });
         profileButton.addEventListener('click', function (evt) {
-          textDisplay.setAttribute("value", "AR, VR solutions and consultation");
+          text.setAttribute("value", "AR, VR solutions and consultation");
           currentTab = 'profile';
         });
         locationButton.addEventListener('click', function (evt) {
-          textDisplay.setAttribute("value", "China | GuangDong");
+          console.log("loc");
+          text.setAttribute("value", "China | GuangDong");
           currentTab = 'location';
         });
 
-        // Event listener for the text display area (e.g., to open a web link)
-        textDisplay.addEventListener('click', function (evt) {
+        text.addEventListener('click', function (evt) {
           if (currentTab === 'web') {
-            // Ensure it's a clickable entity for the event to fire reliably
             window.location.href="https://svg.2023gpt.top/AD.html";
           }
         });
       }
 
-      // Shows the portfolio section and handles its interactions
       const showPortfolio = (done) => {
-        const portfolioPanel = document.querySelector("#portfolio-panel");
+        const portfolio = document.querySelector("#portfolio-panel");
         const portfolioLeftButton = document.querySelector("#portfolio-left-button");
         const portfolioRightButton = document.querySelector("#portfolio-right-button");
-        const paintAndQuestPreviewButton = document.querySelector("#paintandquest-preview-button");
-        const videoPlayButton = document.querySelector("#video-play-button");
-        const videoPauseButton = document.querySelector("#video-pause-button");
+        const paintandquestPreviewButton = document.querySelector("#paintandquest-preview-button");
 
-        let y = 0; // Initial Y position for animation
-        let currentItem = 0; // Index of the currently displayed portfolio item
-        const totalItems = 3; // Total number of portfolio items
+        let y = 0;
+        let currentItem = 0;
 
-        portfolioPanel.setAttribute("visible", true);
+        portfolio.setAttribute("visible", true);
 
-        // Function to show a specific portfolio item and hide others
-        const showPortfolioItem = (itemIndex) => {
-          for (let i = 0; i < totalItems; i++) {
-            const itemEntity = document.querySelector("#portfolio-item" + i);
-            if (itemEntity) {
-              itemEntity.setAttribute("visible", i === itemIndex);
-            }
+        const showPortfolioItem = (item) => {
+          for (let i = 0; i <= 2; i++) {
+            document.querySelector("#portfolio-item" + i).setAttribute("visible", i === item);
           }
-           // If the first item is the video item, ensure its preview/video state is reset or correctly shown
-          if (itemIndex === 0) {
-            const videoLinkEntity = document.querySelector("#paintandquest-video-link");
-            const videoAssetId = videoLinkEntity.getAttribute("src"); // Get current video asset ID
-            // If a video is playing or was played, ensure buttons are in correct state
-            if (videoAssetId && videoAssetId.startsWith('#paintandquest-video')) {
-                 // No automatic action on item switch, user has to click play again.
-                 // Or, you could pause video here:
-                 // const videoElement = document.querySelector(videoAssetId);
-                 // if (videoElement && !videoElement.paused) { videoElement.pause(); ... }
-            } else {
-                // If no video was playing for item0, ensure preview is visible and play button is hidden
-                if(paintAndQuestPreviewButton) paintAndQuestPreviewButton.setAttribute("visible", true);
-                if(videoPlayButton) videoPlayButton.setAttribute("visible", false);
-                if(videoPauseButton) videoPauseButton.setAttribute("visible", false);
-            }
-          }
-        };
-        
-        // Initial display of the first item
-        showPortfolioItem(currentItem);
-
-        // Animation for portfolio panel appearing
-        const animationInterval = setInterval(() => {
+        }
+        const id = setInterval(() => {
           y += 0.008;
-          if (y >= 0.6) { // Target Y position
-            clearInterval(animationInterval); // Stop animation
+          if (y >= 0.6) {
+            clearInterval(id);
             portfolioLeftButton.setAttribute("visible", true);
             portfolioRightButton.setAttribute("visible", true);
-
-            // Event listener for the left navigation button
             portfolioLeftButton.addEventListener('click', () => {
-              currentItem = (currentItem - 1 + totalItems) % totalItems; // Cycle to previous item
+              currentItem = (currentItem + 1) % 3;
               showPortfolioItem(currentItem);
             });
-
-            // Event listener for the right navigation button
             portfolioRightButton.addEventListener('click', () => {
-              currentItem = (currentItem + 1) % totalItems; // Cycle to next item
+              currentItem = (currentItem - 1 + 3) % 3;
               showPortfolioItem(currentItem);
             });
 
-            // Event listener for the video preview image (acts as a custom play button)
-            if (paintAndQuestPreviewButton) {
-                paintAndQuestPreviewButton.addEventListener('click', () => {
-                    paintAndQuestPreviewButton.setAttribute("visible", false);
-                    videoPlayButton.setAttribute("visible", true); // Show actual play button
-                    videoPauseButton.setAttribute("visible", false); // Ensure pause is hidden
-                    
-                    const testVideo = document.createElement("video"); // Used to check codec support
-                    const canPlayWebm = testVideo.canPlayType('video/webm; codecs="vp8, vorbis"');
-                    const videoLinkEntity = document.querySelector("#paintandquest-video-link");
-                    let videoElement; // To store the selected video DOM element
-
-                    if (canPlayWebm === "") {
-                        videoLinkEntity.setAttribute("src", "#paintandquest-video-mp4");
-                        videoElement = document.querySelector("#paintandquest-video-mp4");
-                    } else {
-                        // If you have a webm version, point to it. Otherwise, fallback to mp4.
-                        // For this example, assuming the same mp4 link for webm if webm asset is missing.
-                        videoLinkEntity.setAttribute("src", "#paintandquest-video-webm"); 
-                        videoElement = document.querySelector("#paintandquest-video-webm");
-                    }
-                    
-                    if (videoElement) {
-                        videoElement.pause(); // Ensure video is paused initially
-                        videoElement.currentTime = 0; // Optional: rewind to start
-                    }
-                });
-            }
-            
-            // Event listener for the actual video play button
-            if (videoPlayButton) {
-                videoPlayButton.addEventListener('click', () => {
-                    const videoLinkEntity = document.querySelector("#paintandquest-video-link");
-                    const videoAssetId = videoLinkEntity.getAttribute("src");
-                    const videoElement = document.querySelector(videoAssetId);
-                    if (videoElement) {
-                        videoElement.play();
-                        videoPlayButton.setAttribute("visible", false);
-                        videoPauseButton.setAttribute("visible", true);
-                    }
-                });
-            }
-            
-            // Event listener for the video pause button
-            if (videoPauseButton) {
-                videoPauseButton.addEventListener('click', () => {
-                    const videoLinkEntity = document.querySelector("#paintandquest-video-link");
-                    const videoAssetId = videoLinkEntity.getAttribute("src");
-                    const videoElement = document.querySelector(videoAssetId);
-                    if (videoElement) {
-                        videoElement.pause();
-                        videoPauseButton.setAttribute("visible", false);
-                        videoPlayButton.setAttribute("visible", true);
-                    }
-                });
-            }
+            paintandquestPreviewButton.addEventListener('click', () => {
+              paintandquestPreviewButton.setAttribute("visible", false);
+              const testVideo = document.createElement("video");
+              const canplayWebm = testVideo.canPlayType('video/webm; codecs="vp8, vorbis"');
+              let videoElement;
+              
+              if (canplayWebm == "") {
+                document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-mp4");
+                videoElement = document.querySelector("#paintandquest-video-mp4");
+              } else {
+                document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-webm");
+                videoElement = document.querySelector("#paintandquest-video-webm");
+              }
+              
+              // 显示视频控制按钮
+              document.querySelector("#video-controls").setAttribute("visible", true);
+            });
 
             setTimeout(() => {
-              if (done) done(); // Callback after setup
+              done();
             }, 500);
           }
-          portfolioPanel.setAttribute("position", "0 " + y + " -0.01");
+          portfolio.setAttribute("position", "0 " + y + " -0.01");
         }, 10);
       }
 
-      // Simulates a delay, previously for an avatar animation.
+      // Modified showAvatar function
+      // It no longer animates a GLTF model.
+      // Instead, it waits for approximately the same duration as the original animation
+      // before calling onDone, to maintain the timing of subsequent operations.
       const showAvatar = (onDone) => {
-        // The original avatar animation took roughly 750ms.
-        setTimeout(onDone, 750); // Delay to simulate original animation time
+        // The original avatar animation took roughly (0.3 - (-0.3)) / 0.008 * 10ms = 750ms.
+        // We use a setTimeout to simulate this delay.
+        setTimeout(onDone, 750);
       }
 
-      // A-Frame component to handle MindAR target events
       AFRAME.registerComponent('mytarget', {
         init: function () {
           this.el.addEventListener('targetFound', event => {
-            console.log("Target Found");
-            // Sequence of animations/reveals
-            showAvatar(() => { // First, simulate avatar appearance
-              setTimeout(() => { // Then, show portfolio
-                showPortfolio(() => { // After portfolio is shown
-                  setTimeout(() => { // Finally, show info buttons
+            console.log("target found");
+            showAvatar(() => { // Call the modified showAvatar
+              setTimeout(() => {
+                showPortfolio(() => {
+                  setTimeout(() => {
                     showInfo();
                   }, 300);
                 });
               }, 300);
             });
           });
-
           this.el.addEventListener('targetLost', event => {
-            console.log("Target Lost");
-            // Example: Hide elements when target is lost to reset state
-            document.querySelector("#portfolio-panel").setAttribute("visible", false);
-            document.querySelector("#profile-button").setAttribute("visible", false);
-            document.querySelector("#web-button").setAttribute("visible", false);
-            document.querySelector("#email-button").setAttribute("visible", false);
-            document.querySelector("#location-button").setAttribute("visible", false);
-            document.querySelector("#info-text-display").setAttribute("value", "");
-            // Optionally, reset portfolio item visibility and video states here
+            // It's good practice to also handle targetLost, e.g., hide elements.
+            // For now, just logging as in the original code.
+            console.log("target lost"); 
           });
-
-          // For testing without a physical target, uncomment the line below:
-          // this.el.emit('targetFound'); 
+          //this.el.emit('targetFound'); // Uncomment for testing without a physical target
+        }
+      });
+      
+      // 添加视频控制功能
+      AFRAME.registerComponent('video-controls', {
+        init: function() {
+          this.playPauseButton = document.querySelector("#play-pause-button");
+          this.videoMP4 = document.querySelector("#paintandquest-video-mp4");
+          this.videoWebM = document.querySelector("#paintandquest-video-webm");
+          this.videoText = document.querySelector("#video-text");
+          
+          // 为文本添加点击事件
+          this.videoText.addEventListener('click', () => {
+            this.toggleVideo();
+          });
+          
+          // 为播放按钮添加点击事件
+          this.playPauseButton.addEventListener('click', () => {
+            this.toggleVideo();
+          });
+        },
+        
+        toggleVideo: function() {
+          const testVideo = document.createElement("video");
+          const canplayWebm = testVideo.canPlayType('video/webm; codecs="vp8, vorbis"');
+          let videoElement;
+          
+          if (canplayWebm == "") {
+            document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-mp4");
+            videoElement = this.videoMP4;
+          } else {
+            document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-webm");
+            videoElement = this.videoWebM;
+          }
+          
+          const isPlaying = !videoElement.paused;
+          
+          if (isPlaying) {
+            videoElement.pause();
+            this.playPauseButton.setAttribute("src", "#icon-play");
+            this.videoText.setAttribute("value", "点击播放视频");
+          } else {
+            videoElement.play();
+            this.playPauseButton.setAttribute("src", "#icon-pause");
+            this.videoText.setAttribute("value", "点击暂停视频");
+          }
+          
+          // 显示视频和控制按钮
+          document.querySelector("#paintandquest-video-link").setAttribute("visible", true);
+          document.querySelector("#video-controls").setAttribute("visible", true);
         }
       });
     </script>
@@ -230,16 +196,14 @@
     <style>
       body {
         margin: 0;
-        font-family: 'Inter', sans-serif; /* Using a common sans-serif font */
       }
       .example-container {
-        overflow: hidden; /* Essential for full-screen AR */
+        overflow: hidden;
         position: absolute;
         width: 100%;
         height: 100%;
       }
       
-      /* Scanning UI Styles */
       #example-scanning-overlay {
         display: flex;
         align-items: center;
@@ -249,18 +213,18 @@
         right: 0;
         top: 0;
         bottom: 0;
-        background: transparent; /* Transparent background */
-        z-index: 2; /* Ensure it's above the A-Frame scene during scanning */
+        background: transparent;
+        z-index: 2;
       }
-      @media (min-aspect-ratio: 1/1) { /* Landscape or square */
+      @media (min-aspect-ratio: 1/1) {
         #example-scanning-overlay .inner {
-          width: 50vh; /* Scanner frame scales with viewport height */
+          width: 50vh;
           height: 50vh;
         }
       }
-      @media (max-aspect-ratio: 1/1) { /* Portrait */
+      @media (max-aspect-ratio: 1/1) {
         #example-scanning-overlay .inner {
-          width: 80vw; /* Scanner frame scales with viewport width */
+          width: 80vw;
           height: 80vw;
         }
       }
@@ -269,8 +233,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        position: relative; /* For scanline positioning */
-        background: /* Corner borders */
+        position: relative;
+
+        background:
           linear-gradient(to right, white 10px, transparent 10px) 0 0,
           linear-gradient(to right, white 10px, transparent 10px) 0 100%,
           linear-gradient(to left, white 10px, transparent 10px) 100% 0,
@@ -280,18 +245,16 @@
           linear-gradient(to top, white 10px, transparent 10px) 0 100%,
           linear-gradient(to top, white 10px, transparent 10px) 100% 100%;
         background-repeat: no-repeat;
-        background-size: 40px 40px; /* Size of the corner elements */
+        background-size: 40px 40px;
       }
 
       #example-scanning-overlay.hidden {
-        display: none; /* Hide when not scanning */
+        display: none;
       }
 
-      #example-scanning-overlay img { /* Image inside scanner UI */
+      #example-scanning-overlay img {
         opacity: 0.6;
-        width: 90%; /* Scales with .inner container */
-        max-width: 100%;
-        height: auto; /* Maintain aspect ratio */
+        width: 90%;
         align-self: center;
       }
 
@@ -300,19 +263,26 @@
         width: 100%;
         height: 10px;
         background: white;
-        animation: move 2s linear infinite; /* Scanline animation */
+        animation: move 2s linear infinite;
       }
       @keyframes move {
         0%, 100% { top: 0% }
-        50% { top: calc(100% - 10px) } /* Moves scanline up and down */
+        50% { top: calc(100% - 10px) }
       }
       
-      /* This class was in user's CSS. It's for HTML <img> tags if used outside A-Frame.
-         A-Frame entities (a-image, a-video) use width/height attributes for sizing. */
-      .responsive-img {
-        object-fit: contain !important;
+      /* 添加适应性图片样式 */
+      .responsive-image {
+        object-fit: contain;
         width: 100%;
         height: 100%;
+      }
+      
+      /* 添加视频控制样式 */
+      .video-control-button {
+        cursor: pointer;
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        padding: 5px;
       }
     </style>
   </head>
@@ -320,37 +290,29 @@
     <div class="example-container">
       <div id="example-scanning-overlay" class="hidden">
         <div class="inner">
-          <img src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" alt="Scan Target Hint"/>
+          <img src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png"/>
           <div class="scanline"></div>
         </div>
       </div>
 
-      <a-scene 
-        mindar-image="imageTargetSrc: https://api.2023gpt.top/fileSystem/download/20250517/3262eb95-4f52-4941-8222-b9b457e552f1.mind; showStats: false; uiScanning: #example-scanning-overlay;" 
-        embedded 
-        color-space="sRGB" 
-        renderer="colorManagement: true, physicallyCorrectLights" 
-        vr-mode-ui="enabled: false" 
-        device-orientation-permission-ui="enabled: false">
-        
+      <a-scene mindar-image="imageTargetSrc: https://api.2023gpt.top/fileSystem/download/20250517/3262eb95-4f52-4941-8222-b9b457e552f1.mind; showStats: false; uiScanning: #example-scanning-overlay;" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         <a-assets>
           <img id="card" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
-          
           <img id="icon-web" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/web.png" />
           <img id="icon-location" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/location.png" />
           <img id="icon-profile" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/profile.png" />
+          <img id="icon-phone" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/phone.png" />
           <img id="icon-email" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/email.png" />
+          <img id="icon-play" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/play.png" />
+          <img id="icon-pause" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js-doc@main/assets/images/pause-icon.png" />
           <img id="icon-left" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/left.png" />
           <img id="icon-right" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/right.png" />
-          <img id="icon-play-video" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/play.png" />
-          <img id="icon-pause" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/pause.png" />
-          
           <img id="paintandquest-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
+          <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4" playsinline webkit-playsinline></video>
+          <video id="paintandquest-video-webm" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4" playsinline webkit-playsinline></video>
           <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
           <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
-          
-          <video id="paintandquest-video-mp4" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4" webkit-playsinline playsinline></video>
-          <video id="paintandquest-video-webm" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4" webkit-playsinline playsinline></video> </a-assets>
+        </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable">
         </a-camera>
@@ -358,72 +320,51 @@
         <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
           <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
 
-          <a-entity visible="false" id="portfolio-panel" position="0 0 0.005"> <a-text 
-              value="AR测试By.leong" 
-              color="black" 
-              align="center" 
-              width="0.9" position="0 0.35 0.01" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"
-              shader="msdf" 
-              negate="false"> </a-text>
+          <a-entity visible=false id="portfolio-panel" position="0 0 -0.01">
+            <!-- 修复中文显示问题 -->
+            <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0.4 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
             
             <a-entity id="portfolio-item0">
-              <a-video 
-                id="paintandquest-video-link" 
-                webkit-playsinline playsinline 
-                width="0.981" height="0.552" 
-                position="0 0 0" 
-                material="shader: flat;" visible="true"> </a-video>
-              <a-image 
-                id="paintandquest-preview-button" 
-                class="clickable" 
-                src="#paintandquest-preview" 
-                width="0.981" height="0.552" 
-                position="0 0 0.001" material="alphaTest: 0.5;"> </a-image>
-              <a-image visible="false" id="video-play-button" class="clickable" src="#icon-play-video" position="0 0 0.005" height="0.12" width="0.12" material="shader: flat; transparent: true;"></a-image>
-              <a-image visible="false" id="video-pause-button" class="clickable" src="#icon-pause" position="0 0 0.005" height="0.12" width="0.12" material="shader: flat; transparent: true;"></a-image>
+              <!-- 添加可点击的文本区域 -->
+              <a-text id="video-text" class="clickable" value="点击播放视频" color="black" align="center" width="2" position="0 0 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+              <!-- 添加视频元素，默认隐藏 -->
+              <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0" visible="false"></a-video>
+              <a-entity id="video-controls" visible="false" video-controls position="0 -0.3 0.01">
+                <a-image id="play-pause-button" class="clickable" src="#icon-play" position="0 0 0" height="0.15" width="0.15"></a-image>
+              </a-entity>
             </a-entity>
             
-            <a-entity id="portfolio-item1" visible="false">
-              <a-image class="clickable" src="#coffeemachine-preview" 
-                width="0.981" height="0.552" 
-                position="0 0 0" 
-                material="alphaTest: 0.5;">
-              </a-image>
+            <a-entity id="portfolio-item1" visible=false>
+              <!-- 将图片改为文本显示 -->
+              <a-text value="示例内容 1" color="black" align="center" width="2" position="0 0 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
             </a-entity>
             
-            <a-entity id="portfolio-item2" visible="false">
-              <a-image class="clickable" src="#peak-preview" 
-                width="0.981" height="0.552" 
-                position="0 0 0" 
-                material="alphaTest: 0.5;">
-              </a-image>
+            <a-entity id="portfolio-item2" visible=false>
+              <!-- 将图片改为文本显示 -->
+              <a-text value="示例内容 2" color="black" align="center" width="2" position="0 0 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
             </a-entity>
 
-            <a-image visible="false" id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.65 0 0.01" height="0.15" width="0.15" material="shader: flat; transparent: true;"></a-image>
-            <a-image visible="false" id="portfolio-right-button" class="clickable" src="#icon-right" position="0.65 0 0.01" height="0.15" width="0.15" material="shader: flat; transparent: true;"></a-image>
+            <a-image visible=false id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
+            <a-image visible=false id="portfolio-right-button" class="clickable" src="#icon-right" position="0.7 0 0" height="0.15" width="0.15"></a-image>
           </a-entity>
 
-          <a-image visible="false" id="profile-button" class="clickable" src="#icon-profile" position="-0.42 -0.38 0.01" height="0.12" width="0.12" material="shader: flat; transparent: true;"
-            animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
-          ></a-image>
-          <a-image visible="false" id="web-button" class="clickable" src="#icon-web" position="-0.14 -0.38 0.01" height="0.12" width="0.12" material="shader: flat; transparent: true; alphaTest: 0.5;" animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
-          ></a-image>
-          <a-image visible="false" id="email-button" class="clickable" src="#icon-email"  position="0.14 -0.38 0.01" height="0.12" width="0.12" material="shader: flat; transparent: true;"
-            animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
-          ></a-image>
-          <a-image visible="false" id="location-button" class="clickable" src="#icon-location" position="0.42 -0.38 0.01" height="0.12" width="0.12" material="shader: flat; transparent: true;"
+          <a-image visible=false id="profile-button" class="clickable" src="#icon-profile" position="-0.42 -0.5 0" height="0.15" width="0.15"
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
 
-          <a-text 
-            id="info-text-display" 
-            class="clickable" value="" 
-            color="black" 
-            align="center" 
-            width="1.8"  wrap-count="35" position="0 -0.58 0.01" geometry="primitive: plane; width: 0.9; height: auto; padding: 0.05" material="color: #FFFFFF; opacity: 0.85; transparent: true;"
-            font="https://cdn.aframe.io/fonts/Roboto-msdf.json"
-            shader="msdf">
-          </a-text>
+          <a-image visible=false id="web-button" class="clickable" src="#icon-web" alpha-test="0.5" position="-0.14 -0.5 0" height="0.15" width="0.15"
+            animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
+          ></a-image>
+
+          <a-image visible=false id="email-button" class="clickable" src="#icon-email"  position="0.14 -0.5 0" height="0.15" width="0.15"
+            animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
+          ></a-image>
+
+          <a-image visible=false id="location-button" class="clickable" src="#icon-location" position="0.42 -0.5 0" height="0.15" width="0.15"
+            animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
+          ></a-image>
+
+          <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
         </a-entity>
       </a-scene>
     </div>
