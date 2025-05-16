@@ -6,24 +6,6 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
-    <!-- 加载适用于A-Frame的中文字体组件 -->
-    <script>
-      // 注册一个专门处理中文字体的组件
-      AFRAME.registerComponent('chinese-font-support', {
-        init: function() {
-          // 为所有a-text元素添加negate="false"属性以支持MSDF字体
-          const textElements = document.querySelectorAll('a-text');
-          textElements.forEach(el => {
-            el.setAttribute('negate', 'false');
-            if (!el.hasAttribute('font')) {
-              // 使用NotoSansSC字体
-              el.setAttribute('font', 'https://cdn.aframe.io/fonts/NotoSans-SemiBold.json');
-            }
-          });
-        }
-      });
-    </script>
-
     <script>
       const setupVideoControls = (videoElement, controlButtonId) => {
         const controlButton = document.querySelector(controlButtonId);
@@ -95,13 +77,13 @@
       });
 
       const showInfo = () => {
-        let y = 0;
         const profileButton = document.querySelector("#profile-button");
         const webButton = document.querySelector("#web-button");
         const emailButton = document.querySelector("#email-button");
         const locationButton = document.querySelector("#location-button");
         const text = document.querySelector("#text");
         const textContainer = document.querySelector("#text-container");
+        const infoText = document.getElementById('info-text');
         
         profileButton.setAttribute("visible", true);
         setTimeout(() => {
@@ -115,27 +97,39 @@
         }, 900);
         setTimeout(() => {
           textContainer.setAttribute("visible", true);
+          infoText.style.display = 'block';
         }, 1200);
 
         let currentTab = '';
         webButton.addEventListener('click', function (evt) {
           text.setAttribute("value", "https://svg.2023gpt.top/AD.html");
+          infoText.textContent = "https://svg.2023gpt.top/AD.html";
           currentTab = 'web';
         });
         emailButton.addEventListener('click', function (evt) {
           text.setAttribute("value", "leongxj@icloud.com");
+          infoText.textContent = "leongxj@icloud.com";
           currentTab = 'email';
         });
         profileButton.addEventListener('click', function (evt) {
           text.setAttribute("value", "AR, VR solutions and consultation");
+          infoText.textContent = "AR和VR解决方案与咨询";
           currentTab = 'profile';
         });
         locationButton.addEventListener('click', function (evt) {
           text.setAttribute("value", "China | GuangDong");
+          infoText.textContent = "中国 | 广东";
           currentTab = 'location';
         });
 
         text.addEventListener('click', function (evt) {
+          if (currentTab === 'web') {
+            window.location.href="https://svg.2023gpt.top/AD.html";
+          }
+        });
+        
+        // 点击中文文本也可以跳转
+        infoText.addEventListener('click', function (evt) {
           if (currentTab === 'web') {
             window.location.href="https://svg.2023gpt.top/AD.html";
           }
@@ -163,8 +157,24 @@
             document.querySelector("#portfolio-item" + i).setAttribute("visible", i === item);
           }
           
+          // 隐藏所有文本，然后仅显示当前项目的文本
+          document.getElementById('medical-text').style.display = 'none';
+          document.getElementById('coffee-text').style.display = 'none';
+          document.getElementById('advanced-text').style.display = 'none';
+          
+          // 显示当前项目对应的中文文本
           if (item === 0) {
+            document.getElementById('medical-text').style.display = 'block';
             initializeVideo();
+          } else if (item === 1) {
+            document.getElementById('coffee-text').style.display = 'block';
+          } else if (item === 2) {
+            document.getElementById('advanced-text').style.display = 'block';
+          }
+          
+          // 如果切换到视频项目，初始化视频
+          if (item === 0) {
+            videoControlButton.setAttribute("visible", true);
           } else {
             videoControlButton.setAttribute("visible", false);
           }
@@ -220,8 +230,13 @@
           this.el.addEventListener('targetFound', event => {
             console.log("target found");
             
+            // 重置场景，清除所有可能的显示状态
             this.resetScene();
             
+            // 显示中文覆盖层
+            document.getElementById('chinese-overlay').style.display = 'block';
+            
+            // 直接显示内容，不使用复杂的嵌套动画
             showAvatar(() => {
               showPortfolio(() => {
                 showInfo();
@@ -232,9 +247,13 @@
           this.el.addEventListener('targetLost', event => {
             console.log("target lost");
             this.resetScene();
+            
+            // 隐藏中文覆盖层
+            document.getElementById('chinese-overlay').style.display = 'none';
           });
         },
         
+        // 重置场景，隐藏所有元素
         resetScene: function() {
           // 隐藏主要容器
           document.querySelector("#content-container").setAttribute("visible", false);
@@ -264,6 +283,12 @@
           
           if (videoMp4) videoMp4.pause();
           if (videoWebm) videoWebm.pause();
+          
+          // 隐藏所有中文文本元素
+          document.getElementById('medical-text').style.display = 'none';
+          document.getElementById('coffee-text').style.display = 'none';
+          document.getElementById('advanced-text').style.display = 'none';
+          document.getElementById('info-text').style.display = 'none';
         }
       });
     </script>
@@ -292,6 +317,67 @@
         background: transparent;
         z-index: 2;
       }
+
+      /* 中文文本覆盖层 */
+      .chinese-text-overlay {
+        position: absolute;
+        z-index: 3;
+        pointer-events: none;
+        width: 100%;
+        height: 100%;
+        display: none;
+      }
+      
+      .text-item {
+        position: absolute;
+        background-color: rgba(255, 248, 225, 0.9);
+        padding: 4px 8px;
+        border-radius: 4px;
+        text-align: center;
+        font-size: 14px;
+        color: black;
+        transform: translateX(-50%);
+        font-family: 'Noto Sans SC', sans-serif;
+      }
+      
+      #title-text {
+        top: 28%;
+        left: 50%;
+        min-width: 120px;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      
+      #medical-text {
+        bottom: 28%;
+        left: 50%;
+        min-width: 100px;
+        display: none;
+      }
+      
+      #coffee-text {
+        bottom: 28%;
+        left: 50%;
+        min-width: 100px;
+        display: none;
+      }
+      
+      #advanced-text {
+        bottom: 28%;
+        left: 50%;
+        min-width: 100px;
+        display: none;
+      }
+      
+      #info-text {
+        bottom: 8%;
+        left: 50%;
+        min-width: 150px;
+        padding: 6px 10px;
+        display: none;
+        pointer-events: auto; /* 使这个元素可以点击 */
+      }
+
       @media (min-aspect-ratio: 1/1) {
         #example-scanning-overlay .inner {
           width: 50vh;
@@ -444,6 +530,15 @@
       </div>
     </div>
 
+    <!-- 中文文本覆盖层 -->
+    <div class="chinese-text-overlay" id="chinese-overlay">
+      <div class="text-item" id="title-text">AR测试By.leong</div>
+      <div class="text-item" id="medical-text">医疗演示视频</div>
+      <div class="text-item" id="coffee-text">咖啡机AR演示</div>
+      <div class="text-item" id="advanced-text">高级AR体验</div>
+      <div class="text-item" id="info-text"></div>
+    </div>
+
     <div class="example-container">
       <div id="example-scanning-overlay" class="hidden">
         <div class="inner">
@@ -452,7 +547,7 @@
         </div>
       </div>
 
-      <a-scene mindar-image="imageTargetSrc: https://api.2023gpt.top/fileSystem/download/20250517/3262eb95-4f52-4941-8222-b9b457e552f1.mind; showStats: false; uiScanning: #example-scanning-overlay;" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" chinese-font-support>
+      <a-scene mindar-image="imageTargetSrc: https://api.2023gpt.top/fileSystem/download/20250517/3262eb95-4f52-4941-8222-b9b457e552f1.mind; showStats: false; uiScanning: #example-scanning-overlay;" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         <a-assets>
           <img id="card" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
           <img id="icon-web" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/web.png" />
@@ -478,39 +573,49 @@
           <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
 
           <a-entity id="content-container" position="0 0 0.01">
-            <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0.4 0" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
+            <!-- 标题文本 -->
+            <a-text value="AR By.leong" color="black" align="center" width="2" position="0 0.4 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
             
+            <!-- 内容项 - 使用单独的位置管理 -->
             <a-entity id="items-container" position="0 0 0">
+              <!-- 视频项 -->
               <a-entity id="portfolio-item0" visible="false">
                 <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0"></a-video>
                 <a-image visible="false" id="video-control-button" class="clickable" src="#icon-play" position="0.4 -0.2 0.001" height="0.08" width="0.08" opacity="0.7" animation="property: opacity; to: 1; dur: 200; startEvents: mouseenter; dir: alternate" animation__2="property: opacity; to: 0.7; dur: 200; startEvents: mouseleave; dir: alternate"></a-image>
+                <!-- 视频底部文本框 -->
                 <a-entity position="0 -0.35 0.001">
                   <a-plane color="#FFF8E1" width="1" height="0.12" opacity="0.9"></a-plane>
-                  <a-text value="医疗演示视频" color="black" align="center" width="1" position="0 0 0.001" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
+                  <a-text value="Medical Demo" color="black" align="center" width="1" position="0 0 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
                 </a-entity>
               </a-entity>
               
+              <!-- 咖啡机预览 -->
               <a-entity id="portfolio-item1" visible="false">
                 <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1"></a-image>
+                <!-- 图片底部文本框 -->
                 <a-entity position="0 -0.35 0.001">
                   <a-plane color="#FFF8E1" width="1" height="0.12" opacity="0.9"></a-plane>
-                  <a-text value="咖啡机AR演示" color="black" align="center" width="1" position="0 0 0.001" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
+                  <a-text value="Coffee Machine" color="black" align="center" width="1" position="0 0 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
                 </a-entity>
               </a-entity>
               
+              <!-- Peak预览 -->
               <a-entity id="portfolio-item2" visible="false">
                 <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1"></a-image>
+                <!-- 图片底部文本框 -->
                 <a-entity position="0 -0.35 0.001">
                   <a-plane color="#FFF8E1" width="1" height="0.12" opacity="0.9"></a-plane>
-                  <a-text value="高级AR体验" color="black" align="center" width="1" position="0 0 0.001" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
+                  <a-text value="Advanced AR" color="black" align="center" width="1" position="0 0 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
                 </a-entity>
               </a-entity>
             </a-entity>
             
+            <!-- 导航按钮 -->
             <a-image visible="false" id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
             <a-image visible="false" id="portfolio-right-button" class="clickable" src="#icon-right" position="0.7 0 0" height="0.15" width="0.15"></a-image>
           </a-entity>
 
+          <!-- 底部按钮组 -->
           <a-entity id="buttons-container" position="0 -0.5 0.02">
             <a-image visible="false" id="profile-button" class="clickable" src="#icon-profile" position="-0.42 0 0" height="0.15" width="0.15"
               animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"></a-image>
@@ -522,9 +627,10 @@
               animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"></a-image>
           </a-entity>
 
+          <!-- 底部文本容器 -->
           <a-entity visible="false" id="text-container" position="0 -1 0.02">
             <a-plane id="text-background" color="#FFF8E1" width="2" height="0.15" opacity="0.9"></a-plane>
-            <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 0 0.001" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
+            <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 0 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
           </a-entity>
         </a-entity>
       </a-scene>
