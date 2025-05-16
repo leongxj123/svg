@@ -103,21 +103,24 @@
         }, 10);
       }
 
-      // Modified showAvatar function
-      // It no longer animates a GLTF model.
-      // Instead, it waits for approximately the same duration as the original animation
-      // before calling onDone, to maintain the timing of subsequent operations.
       const showAvatar = (onDone) => {
-        // The original avatar animation took roughly (0.3 - (-0.3)) / 0.008 * 10ms = 750ms.
-        // We use a setTimeout to simulate this delay.
-        setTimeout(onDone, 750);
+        const avatar = document.querySelector("#avatar");
+        let z = -0.3;
+        const id = setInterval(() => {
+          z += 0.008;
+          if (z >= 0.3) {
+            clearInterval(id);
+            onDone();
+          }
+          avatar.setAttribute("position", "0 -0.25 " + z);
+        }, 10);
       }
 
       AFRAME.registerComponent('mytarget', {
         init: function () {
           this.el.addEventListener('targetFound', event => {
             console.log("target found");
-            showAvatar(() => { // Call the modified showAvatar
+            showAvatar(() => {
               setTimeout(() => {
                 showPortfolio(() => {
                   setTimeout(() => {
@@ -128,11 +131,9 @@
             });
           });
           this.el.addEventListener('targetLost', event => {
-            // It's good practice to also handle targetLost, e.g., hide elements.
-            // For now, just logging as in the original code.
-            console.log("target lost"); 
+            console.log("target found");
           });
-          //this.el.emit('targetFound'); // Uncomment for testing without a physical target
+          //this.el.emit('targetFound');
         }
       });
     </script>
@@ -147,81 +148,81 @@
         width: 100%;
         height: 100%;
       }
-      
+     
       #example-scanning-overlay {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        background: transparent;
-        z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: transparent;
+	z-index: 2;
       }
       @media (min-aspect-ratio: 1/1) {
-        #example-scanning-overlay .inner {
-          width: 50vh;
-          height: 50vh;
-        }
+	#example-scanning-overlay .inner {
+	  width: 50vh;
+	  height: 50vh;
+	}
       }
       @media (max-aspect-ratio: 1/1) {
-        #example-scanning-overlay .inner {
-          width: 80vw;
-          height: 80vw;
-        }
+	#example-scanning-overlay .inner {
+	  width: 80vw;
+	  height: 80vw;
+	}
       }
 
       #example-scanning-overlay .inner {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
 
-        background:
-          linear-gradient(to right, white 10px, transparent 10px) 0 0,
-          linear-gradient(to right, white 10px, transparent 10px) 0 100%,
-          linear-gradient(to left, white 10px, transparent 10px) 100% 0,
-          linear-gradient(to left, white 10px, transparent 10px) 100% 100%,
-          linear-gradient(to bottom, white 10px, transparent 10px) 0 0,
-          linear-gradient(to bottom, white 10px, transparent 10px) 100% 0,
-          linear-gradient(to top, white 10px, transparent 10px) 0 100%,
-          linear-gradient(to top, white 10px, transparent 10px) 100% 100%;
-        background-repeat: no-repeat;
-        background-size: 40px 40px;
+	background:
+	  linear-gradient(to right, white 10px, transparent 10px) 0 0,
+	  linear-gradient(to right, white 10px, transparent 10px) 0 100%,
+	  linear-gradient(to left, white 10px, transparent 10px) 100% 0,
+	  linear-gradient(to left, white 10px, transparent 10px) 100% 100%,
+	  linear-gradient(to bottom, white 10px, transparent 10px) 0 0,
+	  linear-gradient(to bottom, white 10px, transparent 10px) 100% 0,
+	  linear-gradient(to top, white 10px, transparent 10px) 0 100%,
+	  linear-gradient(to top, white 10px, transparent 10px) 100% 100%;
+	background-repeat: no-repeat;
+	background-size: 40px 40px;
       }
 
       #example-scanning-overlay.hidden {
-        display: none;
+	display: none;
       }
 
       #example-scanning-overlay img {
-        opacity: 0.6;
-        width: 90%;
-        align-self: center;
+	opacity: 0.6;
+	width: 90%;
+	align-self: center;
       }
 
       #example-scanning-overlay .inner .scanline {
-        position: absolute;
-        width: 100%;
-        height: 10px;
-        background: white;
-        animation: move 2s linear infinite;
+	position: absolute;
+	width: 100%;
+	height: 10px;
+	background: white;
+	animation: move 2s linear infinite;
       }
       @keyframes move {
-        0%, 100% { top: 0% }
-        50% { top: calc(100% - 10px) }
+	0%, 100% { top: 0% }
+	50% { top: calc(100% - 10px) }
       }
     </style>
   </head>
   <body>
     <div class="example-container">
       <div id="example-scanning-overlay" class="hidden">
-        <div class="inner">
-          <img src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/card.png"/>
-          <div class="scanline"></div>
-        </div>
+	<div class="inner">
+	  <img src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/card.png"/>
+	  <div class="scanline"></div>
+	</div>
       </div>
 
       <a-scene mindar-image="imageTargetSrc: https://api.2023gpt.top/fileSystem/download/20250517/3262eb95-4f52-4941-8222-b9b457e552f1.mind; showStats: false; uiScanning: #example-scanning-overlay;" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
@@ -241,7 +242,8 @@
           <img id="coffeemachine-preview" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/portfolio/coffeemachine-preview.png" />
           <img id="peak-preview" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/portfolio/peak-preview.png" />
           
-          </a-assets>
+          <a-asset-item id="avatarModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.2/examples/image-tracking/assets/card-example/softmind/scene.gltf"></a-asset-item>
+        </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable">
         </a-camera>
@@ -284,6 +286,8 @@
           <a-image visible=false id="location-button" class="clickable" src="#icon-location" position="0.42 -0.5 0" height="0.15" width="0.15"
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
+
+          <a-gltf-model id="avatar" rotation="0 0 0" position="0 -0.25 0" scale="0.004 0.004 0.004" src="#avatarModel"></a-gltf-model>
 
           <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5"></a-text>
         </a-entity>
