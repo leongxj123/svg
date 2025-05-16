@@ -49,7 +49,32 @@
         });
       };
 
-      document.addEventListener('DOMContentLoaded', setupImageAspectRatio);
+      const fixVideoAspectRatio = () => {
+        const videoMp4 = document.querySelector("#paintandquest-video-mp4");
+        const videoWebm = document.querySelector("#paintandquest-video-webm");
+        const videoLink = document.querySelector("#paintandquest-video-link");
+        
+        const setAspectRatio = (video) => {
+          if (video && videoLink) {
+            video.addEventListener('loadedmetadata', function() {
+              const videoWidth = video.videoWidth;
+              const videoHeight = video.videoHeight;
+              const aspectRatio = videoWidth / videoHeight;
+              
+              const currentWidth = parseFloat(videoLink.getAttribute("width") || 1);
+              videoLink.setAttribute("height", currentWidth / aspectRatio);
+            });
+          }
+        };
+        
+        setAspectRatio(videoMp4);
+        setAspectRatio(videoWebm);
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        setupImageAspectRatio();
+        fixVideoAspectRatio();
+      });
 
       const showInfo = () => {
         let y = 0;
@@ -131,14 +156,32 @@
               paintandquestPreviewButton.setAttribute("visible", false);
               const testVideo = document.createElement( "video" );
               const canplayWebm = testVideo.canPlayType( 'video/webm; codecs="vp8, vorbis"' );
+              let videoElement;
+              
               if (canplayWebm == "") {
                 document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-mp4");
                 document.querySelector("#video-control-button").setAttribute("visible", true);
-                setupVideoControls(document.querySelector("#paintandquest-video-mp4"), "#video-control-button");
+                videoElement = document.querySelector("#paintandquest-video-mp4");
+                // 不自动播放，等待用户点击播放按钮
+                setupVideoControls(videoElement, "#video-control-button");
               } else {
                 document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-webm");
                 document.querySelector("#video-control-button").setAttribute("visible", true);
-                setupVideoControls(document.querySelector("#paintandquest-video-webm"), "#video-control-button");
+                videoElement = document.querySelector("#paintandquest-video-webm");
+                // 不自动播放，等待用户点击播放按钮
+                setupVideoControls(videoElement, "#video-control-button");
+              }
+              
+              // 确保视频宽高比正确
+              if (videoElement.readyState >= 1) { // 如果元数据已经加载
+                const videoWidth = videoElement.videoWidth;
+                const videoHeight = videoElement.videoHeight;
+                if (videoWidth && videoHeight) {
+                  const aspectRatio = videoWidth / videoHeight;
+                  const videoLink = document.querySelector("#paintandquest-video-link");
+                  const currentWidth = parseFloat(videoLink.getAttribute("width") || 1);
+                  videoLink.setAttribute("height", currentWidth / aspectRatio);
+                }
               }
             });
 
@@ -391,15 +434,19 @@
               <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0"></a-video>
               <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
               </a-image>
-              <a-image visible=false id="video-control-button" class="clickable" src="#icon-play" position="0 0 0.001" height="0.15" width="0.15"></a-image>
+              <a-image visible=false id="video-control-button" class="clickable" src="#icon-play" position="0.4 -0.2 0.001" height="0.08" width="0.08" opacity="0.7" animation="property: opacity; to: 1; dur: 200; startEvents: mouseenter; dir: alternate" animation__2="property: opacity; to: 0.7; dur: 200; startEvents: mouseleave; dir: alternate"></a-image>
             </a-entity>
             <a-entity id="portfolio-item1" visible=false>
-              <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
-              </a-image>
+              <a-plane color="#FFF8E1" opacity="0.9" position="0 0 0" height="0.552" width="1">
+              </a-plane>
+              <a-text value="咖啡机AR演示" color="black" align="center" width="2" position="0 0.1 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+              <a-text value="扫描咖啡机图像，展示AR交互功能" color="black" align="center" width="2" position="0 -0.1 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json" scale="0.5 0.5 0.5"></a-text>
             </a-entity>
             <a-entity id="portfolio-item2" visible=false>
-              <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
-              </a-image>
+              <a-plane color="#FFF8E1" opacity="0.9" position="0 0 0" height="0.552" width="1">
+              </a-plane>
+              <a-text value="高级AR展示" color="black" align="center" width="2" position="0 0.1 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+              <a-text value="未来技术展示与交互体验" color="black" align="center" width="2" position="0 -0.1 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json" scale="0.5 0.5 0.5"></a-text>
             </a-entity>
 
             <a-image visible=false id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
