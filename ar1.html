@@ -6,6 +6,24 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
+    <!-- 加载适用于A-Frame的中文字体组件 -->
+    <script>
+      // 注册一个专门处理中文字体的组件
+      AFRAME.registerComponent('chinese-font-support', {
+        init: function() {
+          // 为所有a-text元素添加negate="false"属性以支持MSDF字体
+          const textElements = document.querySelectorAll('a-text');
+          textElements.forEach(el => {
+            el.setAttribute('negate', 'false');
+            if (!el.hasAttribute('font')) {
+              // 使用NotoSansSC字体
+              el.setAttribute('font', 'https://cdn.aframe.io/fonts/NotoSans-SemiBold.json');
+            }
+          });
+        }
+      });
+    </script>
+
     <script>
       const setupVideoControls = (videoElement, controlButtonId) => {
         const controlButton = document.querySelector(controlButtonId);
@@ -248,44 +266,6 @@
           if (videoWebm) videoWebm.pause();
         }
       });
-
-      // 为A-Frame添加中文支持
-      AFRAME.registerComponent('use-chinese-font', {
-        schema: {
-          value: {type: 'string', default: ''}
-        },
-        
-        init: function() {
-          this.updateText();
-          
-          // 监听属性变化
-          this.el.addEventListener('componentchanged', (evt) => {
-            if (evt.detail.name === 'text') {
-              this.updateText();
-            }
-          });
-        },
-        
-        updateText: function() {
-          const textComponent = this.el.getAttribute('text');
-          if (!textComponent) return;
-          
-          // 设置中文字体
-          this.el.setAttribute('text', {
-            font: 'https://cdn.rawgit.com/etiennepinchon/aframe-fonts/master/fonts/noto-sans-sc/NotoSansSC-Medium.json',
-            // 保持其他属性不变
-            value: textComponent.value,
-            color: textComponent.color,
-            width: textComponent.width,
-            align: textComponent.align,
-            wrapCount: textComponent.wrapCount || 20,
-            // 增加字符间距，使中文字符显示更清晰
-            letterSpacing: 0.1,
-            // 确保基线正确
-            baseline: 'center'
-          });
-        }
-      });
     </script>
 
     <style>
@@ -444,25 +424,6 @@
       }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC&display=swap" rel="stylesheet">
-    
-    <script>
-      // 注册支持中文的自定义字体
-      AFRAME.registerComponent('font-loader', {
-        init: function () {
-          // 字体预加载后触发事件
-          document.fonts.ready.then(() => {
-            document.querySelectorAll('a-text').forEach(textEl => {
-              // 强制更新文本以确保字体应用
-              const currentValue = textEl.getAttribute('value');
-              textEl.setAttribute('value', '');
-              setTimeout(() => {
-                textEl.setAttribute('value', currentValue);
-              }, 100);
-            });
-          });
-        }
-      });
-    </script>
   </head>
   <body>
     <!-- 加载指示器 -->
@@ -491,7 +452,7 @@
         </div>
       </div>
 
-      <a-scene mindar-image="imageTargetSrc: https://api.2023gpt.top/fileSystem/download/20250517/3262eb95-4f52-4941-8222-b9b457e552f1.mind; showStats: false; uiScanning: #example-scanning-overlay;" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-scene mindar-image="imageTargetSrc: https://api.2023gpt.top/fileSystem/download/20250517/3262eb95-4f52-4941-8222-b9b457e552f1.mind; showStats: false; uiScanning: #example-scanning-overlay;" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" chinese-font-support>
         <a-assets>
           <img id="card" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
           <img id="icon-web" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/web.png" />
@@ -508,19 +469,16 @@
           <video id="paintandquest-video-webm" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
           <img id="coffeemachine-preview" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzljYTNhZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZHk9Ii4zNWVtIj5Db2ZmZWUgTWFjaGluZTwvdGV4dD48L3N2Zz4=" crossorigin="anonymous" />
           <img id="peak-preview" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzY0NzQ4YiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZHk9Ii4zNWVtIj5QZWFrIFByZXZpZXc8L3RleHQ+PC9zdmc+" crossorigin="anonymous" />
-          
-          <!-- 添加备用中文字体资源 -->
-          <a-asset-item id="noto-sans-sc" src="https://cdn.jsdelivr.net/npm/noto-sans-sc@1.0.2/fonts/NotoSansSC-Regular.otf"></a-asset-item>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable">
         </a-camera>
 
-        <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0" font-loader>
+        <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
           <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
 
           <a-entity id="content-container" position="0 0 0.01">
-            <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0.4 0" font="https://cdn.rawgit.com/etiennepinchon/aframe-fonts/master/fonts/noto-sans-sc/NotoSansSC-Medium.json" use-chinese-font></a-text>
+            <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0.4 0" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
             
             <a-entity id="items-container" position="0 0 0">
               <a-entity id="portfolio-item0" visible="false">
@@ -528,7 +486,7 @@
                 <a-image visible="false" id="video-control-button" class="clickable" src="#icon-play" position="0.4 -0.2 0.001" height="0.08" width="0.08" opacity="0.7" animation="property: opacity; to: 1; dur: 200; startEvents: mouseenter; dir: alternate" animation__2="property: opacity; to: 0.7; dur: 200; startEvents: mouseleave; dir: alternate"></a-image>
                 <a-entity position="0 -0.35 0.001">
                   <a-plane color="#FFF8E1" width="1" height="0.12" opacity="0.9"></a-plane>
-                  <a-text value="医疗演示视频" color="black" align="center" width="1" position="0 0 0.001" font="https://cdn.rawgit.com/etiennepinchon/aframe-fonts/master/fonts/noto-sans-sc/NotoSansSC-Medium.json" use-chinese-font></a-text>
+                  <a-text value="医疗演示视频" color="black" align="center" width="1" position="0 0 0.001" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
                 </a-entity>
               </a-entity>
               
@@ -536,7 +494,7 @@
                 <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1"></a-image>
                 <a-entity position="0 -0.35 0.001">
                   <a-plane color="#FFF8E1" width="1" height="0.12" opacity="0.9"></a-plane>
-                  <a-text value="咖啡机AR演示" color="black" align="center" width="1" position="0 0 0.001" font="https://cdn.rawgit.com/etiennepinchon/aframe-fonts/master/fonts/noto-sans-sc/NotoSansSC-Medium.json" use-chinese-font></a-text>
+                  <a-text value="咖啡机AR演示" color="black" align="center" width="1" position="0 0 0.001" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
                 </a-entity>
               </a-entity>
               
@@ -544,7 +502,7 @@
                 <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1"></a-image>
                 <a-entity position="0 -0.35 0.001">
                   <a-plane color="#FFF8E1" width="1" height="0.12" opacity="0.9"></a-plane>
-                  <a-text value="高级AR体验" color="black" align="center" width="1" position="0 0 0.001" font="https://cdn.rawgit.com/etiennepinchon/aframe-fonts/master/fonts/noto-sans-sc/NotoSansSC-Medium.json" use-chinese-font></a-text>
+                  <a-text value="高级AR体验" color="black" align="center" width="1" position="0 0 0.001" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
                 </a-entity>
               </a-entity>
             </a-entity>
@@ -566,7 +524,7 @@
 
           <a-entity visible="false" id="text-container" position="0 -1 0.02">
             <a-plane id="text-background" color="#FFF8E1" width="2" height="0.15" opacity="0.9"></a-plane>
-            <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 0 0.001" font="https://cdn.rawgit.com/etiennepinchon/aframe-fonts/master/fonts/noto-sans-sc/NotoSansSC-Medium.json" use-chinese-font></a-text>
+            <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 0 0.001" negate="false" font="https://cdn.aframe.io/fonts/NotoSans-SemiBold.json"></a-text>
           </a-entity>
         </a-entity>
       </a-scene>
