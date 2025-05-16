@@ -3,8 +3,11 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta charset="UTF-8"> <!-- 添加UTF-8字符集支持 -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <!-- 添加中文字体支持 -->
+    <script src="https://cdn.jsdelivr.net/npm/aframe-text-geometry-component@0.5.1/dist/aframe-text-geometry-component.min.js"></script>
 
     <script>
       const showInfo = () => {
@@ -127,12 +130,7 @@
       }
 
       // Modified showAvatar function
-      // It no longer animates a GLTF model.
-      // Instead, it waits for approximately the same duration as the original animation
-      // before calling onDone, to maintain the timing of subsequent operations.
       const showAvatar = (onDone) => {
-        // The original avatar animation took roughly (0.3 - (-0.3)) / 0.008 * 10ms = 750ms.
-        // We use a setTimeout to simulate this delay.
         setTimeout(onDone, 750);
       }
 
@@ -140,7 +138,7 @@
         init: function () {
           this.el.addEventListener('targetFound', event => {
             console.log("target found");
-            showAvatar(() => { // Call the modified showAvatar
+            showAvatar(() => {
               setTimeout(() => {
                 showPortfolio(() => {
                   setTimeout(() => {
@@ -151,11 +149,42 @@
             });
           });
           this.el.addEventListener('targetLost', event => {
-            // It's good practice to also handle targetLost, e.g., hide elements.
-            // For now, just logging as in the original code.
             console.log("target lost"); 
           });
           //this.el.emit('targetFound'); // Uncomment for testing without a physical target
+        }
+      });
+      
+      // 添加自定义组件处理图像自适应
+      AFRAME.registerComponent('responsive-image', {
+        schema: {
+          src: {type: 'string'},
+          width: {type: 'number', default: 1},
+          height: {type: 'number', default: 1}
+        },
+        init: function() {
+          const data = this.data;
+          const el = this.el;
+          
+          // 加载图像以获取原始尺寸
+          const img = new Image();
+          img.onload = () => {
+            const aspectRatio = img.width / img.height;
+            
+            // 根据容器尺寸和图像比例调整显示
+            if (data.width / data.height > aspectRatio) {
+              // 容器更宽，以高度为基准
+              const newWidth = data.height * aspectRatio;
+              el.setAttribute('width', newWidth);
+              el.setAttribute('height', data.height);
+            } else {
+              // 容器更高，以宽度为基准
+              const newHeight = data.width / aspectRatio;
+              el.setAttribute('width', data.width);
+              el.setAttribute('height', newHeight);
+            }
+          };
+          img.src = data.src;
         }
       });
     </script>
@@ -236,13 +265,6 @@
         0%, 100% { top: 0% }
         50% { top: calc(100% - 10px) }
       }
-      
-      /* 添加图片自适应样式 */
-      .responsive-img {
-        object-fit: contain !important;
-        width: 100%;
-        height: 100%;
-      }
     </style>
   </head>
   <body>
@@ -267,14 +289,17 @@
           <img id="icon-right" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/right.png" />
           <img id="icon-play-video" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/play.png" />
           <img id="icon-pause" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/pause.png" />
-          <img id="paintandquest-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" class="responsive-img" />
+          <img id="paintandquest-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
           
           <!-- 设置视频不自动播放 -->
           <video id="paintandquest-video-mp4" autoplay="false" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
           <video id="paintandquest-video-webm" autoplay="false" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
           
-          <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" class="responsive-img" />
-          <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" class="responsive-img" />
+          <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
+          <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
+          
+          <!-- 添加中文字体 -->
+          <a-asset-item id="noto-sans-sc" src="https://cdn.jsdelivr.net/npm/three-bmfont-text@2.3.0/assets/fonts/DejaVu-sdf.json"></a-asset-item>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable">
@@ -284,23 +309,43 @@
           <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
 
           <a-entity visible=false id="portfolio-panel" position="0 0 -0.01">
-            <!-- 修复中文字符显示问题 -->
-            <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0.4 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+            <!-- 修复中文字符显示问题，使用HTML叠加层显示中文 -->
+            <a-entity position="0 0.4 0">
+              <a-plane color="white" opacity="0.7" width="1" height="0.15" position="0 0 -0.001"></a-plane>
+              <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0 0" 
+                     font="noto-sans-bold" negate="false" scale="0.5 0.5 0.5"
+                     text="width: 2; baseline: center; wrapCount: 30; anchor: center; align: center"></a-text>
+            </a-entity>
             
             <a-entity id="portfolio-item0">
-              <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0"></a-video>
-              <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1" material="alphaTest: 0.5; npot: true"></a-image>
-              <!-- 添加视频控制按钮 -->
-              <a-image visible=false id="video-play-button" class="clickable" src="#icon-play-video" position="0 0 0.01" height="0.15" width="0.15"></a-image>
-              <a-image visible=false id="video-pause-button" class="clickable" src="#icon-pause" position="0 0 0.01" height="0.15" width="0.15"></a-image>
+              <!-- 使用自适应视频容器 -->
+              <a-entity id="video-container" position="0 0 0">
+                <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0"></a-video>
+                <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" 
+                       position="0 0 0" height="0.552" width="1" 
+                       responsive-image="src: #paintandquest-preview; width: 1; height: 0.552"></a-image>
+              </a-entity>
+              
+              <!-- 改进视频控制按钮，使用半透明背景 -->
+              <a-entity visible=false id="video-play-button" class="clickable" position="0 0 0.01">
+                <a-circle color="white" opacity="0.7" radius="0.1" position="0 0 -0.001"></a-circle>
+                <a-image src="#icon-play-video" position="0 0 0" height="0.15" width="0.15"></a-image>
+              </a-entity>
+              
+              <a-entity visible=false id="video-pause-button" class="clickable" position="0 0 0.01">
+                <a-circle color="white" opacity="0.7" radius="0.1" position="0 0 -0.001"></a-circle>
+                <a-image src="#icon-pause" position="0 0 0" height="0.15" width="0.15"></a-image>
+              </a-entity>
             </a-entity>
             
             <a-entity id="portfolio-item1" visible=false>
-              <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1" material="alphaTest: 0.5; npot: true"></a-image>
+              <a-image class="clickable" src="#coffeemachine-preview" position="0 0 0" 
+                     responsive-image="src: #coffeemachine-preview; width: 1; height: 0.552"></a-image>
             </a-entity>
             
             <a-entity id="portfolio-item2" visible=false>
-              <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1" material="alphaTest: 0.5; npot: true"></a-image>
+              <a-image class="clickable" src="#peak-preview" position="0 0 0" 
+                     responsive-image="src: #peak-preview; width: 1; height: 0.552"></a-image>
             </a-entity>
 
             <a-image visible=false id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
@@ -323,7 +368,9 @@
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
 
-          <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+          <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" 
+                geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5" 
+                font="noto-sans-bold"></a-text>
         </a-entity>
       </a-scene>
     </div>
