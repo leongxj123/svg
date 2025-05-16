@@ -113,7 +113,6 @@
           currentTab = 'profile';
         });
         locationButton.addEventListener('click', function (evt) {
-          console.log("loc");
           text.setAttribute("value", "China | GuangDong");
           currentTab = 'location';
         });
@@ -131,92 +130,118 @@
         const portfolioRightButton = document.querySelector("#portfolio-right-button");
         const paintandquestPreviewButton = document.querySelector("#paintandquest-preview-button");
 
-        let y = 0;
         let currentItem = 0;
 
-        portfolio.setAttribute("visible", true);
+        // 确保先隐藏所有内容，然后再显示
+        portfolio.setAttribute("visible", false);
+        portfolioLeftButton.setAttribute("visible", false);
+        portfolioRightButton.setAttribute("visible", false);
+        document.querySelector("#portfolio-item0").setAttribute("visible", false);
+        document.querySelector("#portfolio-item1").setAttribute("visible", false);
+        document.querySelector("#portfolio-item2").setAttribute("visible", false);
+        
+        // 设置好位置后再显示
+        portfolio.setAttribute("position", "0 0.6 -0.01");
+        
+        // 使用延时确保位置设置完成后再显示
+        setTimeout(() => {
+          portfolio.setAttribute("visible", true);
+          portfolioLeftButton.setAttribute("visible", true);
+          portfolioRightButton.setAttribute("visible", true);
+          document.querySelector("#portfolio-item0").setAttribute("visible", true);
+        }, 100);
 
         const showPortfolioItem = (item) => {
           for (let i = 0; i <= 2; i++) {
             document.querySelector("#portfolio-item" + i).setAttribute("visible", i === item);
           }
         }
-        const id = setInterval(() => {
-          y += 0.008;
-          if (y >= 0.6) {
-            clearInterval(id);
-            portfolioLeftButton.setAttribute("visible", true);
-            portfolioRightButton.setAttribute("visible", true);
-            portfolioLeftButton.addEventListener('click', () => {
-              currentItem = (currentItem + 1) % 3;
-              showPortfolioItem(currentItem);
-            });
-            portfolioRightButton.addEventListener('click', () => {
-              currentItem = (currentItem - 1 + 3) % 3;
-              showPortfolioItem(currentItem);
-            });
+        
+        portfolioLeftButton.addEventListener('click', () => {
+          currentItem = (currentItem + 1) % 3;
+          showPortfolioItem(currentItem);
+        });
+        
+        portfolioRightButton.addEventListener('click', () => {
+          currentItem = (currentItem - 1 + 3) % 3;
+          showPortfolioItem(currentItem);
+        });
 
-            paintandquestPreviewButton.addEventListener('click', () => {
-              paintandquestPreviewButton.setAttribute("visible", false);
-              const testVideo = document.createElement( "video" );
-              const canplayWebm = testVideo.canPlayType( 'video/webm; codecs="vp8, vorbis"' );
-              let videoElement;
-              
-              if (canplayWebm == "") {
-                document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-mp4");
-                document.querySelector("#video-control-button").setAttribute("visible", true);
-                videoElement = document.querySelector("#paintandquest-video-mp4");
-                // 不自动播放，等待用户点击播放按钮
-                setupVideoControls(videoElement, "#video-control-button");
-              } else {
-                document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-webm");
-                document.querySelector("#video-control-button").setAttribute("visible", true);
-                videoElement = document.querySelector("#paintandquest-video-webm");
-                // 不自动播放，等待用户点击播放按钮
-                setupVideoControls(videoElement, "#video-control-button");
-              }
-              
-              // 确保视频宽高比正确
-              if (videoElement.readyState >= 1) { // 如果元数据已经加载
-                const videoWidth = videoElement.videoWidth;
-                const videoHeight = videoElement.videoHeight;
-                if (videoWidth && videoHeight) {
-                  const aspectRatio = videoWidth / videoHeight;
-                  const videoLink = document.querySelector("#paintandquest-video-link");
-                  const currentWidth = parseFloat(videoLink.getAttribute("width") || 1);
-                  videoLink.setAttribute("height", currentWidth / aspectRatio);
-                }
-              }
-            });
-
-            setTimeout(() => {
-              done();
-            }, 500);
+        paintandquestPreviewButton.addEventListener('click', () => {
+          paintandquestPreviewButton.setAttribute("visible", false);
+          const testVideo = document.createElement("video");
+          const canplayWebm = testVideo.canPlayType('video/webm; codecs="vp8, vorbis"');
+          let videoElement;
+          
+          if (canplayWebm == "") {
+            document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-mp4");
+            document.querySelector("#video-control-button").setAttribute("visible", true);
+            videoElement = document.querySelector("#paintandquest-video-mp4");
+            setupVideoControls(videoElement, "#video-control-button");
+          } else {
+            document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-webm");
+            document.querySelector("#video-control-button").setAttribute("visible", true);
+            videoElement = document.querySelector("#paintandquest-video-webm");
+            setupVideoControls(videoElement, "#video-control-button");
           }
-          portfolio.setAttribute("position", "0 " + y + " -0.01");
-        }, 10);
+          
+          // 确保视频宽高比正确
+          if (videoElement.readyState >= 1) {
+            const videoWidth = videoElement.videoWidth;
+            const videoHeight = videoElement.videoHeight;
+            if (videoWidth && videoHeight) {
+              const aspectRatio = videoWidth / videoHeight;
+              const videoLink = document.querySelector("#paintandquest-video-link");
+              const currentWidth = parseFloat(videoLink.getAttribute("width") || 1);
+              videoLink.setAttribute("height", currentWidth / aspectRatio);
+            }
+          }
+        });
+
+        // 延时确保一切就绪再回调
+        setTimeout(() => {
+          done();
+        }, 200);
       }
 
       const showAvatar = (onDone) => {
-        setTimeout(onDone, 750);
+        // 简化头像显示逻辑
+        onDone();
       }
 
       AFRAME.registerComponent('mytarget', {
         init: function () {
           this.el.addEventListener('targetFound', event => {
             console.log("target found");
-            showAvatar(() => {
-              setTimeout(() => {
+            
+            // 清理任何可能存在的旧元素，防止重复
+            const portfolio = document.querySelector("#portfolio-panel");
+            portfolio.setAttribute("visible", false);
+            document.querySelector("#profile-button").setAttribute("visible", false);
+            document.querySelector("#web-button").setAttribute("visible", false);
+            document.querySelector("#email-button").setAttribute("visible", false);
+            document.querySelector("#location-button").setAttribute("visible", false);
+            document.querySelector("#text-container").setAttribute("visible", false);
+            
+            // 设置适当的延时，确保顺序加载
+            setTimeout(() => {
+              showAvatar(() => {
                 showPortfolio(() => {
-                  setTimeout(() => {
-                    showInfo();
-                  }, 300);
+                  showInfo();
                 });
-              }, 300);
-            });
+              });
+            }, 300);
           });
+          
           this.el.addEventListener('targetLost', event => {
-            console.log("target lost"); 
+            console.log("target lost");
+            // 隐藏所有元素
+            document.querySelector("#portfolio-panel").setAttribute("visible", false);
+            document.querySelector("#profile-button").setAttribute("visible", false);
+            document.querySelector("#web-button").setAttribute("visible", false);
+            document.querySelector("#email-button").setAttribute("visible", false);
+            document.querySelector("#location-button").setAttribute("visible", false);
+            document.querySelector("#text-container").setAttribute("visible", false);
           });
         }
       });
@@ -421,10 +446,9 @@
           <img id="paintandquest-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
           <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
           <video id="paintandquest-video-webm" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
-          <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
-          <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
-          
-          </a-assets>
+          <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" crossorigin="anonymous" />
+          <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" crossorigin="anonymous" />
+        </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable">
         </a-camera>
