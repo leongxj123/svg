@@ -1,211 +1,124 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR 名片扫描 (Hiro示例排查)</title>
+    <title>WebAR 立方体演示</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 基本样式 */
         body {
-            font-family: 'Inter', sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden; /* 防止水平滚动条 */
+            overflow: hidden; /* 防止滚动条出现 */
+            font-family: Arial, sans-serif; /* 设置一个通用字体 */
         }
-        /* A-Frame 场景容器样式 */
-        #ar-scene-container {
-            width: 100%; /* 占据全部可用宽度 */
-            max-width: 800px; /* 在大屏幕上限制最大宽度 */
-            height: 50vh; /* 调整高度以便在手机上更好地显示其他内容 */
-            min-height: 300px; /* 保证一个最小高度 */
-            margin: 20px auto; /* 水平居中 */
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            overflow: hidden;
-            position: relative;
-        }
-        /* AR.js 默认的加载UI */
-        .arjs-loader {
-            height: 100%;
-            width: 100%;
+        /* 提示信息样式 */
+        #infoBox {
             position: absolute;
-            top: 0;
-            left: 0;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 15px;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            z-index: 100;
         }
-        .arjs-loader-spinner {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #3498db;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* 确保 canvas 充满其容器 */
-        a-scene canvas {
-            width: 100% !important;
-            height: 100% !important;
-            border-radius: 12px; /* 确保 canvas 也有圆角 */
-        }
-        /* 确保主内容区域不会过宽 */
-        main {
-            width: 100%;
-            padding-left: 1rem; /* 16px */
-            padding-right: 1rem; /* 16px */
+        /* 错误信息样式 */
+        #errorBox {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 15px;
+            background-color: rgba(255,0,0,0.7);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            z-index: 100;
+            display: none; /* 默认隐藏 */
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100">
+<body style='margin : 0px; overflow: hidden;'>
+    <div id="infoBox">
+        请将摄像头对准 Hiro 标记图案。
+        <br>
+        <a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" target="_blank" style="color: #4CAF50;">查看 Hiro 标记</a>
+    </div>
 
-    <header class="w-full bg-blue-600 p-4 shadow-md">
-        <h1 class="text-2xl sm:text-3xl font-bold text-white text-center">互动AR名片 (Hiro示例)</h1>
-    </header>
+    <div id="errorBox"></div>
 
-    <main class="w-full max-w-4xl p-4 sm:p-6 flex flex-col items-center">
-        <p class="text-base sm:text-lg text-gray-700 mb-4 text-center">
-            请授权摄像头访问，并将摄像头对准下方的 "Hiro" 标记图案。
-        </p>
+    <a-scene embedded
+             arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
+             renderer='antialias: true; alpha: true; precision: mediump;'
+             vr-mode-ui='enabled: false'>
 
-        <div id="ar-scene-container">
-            <a-scene embedded
-                     arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
-                     renderer="colorManagement: true; physicallyCorrectLights: true"
-                     vr-mode-ui="enabled: false"
-                     id="arScene">
+        <a-marker preset="hiro">
+            <a-box position="0 0.5 0" rotation="-45 45 0" material="color: red; opacity: 0.8;" shadow></a-box>
+        </a-marker>
 
-                <a-assets>
-                    </a-assets>
-
-                <a-light type="ambient" color="#BBB"></a-light>
-                <a-light type="directional" color="#FFF" intensity="0.8" position="-0.5 1 1"></a-light>
-
-                <a-marker id="hiro-marker" preset='hiro'>
-                    <a-box id="ar-object"
-                           color="green"
-                           depth="0.5"
-                           height="0.5"
-                           width="0.5"
-                           position="0 0.5 0" /* Y轴向上0.5单位，使其位于标记正上方 */
-                           animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear;">
-                        <a-text value="Hiro 标记!"
-                                align="center"
-                                color="#FFFFFF"
-                                position="0 0.4 0"
-                                scale="0.3 0.3 0.3"
-                                wrap-count="15">
-                        </a-text>
-                    </a-box>
-                </a-marker>
-
-                <a-entity camera></a-entity>
-            </a-scene>
-        </div>
-
-        <section class="mt-6 p-4 bg-white rounded-lg shadow-lg w-full">
-            <h2 class="text-xl sm:text-2xl font-semibold text-blue-700 mb-3">如何操作</h2>
-            <ol class="list-decimal list-inside text-gray-600 space-y-2 text-sm sm:text-base">
-                <li>确保您的浏览器已授权访问摄像头。页面加载时通常会有提示。</li>
-                <li>
-                    在另一个屏幕上显示或打印下面的 "Hiro" 标记图案。
-                    <div class="my-3 p-3 border border-gray-300 rounded-md inline-block bg-white">
-                        <img src="https://raw.githack.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" alt="Hiro 标记图案" class="w-32 h-32 sm:w-40 sm:h-40 mx-auto">
-                        <p class="text-xs sm:text-sm text-center mt-1">Hiro 标记 (示例)</p>
-                    </div>
-                </li>
-                <li>将您设备的摄像头平稳地对准该标记图案。</li>
-                <li>当标记被识别后，您应该能看到一个绿色的3D立方体出现在标记上方。</li>
-            </ol>
-        </section>
-
-        <section class="mt-6 p-4 bg-white rounded-lg shadow-lg w-full">
-            <h2 class="text-xl sm:text-2xl font-semibold text-blue-700 mb-3">排查提示</h2>
-            <ul class="list-disc list-inside text-gray-600 space-y-1 text-sm sm:text-base">
-                <li><strong>摄像头权限：</strong> 再次检查浏览器设置，确保此网站有权访问摄像头。</li>
-                <li><strong>本地服务器：</strong> 如果您是在本地测试HTML文件，请确保通过Web服务器 (如Node.js的 `http-server` 或 Python的 `SimpleHTTPServer`) 访问，而不是直接用 `file:///` 协议打开。直接打开文件可能会导致AR.js无法正常工作。</li>
-                <li><strong>浏览器控制台：</strong> 在手机上查看浏览器开发者控制台的错误信息。这是诊断问题的最重要步骤。
-                    <ul>
-                        <li>Android (Chrome): USB连接电脑, 电脑Chrome打开 `chrome://inspect`。</li>
-                        <li>iOS (Safari): USB连接Mac, Mac Safari开启开发菜单检查。</li>
-                    </ul>
-                </li>
-                <li><strong>光线和标记：</strong> 确保标记图案清晰、光线充足且无反光。</li>
-                <li><strong>清除缓存：</strong> 尝试清除浏览器缓存或使用无痕模式。</li>
-            </ul>
-        </section>
-    </main>
-
-    <footer class="w-full bg-gray-800 p-3 mt-8">
-        <p class="text-xs sm:text-sm text-gray-400 text-center">&copy; 2025 WebAR测试平台. 保留所有权利.</p>
-    </footer>
+        <a-entity camera></a-entity>
+    </a-scene>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const sceneEl = document.querySelector('#arScene'); // 使用ID选择器
-            const markerEl = document.querySelector('#hiro-marker');
-            const arObject = document.querySelector('#ar-object');
+        // 检查摄像头权限和 WebGL 支持
+        document.addEventListener('DOMContentLoaded', () => {
+            const errorBox = document.getElementById('errorBox');
+            let errorMessage = '';
 
-            if (!sceneEl) {
-                console.error('A-Frame scene (#arScene) not found!');
-                return;
-            }
-            if (!markerEl) {
-                console.error('Hiro marker (#hiro-marker) not found!');
-                return;
-            }
-            if (!arObject) {
-                console.error('AR object (#ar-object) not found!');
+            // 检查 WebGL 支持
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (!gl) {
+                errorMessage += '您的浏览器不支持 WebGL。请尝试使用其他浏览器或更新当前浏览器。\n';
             }
 
-            console.log('AR.js Hiro Marker Test Initialized.');
-            sceneEl.addEventListener('loaded', function () {
-                console.log('A-Frame scene has loaded.');
-            });
-
-            sceneEl.addEventListener('arjs-video-loaded', function () {
-                console.log('AR.js video feed loaded.');
-            });
-
-             sceneEl.addEventListener('arjs-nft-loaded', (event) => {
-                console.log('AR.js NFT marker data loaded:', event.detail);
-            });
-
-
-            if (markerEl) {
-                markerEl.addEventListener('markerFound', function() {
-                    console.log('Hiro marker FOUND!');
-                    if(arObject) {
-                        arObject.setAttribute('visible', true);
-                        console.log('AR object set to visible.');
-                    }
-                });
-
-                markerEl.addEventListener('markerLost', function() {
-                    console.log('Hiro marker LOST.');
-                    if(arObject) {
-                        arObject.setAttribute('visible', false);
-                        console.log('AR object set to hidden.');
-                    }
-                });
+            // 检查摄像头权限
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        stream.getTracks().forEach(track => track.stop()); // 获取权限后立即停止，避免一直占用
+                        if (errorMessage) { // 如果之前有 WebGL 错误
+                            errorBox.innerText = errorMessage;
+                            errorBox.style.display = 'block';
+                        }
+                    })
+                    .catch(err => {
+                        console.error("摄像头访问错误:", err);
+                        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                            errorMessage += '摄像头访问被拒绝。请授予摄像头权限。\n';
+                        } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+                            errorMessage += '未找到摄像头设备。\n';
+                        } else {
+                            errorMessage += '无法访问摄像头。错误: ' + err.message + '\n';
+                        }
+                        errorBox.innerText = errorMessage;
+                        errorBox.style.display = 'block';
+                    });
             } else {
-                console.error("Hiro marker element not found in the DOM.");
+                errorMessage += '您的浏览器不支持访问摄像头 (getUserMedia)。\n';
+                errorBox.innerText = errorMessage;
+                errorBox.style.display = 'block';
+            }
+
+            // 监听 AR.js 的 markerFound 和 markerLost 事件 (可选，用于调试或更复杂的交互)
+            const marker = document.querySelector('a-marker');
+            if (marker) {
+                marker.addEventListener('markerFound', () => {
+                    console.log('Hiro 标记已找到！');
+                    document.getElementById('infoBox').style.backgroundColor = 'rgba(0,128,0,0.7)'; // 绿色提示
+                    document.getElementById('infoBox').innerText = '已识别到 Hiro 标记！';
+                });
+
+                marker.addEventListener('markerLost', () => {
+                    console.log('Hiro 标记已丢失。');
+                     document.getElementById('infoBox').style.backgroundColor = 'rgba(0,0,0,0.7)'; // 恢复原色
+                    document.getElementById('infoBox').innerHTML = '请将摄像头对准 Hiro 标记图案。<br><a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" target="_blank" style="color: #4CAF50;">查看 Hiro 标记</a>';
+                });
             }
         });
     </script>
