@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -56,6 +57,8 @@
         const portfolioLeftButton = document.querySelector("#portfolio-left-button");
         const portfolioRightButton = document.querySelector("#portfolio-right-button");
         const paintandquestPreviewButton = document.querySelector("#paintandquest-preview-button");
+        const videoPlayButton = document.querySelector("#video-play-button");
+        const videoPauseButton = document.querySelector("#video-pause-button");
 
         let y = 0;
         let currentItem = 0;
@@ -84,15 +87,35 @@
 
             paintandquestPreviewButton.addEventListener('click', () => {
               paintandquestPreviewButton.setAttribute("visible", false);
-              const testVideo = document.createElement( "video" );
-              const canplayWebm = testVideo.canPlayType( 'video/webm; codecs="vp8, vorbis"' );
+              videoPlayButton.setAttribute("visible", true); // 显示播放按钮
+              
+              const testVideo = document.createElement("video");
+              const canplayWebm = testVideo.canPlayType('video/webm; codecs="vp8, vorbis"');
+              let videoElement;
+              
               if (canplayWebm == "") {
                 document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-mp4");
-                document.querySelector("#paintandquest-video-mp4").play();
+                videoElement = document.querySelector("#paintandquest-video-mp4");
               } else {
                 document.querySelector("#paintandquest-video-link").setAttribute("src", "#paintandquest-video-webm");
-                document.querySelector("#paintandquest-video-webm").play();
+                videoElement = document.querySelector("#paintandquest-video-webm");
               }
+              
+              // 设置视频为暂停状态，等待用户点击播放按钮
+              videoElement.pause();
+              
+              // 视频播放控制逻辑
+              videoPlayButton.addEventListener('click', () => {
+                videoElement.play();
+                videoPlayButton.setAttribute("visible", false);
+                videoPauseButton.setAttribute("visible", true);
+              });
+              
+              videoPauseButton.addEventListener('click', () => {
+                videoElement.pause();
+                videoPauseButton.setAttribute("visible", false);
+                videoPlayButton.setAttribute("visible", true);
+              });
             });
 
             setTimeout(() => {
@@ -213,6 +236,13 @@
         0%, 100% { top: 0% }
         50% { top: calc(100% - 10px) }
       }
+      
+      /* 添加图片自适应样式 */
+      .responsive-img {
+        object-fit: contain !important;
+        width: 100%;
+        height: 100%;
+      }
     </style>
   </head>
   <body>
@@ -235,13 +265,17 @@
           <img id="icon-play" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/play.png" />
           <img id="icon-left" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/left.png" />
           <img id="icon-right" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/right.png" />
-          <img id="paintandquest-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
-          <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
-          <video id="paintandquest-video-webm" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
-          <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
-          <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
+          <img id="icon-play-video" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/play.png" />
+          <img id="icon-pause" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/pause.png" />
+          <img id="paintandquest-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" class="responsive-img" />
           
-          </a-assets>
+          <!-- 设置视频不自动播放 -->
+          <video id="paintandquest-video-mp4" autoplay="false" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
+          <video id="paintandquest-video-webm" autoplay="false" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
+          
+          <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" class="responsive-img" />
+          <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" class="responsive-img" />
+        </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable">
         </a-camera>
@@ -250,19 +284,23 @@
           <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
 
           <a-entity visible=false id="portfolio-panel" position="0 0 -0.01">
-            <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0.4 0"></a-text>
+            <!-- 修复中文字符显示问题 -->
+            <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0.4 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
+            
             <a-entity id="portfolio-item0">
               <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0"></a-video>
-              <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
-              </a-image>
+              <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1" material="alphaTest: 0.5; npot: true"></a-image>
+              <!-- 添加视频控制按钮 -->
+              <a-image visible=false id="video-play-button" class="clickable" src="#icon-play-video" position="0 0 0.01" height="0.15" width="0.15"></a-image>
+              <a-image visible=false id="video-pause-button" class="clickable" src="#icon-pause" position="0 0 0.01" height="0.15" width="0.15"></a-image>
             </a-entity>
+            
             <a-entity id="portfolio-item1" visible=false>
-              <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
-              </a-image>
+              <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1" material="alphaTest: 0.5; npot: true"></a-image>
             </a-entity>
+            
             <a-entity id="portfolio-item2" visible=false>
-              <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
-              </a-image>
+              <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1" material="alphaTest: 0.5; npot: true"></a-image>
             </a-entity>
 
             <a-image visible=false id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
@@ -285,7 +323,7 @@
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
 
-          <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5"></a-text>
+          <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
         </a-entity>
       </a-scene>
     </div>
