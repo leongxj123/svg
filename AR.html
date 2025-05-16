@@ -53,7 +53,7 @@
     <div id="errorBox"></div>
 
     <a-scene embedded
-             arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
+             arjs='sourceType: webcam; facingMode: environment; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
              renderer='antialias: true; alpha: true; precision: mediump;'
              vr-mode-ui='enabled: false'>
 
@@ -68,6 +68,7 @@
         // 检查摄像头权限和 WebGL 支持
         document.addEventListener('DOMContentLoaded', () => {
             const errorBox = document.getElementById('errorBox');
+            const infoBox = document.getElementById('infoBox');
             let errorMessage = '';
 
             // 检查 WebGL 支持
@@ -79,47 +80,85 @@
 
             // 检查摄像头权限
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
+                // 请求特定朝向的摄像头 (environment 通常指后置摄像头)
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                     .then(stream => {
                         stream.getTracks().forEach(track => track.stop()); // 获取权限后立即停止，避免一直占用
                         if (errorMessage) { // 如果之前有 WebGL 错误
                             errorBox.innerText = errorMessage;
                             errorBox.style.display = 'block';
                         }
+                        console.log("摄像头权限已获取。");
                     })
                     .catch(err => {
                         console.error("摄像头访问错误:", err);
                         if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-                            errorMessage += '摄像头访问被拒绝。请授予摄像头权限。\n';
+                            errorMessage += '摄像头访问被拒绝。请在浏览器和系统设置中授予摄像头权限。\n';
                         } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-                            errorMessage += '未找到摄像头设备。\n';
-                        } else {
-                            errorMessage += '无法访问摄像头。错误: ' + err.message + '\n';
+                            errorMessage += '未找到符合要求的摄像头设备 (NotFoundError)。请确保您的设备有后置摄像头且浏览器可以访问它。\n';
+                        } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+                            errorMessage += '摄像头已被其他应用占用，或硬件故障 (NotReadableError)。\n';
+                        }
+                         else {
+                            errorMessage += '无法访问摄像头。错误: ' + err.name + ' - ' + err.message + '\n';
                         }
                         errorBox.innerText = errorMessage;
                         errorBox.style.display = 'block';
                     });
             } else {
-                errorMessage += '您的浏览器不支持访问摄像头 (getUserMedia)。\n';
+                errorMessage += '您的浏览器不支持访问摄像头 (getUserMedia API)。请尝试更新浏览器或使用其他浏览器。\n';
                 errorBox.innerText = errorMessage;
                 errorBox.style.display = 'block';
             }
 
-            // 监听 AR.js 的 markerFound 和 markerLost 事件 (可选，用于调试或更复杂的交互)
+            // 监听 AR.js 的 markerFound 和 markerLost 事件
             const marker = document.querySelector('a-marker');
             if (marker) {
                 marker.addEventListener('markerFound', () => {
                     console.log('Hiro 标记已找到！');
-                    document.getElementById('infoBox').style.backgroundColor = 'rgba(0,128,0,0.7)'; // 绿色提示
-                    document.getElementById('infoBox').innerText = '已识别到 Hiro 标记！';
+                    infoBox.style.backgroundColor = 'rgba(0,128,0,0.7)'; // 绿色提示
+                    infoBox.innerText = '已识别到 Hiro 标记！';
                 });
 
                 marker.addEventListener('markerLost', () => {
                     console.log('Hiro 标记已丢失。');
-                     document.getElementById('infoBox').style.backgroundColor = 'rgba(0,0,0,0.7)'; // 恢复原色
-                    document.getElementById('infoBox').innerHTML = '请将摄像头对准 Hiro 标记图案。<br><a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" target="_blank" style="color: #4CAF50;">查看 Hiro 标记</a>';
+                    infoBox.style.backgroundColor = 'rgba(0,0,0,0.7)'; // 恢复原色
+                    infoBox.innerHTML = '请将摄像头对准 Hiro 标记图案。<br><a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" target="_blank" style="color: #4CAF50;">查看 Hiro 标记</a>';
                 });
             }
+
+            // 监听AR.js初始化错误 (更底层的错误)
+            const scene = document.querySelector('a-scene');
+            scene.addEventListener('arjs-source-error', (event) => {
+                console.error('AR.js source error:', event.detail);
+                let arjsErrorMessage = 'AR.js 初始化摄像头失败。\n';
+                if (event.detail && event.detail.name) {
+                    arjsErrorMessage += `错误名称: ${event.detail.name}\n`;
+                }
+                if (event.detail && event.detail.message) {
+                    arjsErrorMessage += `错误信息: ${event.detail.message}\n`;
+                }
+                if (!errorBox.innerText.includes(arjsErrorMessage)) {
+                     errorBox.innerText += arjsErrorMessage;
+                }
+                errorBox.style.display = 'block';
+            });
+             scene.addEventListener('arjs-video-error', (event) => { // For three.js based AR.js
+                console.error('AR.js video error:', event.detail);
+                 let arjsVideoErrorMessage = 'AR.js 视频流错误。\n';
+                 if (event.detail && event.detail.name) {
+                    arjsVideoErrorMessage += `错误名称: ${event.detail.name}\n`;
+                }
+                if (event.detail && event.detail.message) {
+                    arjsVideoErrorMessage += `错误信息: ${event.detail.message}\n`;
+                }
+                if (!errorBox.innerText.includes(arjsVideoErrorMessage)) {
+                     errorBox.innerText += arjsVideoErrorMessage;
+                }
+                errorBox.style.display = 'block';
+            });
+
+
         });
     </script>
 </body>
