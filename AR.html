@@ -3,162 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR 立方体演示</title>
+    <title>AR图像追踪 - 医生信息</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+
     <style>
         body {
             margin: 0;
-            overflow: hidden; /* 防止滚动条出现 */
-            font-family: Arial, sans-serif; /* 设置一个通用字体 */
+            overflow: hidden;
+            font-family: Arial, sans-serif;
         }
-        /* 提示信息样式 */
-        #infoBox {
+        #ar-scene {
+            width: 100%;
+            height: 100vh;
+            display: block;
+        }
+        .arjs-loader {
+            height: 100%;
+            width: 100%;
             position: absolute;
-            top: 10px;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2em;
+            z-index: 9999;
+        }
+        #message-box {
+            position: fixed;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 10px 15px;
             background-color: rgba(0,0,0,0.7);
             color: white;
+            padding: 10px 20px;
             border-radius: 8px;
-            font-size: 14px;
+            z-index: 10000;
+            display: none;
             text-align: center;
-            z-index: 100;
-        }
-        /* 错误信息样式 */
-        #errorBox {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 15px;
-            background-color: rgba(255,0,0,0.7);
-            color: white;
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: center;
-            z-index: 100;
-            display: none; /* 默认隐藏 */
         }
     </style>
 </head>
-<body style='margin : 0px; overflow: hidden;'>
-    <div id="infoBox">
-        请将摄像头对准 Hiro 标记图案。
-        <br>
-        <a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" target="_blank" style="color: #4CAF50;">查看 Hiro 标记</a>
+<body style="margin: 0; overflow: hidden;">
+    <div class="arjs-loader">
+        <div>正在加载AR体验，请稍候...</div>
     </div>
 
-    <div id="errorBox"></div>
+    <div id="message-box"></div>
 
-    <a-scene embedded
-             arjs='sourceType: webcam; facingMode: environment; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
-             renderer='antialias: true; alpha: true; precision: mediump;'
-             vr-mode-ui='enabled: false'>
+    <a-scene
+        id="ar-scene"
+        vr-mode-ui="enabled: false;"
+        renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; colorManagement: true;"
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        gesture-detector
+        embedded>
 
-        <a-marker preset="hiro">
-            <a-box position="0 0.5 0" rotation="-45 45 0" material="color: red; opacity: 0.8;" shadow></a-box>
-        </a-marker>
+        <a-nft
+            id="imageMarker"
+            type="nft"
+            url="./mymarker"
+            smooth="true"
+            smoothcount="10"
+            smoothtolerance=".01"
+            smooththreshold="5"
+            emitevents="true">
+
+            <a-entity
+                id="doctorInfo"
+                position="0 0 -50"
+                rotation="0 0 0"
+                scale="50 50 50"
+                visible="false">
+                <!-- 主立方体作为医生信息容器 -->
+                <a-box
+                    id="mainBox"
+                    color="#4CC3D9"
+                    depth="1.5"
+                    height="1.5"
+                    width="1.5"
+                    opacity="0.9">
+                    <a-animation attribute="rotation"
+                                to="0 360 0"
+                                loop="true"
+                                dur="12000"
+                                easing="linear"></a-animation>
+                </a-box>
+                <!-- 添加文本信息 -->
+                <a-text
+                    value="医生信息"
+                    position="0 0.8 0.76"
+                    scale="0.5 0.5 0.5"
+                    color="white"
+                    align="center"></a-text>
+                <a-text
+                    value="专业：外科"
+                    position="0 0.5 0.76"
+                    scale="0.3 0.3 0.3"
+                    color="white"
+                    align="center"></a-text>
+                <a-text
+                    value="经验：10年"
+                    position="0 0.3 0.76"
+                    scale="0.3 0.3 0.3"
+                    color="white"
+                    align="center"></a-text>
+            </a-entity>
+        </a-nft>
 
         <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-        // 检查摄像头权限和 WebGL 支持
-        document.addEventListener('DOMContentLoaded', () => {
-            const errorBox = document.getElementById('errorBox');
-            const infoBox = document.getElementById('infoBox');
-            let errorMessage = '';
+        // 等待场景加载完成
+        document.addEventListener('DOMContentLoaded', function () {
+            const sceneEl = document.querySelector('a-scene');
+            const markerEl = document.querySelector('#imageMarker');
+            const doctorInfoEl = document.querySelector('#doctorInfo');
+            const messageBox = document.getElementById('message-box');
 
-            // 检查 WebGL 支持
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            if (!gl) {
-                errorMessage += '您的浏览器不支持 WebGL。请尝试使用其他浏览器或更新当前浏览器。\n';
+            function showMessage(text, duration = 3000) {
+                messageBox.textContent = text;
+                messageBox.style.display = 'block';
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                }, duration);
             }
 
-            // 检查摄像头权限
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                // 请求特定朝向的摄像头 (environment 通常指后置摄像头)
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                    .then(stream => {
-                        stream.getTracks().forEach(track => track.stop()); // 获取权限后立即停止，避免一直占用
-                        if (errorMessage) { // 如果之前有 WebGL 错误
-                            errorBox.innerText = errorMessage;
-                            errorBox.style.display = 'block';
-                        }
-                        console.log("摄像头权限已获取。");
-                    })
-                    .catch(err => {
-                        console.error("摄像头访问错误:", err);
-                        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-                            errorMessage += '摄像头访问被拒绝。请在浏览器和系统设置中授予摄像头权限。\n';
-                        } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-                            errorMessage += '未找到符合要求的摄像头设备 (NotFoundError)。请确保您的设备有后置摄像头且浏览器可以访问它。\n';
-                        } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
-                            errorMessage += '摄像头已被其他应用占用，或硬件故障 (NotReadableError)。\n';
-                        }
-                         else {
-                            errorMessage += '无法访问摄像头。错误: ' + err.name + ' - ' + err.message + '\n';
-                        }
-                        errorBox.innerText = errorMessage;
-                        errorBox.style.display = 'block';
-                    });
+            if (sceneEl) {
+                sceneEl.addEventListener('loaded', function () {
+                    console.log("A-Frame 场景已加载");
+                    const loader = document.querySelector('.arjs-loader');
+                    if (loader) {
+                        loader.style.display = 'none';
+                    }
+                    showMessage("AR系统已加载，请将相机对准医生图片以查看详细信息。", 5000);
+                });
+
+                sceneEl.addEventListener('arjs-nft-loaded', function (event) {
+                    console.log("AR.js NFT 系统已加载", event.detail);
+                    showMessage("NFT追踪器已准备就绪。");
+                });
+
+                sceneEl.addEventListener('arjs-nft-init-data', function (event) {
+                    console.log("AR.js NFT 初始化数据", event.detail);
+                });
+
+                sceneEl.addEventListener('arjs-nft-fetched', function (event) {
+                    console.log("AR.js NFT 数据已获取", event.detail.url, event.detail.name);
+                    showMessage(`已获取NFT数据: ${event.detail.name}`);
+                });
+
+                sceneEl.addEventListener('arjs-nft-error', function (event) {
+                    console.error("AR.js NFT 错误:", event.detail.error, "URL:", event.detail.url, "Name:", event.detail.name);
+                    let errorMsg = 'NFT加载错误。';
+                    if (event.detail.error) {
+                        if (event.detail.error.message) errorMsg += ` ${event.detail.error.message}`;
+                        else if (event.detail.error.name) errorMsg += ` ${event.detail.error.name}`;
+                        else errorMsg += ` ${JSON.stringify(event.detail.error)}`;
+                    }
+                    errorMsg += " 检查控制台获取详情。";
+                    showMessage(errorMsg, 7000);
+                });
+            }
+
+            if (markerEl) {
+                markerEl.addEventListener('markerfound', () => {
+                    console.log('图像标记已找到!');
+                    showMessage('图像标记已找到! 显示医生信息', 2000);
+                    if (doctorInfoEl) doctorInfoEl.setAttribute('visible', 'true');
+                });
+
+                markerEl.addEventListener('markerlost', () => {
+                    console.log('图像标记已丢失.');
+                    showMessage('图像标记已丢失.', 2000);
+                    if (doctorInfoEl) doctorInfoEl.setAttribute('visible', 'false');
+                });
             } else {
-                errorMessage += '您的浏览器不支持访问摄像头 (getUserMedia API)。请尝试更新浏览器或使用其他浏览器。\n';
-                errorBox.innerText = errorMessage;
-                errorBox.style.display = 'block';
+                console.error("未能找到 a-nft 元素。请检查 ID 是否正确。");
+                showMessage("错误: 未能初始化图像追踪器。", 5000);
             }
 
-            // 监听 AR.js 的 markerFound 和 markerLost 事件
-            const marker = document.querySelector('a-marker');
-            if (marker) {
-                marker.addEventListener('markerFound', () => {
-                    console.log('Hiro 标记已找到！');
-                    infoBox.style.backgroundColor = 'rgba(0,128,0,0.7)'; // 绿色提示
-                    infoBox.innerText = '已识别到 Hiro 标记！';
-                });
-
-                marker.addEventListener('markerLost', () => {
-                    console.log('Hiro 标记已丢失。');
-                    infoBox.style.backgroundColor = 'rgba(0,0,0,0.7)'; // 恢复原色
-                    infoBox.innerHTML = '请将摄像头对准 Hiro 标记图案。<br><a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" target="_blank" style="color: #4CAF50;">查看 Hiro 标记</a>';
-                });
+            function isWebGLAvailable() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+                } catch (e) {
+                    return false;
+                }
             }
 
-            // 监听AR.js初始化错误 (更底层的错误)
-            const scene = document.querySelector('a-scene');
-            scene.addEventListener('arjs-source-error', (event) => {
-                console.error('AR.js source error:', event.detail);
-                let arjsErrorMessage = 'AR.js 初始化摄像头失败。\n';
-                if (event.detail && event.detail.name) {
-                    arjsErrorMessage += `错误名称: ${event.detail.name}\n`;
+            if (!isWebGLAvailable()) {
+                showMessage("错误: 您的浏览器或设备不支持WebGL，AR功能可能无法正常工作。", 10000);
+                const loader = document.querySelector('.arjs-loader');
+                if (loader) {
+                    loader.innerHTML = '<div>错误: 您的浏览器或设备不支持WebGL。<br/>AR功能可能无法正常工作。</div>';
                 }
-                if (event.detail && event.detail.message) {
-                    arjsErrorMessage += `错误信息: ${event.detail.message}\n`;
-                }
-                if (!errorBox.innerText.includes(arjsErrorMessage)) {
-                     errorBox.innerText += arjsErrorMessage;
-                }
-                errorBox.style.display = 'block';
-            });
-             scene.addEventListener('arjs-video-error', (event) => { // For three.js based AR.js
-                console.error('AR.js video error:', event.detail);
-                 let arjsVideoErrorMessage = 'AR.js 视频流错误。\n';
-                 if (event.detail && event.detail.name) {
-                    arjsVideoErrorMessage += `错误名称: ${event.detail.name}\n`;
-                }
-                if (event.detail && event.detail.message) {
-                    arjsVideoErrorMessage += `错误信息: ${event.detail.message}\n`;
-                }
-                if (!errorBox.innerText.includes(arjsVideoErrorMessage)) {
-                     errorBox.innerText += arjsVideoErrorMessage;
-                }
-                errorBox.style.display = 'block';
-            });
+            }
 
-
+            async function checkCameraPermission() {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        stream.getTracks().forEach(track => track.stop());
+                        console.log("摄像头权限已授予或可用。");
+                    } catch (err) {
+                        console.error("摄像头访问被拒绝或出错: ", err);
+                        let msg = "摄像头访问出错: " + err.name;
+                        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                             msg = "错误: 摄像头访问被拒绝。请授予摄像头权限。";
+                        } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+                            msg = "错误: 未找到摄像头设备。";
+                        } else if (err.name === "NotReadableError") {
+                            msg = "错误: 摄像头被其他应用占用。请关闭其他使用摄像头的应用，然后刷新页面。";
+                        }
+                        showMessage(msg, 10000);
+                        const loader = document.querySelector('.arjs-loader');
+                        if (loader) {
+                            loader.innerHTML = `<div>${msg.replace(/\n/g, "<br/>")}<br/>请检查权限或设备。</div>`;
+                        }
+                    }
+                } else {
+                    const msg = "错误: 您的浏览器不支持getUserMedia API (摄像头访问)。";
+                    showMessage(msg, 10000);
+                     const loader = document.querySelector('.arjs-loader');
+                    if (loader) {
+                        loader.innerHTML = `<div>${msg}</div>`;
+                    }
+                }
+            }
+            // 延迟执行相机权限检查，确保AR.js有时间初始化
+            setTimeout(checkCameraPermission, 500);
         });
     </script>
 </body>
