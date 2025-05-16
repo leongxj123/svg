@@ -3,7 +3,6 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta charset="UTF-8"> <!-- 添加UTF-8字符集支持 -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
@@ -108,23 +107,14 @@
               // 视频播放控制逻辑
               videoPlayButton.addEventListener('click', () => {
                 videoElement.play();
-                // 播放后隐藏控制按钮，避免遮挡视频内容
-                setTimeout(() => {
-                  videoPlayButton.setAttribute("visible", false);
-                }, 1000);  // 1秒后隐藏按钮
-                
-                // 点击视频时显示暂停按钮
-                document.querySelector("#paintandquest-video-link").addEventListener('click', () => {
-                  if(!videoElement.paused) {
-                    videoElement.pause();
-                    videoPlayButton.setAttribute("visible", true);
-                  } else {
-                    videoElement.play();
-                    setTimeout(() => {
-                      videoPlayButton.setAttribute("visible", false);
-                    }, 1000);
-                  }
-                });
+                videoPlayButton.setAttribute("visible", false);
+                videoPauseButton.setAttribute("visible", true);
+              });
+              
+              videoPauseButton.addEventListener('click', () => {
+                videoElement.pause();
+                videoPauseButton.setAttribute("visible", false);
+                videoPlayButton.setAttribute("visible", true);
               });
             });
 
@@ -137,7 +127,12 @@
       }
 
       // Modified showAvatar function
+      // It no longer animates a GLTF model.
+      // Instead, it waits for approximately the same duration as the original animation
+      // before calling onDone, to maintain the timing of subsequent operations.
       const showAvatar = (onDone) => {
+        // The original avatar animation took roughly (0.3 - (-0.3)) / 0.008 * 10ms = 750ms.
+        // We use a setTimeout to simulate this delay.
         setTimeout(onDone, 750);
       }
 
@@ -145,7 +140,7 @@
         init: function () {
           this.el.addEventListener('targetFound', event => {
             console.log("target found");
-            showAvatar(() => {
+            showAvatar(() => { // Call the modified showAvatar
               setTimeout(() => {
                 showPortfolio(() => {
                   setTimeout(() => {
@@ -156,27 +151,11 @@
             });
           });
           this.el.addEventListener('targetLost', event => {
+            // It's good practice to also handle targetLost, e.g., hide elements.
+            // For now, just logging as in the original code.
             console.log("target lost"); 
           });
           //this.el.emit('targetFound'); // Uncomment for testing without a physical target
-        }
-      });
-      
-      // 添加保持宽高比的组件
-      AFRAME.registerComponent('preserve-ratio', {
-        init: function() {
-          const el = this.el;
-          const originalWidth = el.getAttribute('original-width') || 1;
-          const originalHeight = el.getAttribute('original-height') || 1;
-          const ratio = originalHeight / originalWidth;
-          
-          // 使用宽度作为基准，计算相应的高度
-          const width = 1; // 默认宽度
-          const height = width * ratio;
-          
-          // 设置实体的尺寸，保持原始宽高比
-          el.setAttribute('width', width);
-          el.setAttribute('height', height);
         }
       });
     </script>
@@ -257,6 +236,13 @@
         0%, 100% { top: 0% }
         50% { top: calc(100% - 10px) }
       }
+      
+      /* 视频控制按钮样式 */
+      .video-control-button {
+        background-color: rgba(255, 255, 255, 0.7) !important;
+        border-radius: 50%;
+        padding: 10px;
+      }
     </style>
   </head>
   <body>
@@ -280,17 +266,15 @@
           <img id="icon-left" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/left.png" />
           <img id="icon-right" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/right.png" />
           <img id="icon-play-video" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/play.png" />
+          <img id="icon-pause" src="https://hiukim.github.io/mind-ar-js-doc/samples/assets/card-example/icons/pause.png" />
           <img id="paintandquest-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
           
           <!-- 设置视频不自动播放 -->
-          <video id="paintandquest-video-mp4" playsinline webkit-playsinline autoplay="false" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
-          <video id="paintandquest-video-webm" playsinline webkit-playsinline autoplay="false" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
+          <video id="paintandquest-video-mp4" autoplay="false" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
+          <video id="paintandquest-video-webm" autoplay="false" loop="true" preload="auto" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
           
           <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
           <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
-          
-          <!-- 加载中文字体 -->
-          <a-asset-item id="noto-sans-sc" src="https://cdn.jsdelivr.net/npm/@xz/fonts@1/serve/noto-sans-sc.min.css"></a-asset-item>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable">
@@ -301,25 +285,26 @@
 
           <a-entity visible=false id="portfolio-panel" position="0 0 -0.01">
             <!-- 修复中文字符显示问题 -->
-            <a-entity text="value: AR测试By.leong; color: black; align: center; width: 2; wrapCount: 20; font: dejavu" position="0 0.4 0"></a-entity>
+            <a-entity text="value: AR测试By.leong; color: black; align: center; width: 2; font: https://cdn.aframe.io/fonts/Roboto-msdf.json; negate: false" position="0 0.4 0"></a-entity>
             
             <a-entity id="portfolio-item0">
-              <!-- 使用preserve-ratio组件确保视频保持原始宽高比 -->
-              <a-video id="paintandquest-video-link" class="clickable" webkit-playsinline playsinline width="1" position="0 0 0" preserve-ratio original-width="16" original-height="9"></a-video>
-              
-              <!-- 使用preserve-ratio组件确保图片保持原始宽高比 -->
-              <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" position="0 0 0" preserve-ratio original-width="1" original-height="1"></a-image>
-              
-              <!-- 添加视频控制按钮，调整位置 -->
-              <a-image visible=false id="video-play-button" class="clickable" src="#icon-play-video" position="0 0 0.02" height="0.2" width="0.2" material="transparent: true; opacity: 0.8"></a-image>
+              <!-- 使用scale属性确保视频比例正确 -->
+              <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0" scale="1 1 1"></a-video>
+              <!-- 使用scale属性确保预览图比例正确 -->
+              <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1" scale="1 1 1"></a-image>
+              <!-- 添加视频控制按钮并应用样式 -->
+              <a-image visible=false id="video-play-button" class="clickable video-control-button" src="#icon-play-video" position="0 0 0.01" height="0.15" width="0.15" material="opacity: 0.9; transparent: true; backgroundColor: #ffffff"></a-image>
+              <a-image visible=false id="video-pause-button" class="clickable video-control-button" src="#icon-pause" position="0 0 0.01" height="0.15" width="0.15" material="opacity: 0.9; transparent: true; backgroundColor: #ffffff"></a-image>
             </a-entity>
             
             <a-entity id="portfolio-item1" visible=false>
-              <a-image class="clickable" src="#coffeemachine-preview" position="0 0 0" preserve-ratio original-width="1" original-height="1"></a-image>
+              <!-- 使用scale属性确保图片比例正确 -->
+              <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1" scale="1 1 1"></a-image>
             </a-entity>
             
             <a-entity id="portfolio-item2" visible=false>
-              <a-image class="clickable" src="#peak-preview" position="0 0 0" preserve-ratio original-width="1" original-height="1"></a-image>
+              <!-- 使用scale属性确保图片比例正确 -->
+              <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1" scale="1 1 1"></a-image>
             </a-entity>
 
             <a-image visible=false id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
@@ -330,11 +315,11 @@
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
 
-          <a-image visible=false id="web-button" class="clickable" src="#icon-web" position="-0.14 -0.5 0" height="0.15" width="0.15"
+          <a-image visible=false id="web-button" class="clickable" src="#icon-web" alpha-test="0.5" position="-0.14 -0.5 0" height="0.15" width="0.15"
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
 
-          <a-image visible=false id="email-button" class="clickable" src="#icon-email" position="0.14 -0.5 0" height="0.15" width="0.15"
+          <a-image visible=false id="email-button" class="clickable" src="#icon-email"  position="0.14 -0.5 0" height="0.15" width="0.15"
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
 
@@ -342,8 +327,7 @@
             animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           ></a-image>
 
-          <!-- 修复文本显示问题 -->
-          <a-entity id="text" class="clickable" text="value: ; color: black; align: center; width: 2; wrapCount: 30; font: dejavu" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5"></a-entity>
+          <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 -1 0" geometry="primitive:plane; height: 0.1; width: 2;" material="opacity: 0.5" font="https://cdn.aframe.io/fonts/Roboto-msdf.json" negate="false"></a-text>
         </a-entity>
       </a-scene>
     </div>
