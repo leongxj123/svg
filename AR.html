@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WebAR 名片扫描应用 (自定义标记)</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 基本样式 */
+        body {
+            font-family: 'Inter', sans-serif; /* Inter 字体 */
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0; /* 淡灰色背景 */
+            color: #333; /* 深灰色文字 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        /* A-Frame 场景容器样式 */
+        #ar-scene-container {
+            width: 100%;
+            max-width: 800px; /* 限制最大宽度 */
+            height: 60vh; /* 占据视口高度的60% */
+            margin: 20px 0;
+            border-radius: 12px; /* 圆角 */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* 添加阴影 */
+            overflow: hidden; /* 确保子元素不会溢出圆角 */
+            position: relative; /* For AR.js UI elements */
+        }
+        /* AR.js 默认的加载UI */
+        .arjs-loader {
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .arjs-loader-spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 确保 canvas 充满其容器 */
+        a-scene canvas {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 12px; /* 确保 canvas 也有圆角 */
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+    <header class="w-full bg-blue-600 p-6 shadow-md">
+        <h1 class="text-3xl font-bold text-white text-center">互动AR名片展示 (自定义标记)</h1>
+    </header>
+
+    <main class="w-full max-w-4xl p-6 flex flex-col items-center">
+        <p class="text-lg text-gray-700 mb-6 text-center">
+            欢迎体验AR名片！请授权摄像头访问，并将摄像头对准您提供的自定义标记图案。
+        </p>
+
+        <div id="ar-scene-container">
+            <a-scene embedded
+                     arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
+                     renderer="colorManagement: true; physicallyCorrectLights: true"
+                     vr-mode-ui="enabled: false">
+                <a-assets>
+                    <a-asset-item id="custom-pattern" src="https://api.2023gpt.top/fileSystem/download/20250516/ba916e92-30c4-4154-9035-ba5a5c6d6f2d.patt"></a-asset-item>
+                </a-assets>
+
+                <a-light type="ambient" color="#BBB"></a-light>
+                <a-light type="directional" color="#FFF" intensity="0.8" position="-0.5 1 1"></a-light>
+
+                <a-marker id="custom-ar-marker" type='pattern' url="#custom-pattern">
+                    <a-box id="ar-content-object"
+                           color="#3498DB" /* A pleasant blue */
+                           depth="0.5"
+                           height="0.5"
+                           width="0.5"
+                           position="0 0.5 0" /* 位置相对于标记中心，Y轴向上0.5单位 */
+                           animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear;">
+                        <a-text value="AR 内容已加载!"
+                                align="center"
+                                color="#FFFFFF"
+                                position="0 0.4 0" /* 相对于父元素(a-box) */
+                                scale="0.3 0.3 0.3"
+                                wrap-count="20">
+                        </a-text>
+                    </a-box>
+
+                    <a-plane position="0 1.2 0" width="1.2" height="0.6" rotation="-20 0 0" material="color: #333; opacity: 0.85;">
+                        <a-text value="您的信息\n职位/公司\n联系方式"
+                                color="white"
+                                align="center"
+                                width="1.1"
+                                wrap-count="30"
+                                position="0 0 0.01">
+                        </a-text>
+                    </a-plane>
+                </a-marker>
+
+                <a-entity camera></a-entity>
+            </a-scene>
+        </div>
+
+        <section class="mt-8 p-6 bg-white rounded-lg shadow-lg w-full">
+            <h2 class="text-2xl font-semibold text-blue-700 mb-4">如何操作</h2>
+            <ol class="list-decimal list-inside text-gray-600 space-y-2">
+                <li>确保您的浏览器已授权访问摄像头。</li>
+                <li>
+                    准备好与您提供的 `.patt` 文件 (<code>ba916e92-30c4-4154-9035-ba5a5c6d6f2d.patt</code>) 对应的标记图像。
+                    您需要打印此图像或在另一个屏幕上显示它。
+                </li>
+                <li>将您设备的摄像头对准该标记图像。</li>
+                <li>当标记被识别后，您应该能看到3D模型出现在标记上方。</li>
+                <li class="mt-2 text-sm text-orange-600">
+                    <strong>重要提示:</strong>
+                    <ul>
+                        <li>- 标记图像需要有清晰的黑色边框和高对比度的内部图案。</li>
+                        <li>- 确保提供的 `.patt` 文件URL (<code>https://api.2023gpt.top/...</code>) 是可公开访问的，并且服务器允许跨域请求 (CORS)，否则浏览器可能无法加载标记图案。</li>
+                    </ul>
+                </li>
+            </ol>
+        </section>
+
+        <section class="mt-8 p-6 bg-white rounded-lg shadow-lg w-full">
+            <h2 class="text-2xl font-semibold text-blue-700 mb-4">关于自定义标记</h2>
+            <p class="text-gray-600 mb-2">
+                您已经提供了一个 <code>.patt</code> 文件。要成功使用它：
+            </p>
+            <ol class="list-decimal list-inside text-gray-600 space-y-1">
+                <li>您需要拥有与此 <code>.patt</code> 文件在生成时所使用的原始图像完全相同的图像。这个图像就是您的AR标记。</li>
+                <li>标记图像通常需要有较粗的黑色边框，内部图案应简单、清晰且对比度高，避免过于复杂或完全对称。</li>
+                <li>如果需要生成新的 <code>.patt</code> 文件，可以使用AR.js标记图案生成器。
+                    例如： <a href="https://jeromeetienne.github.io/AR.js/three.js/examples/marker-training/examples/generator.html" target="_blank" class="text-blue-500 hover:underline">AR.js在线标记生成器</a>。
+                </li>
+                <li>将标记内的3D内容 (当前是示例立方体和信息板) 替换为您想要展示的实际AR内容。</li>
+            </ol>
+        </section>
+
+    </main>
+
+    <footer class="w-full bg-gray-800 p-4 mt-12">
+        <p class="text-sm text-gray-400 text-center">&copy; 2025 WebAR名片平台. 保留所有权利.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sceneEl = document.querySelector('a-scene');
+            // 更新ID以匹配新的自定义标记
+            const markerEl = document.querySelector('#custom-ar-marker');
+            const arContentObject = document.querySelector('#ar-content-object');
+
+            if (!sceneEl) {
+                console.error('A-Frame scene not found!');
+                return;
+            }
+             if (!markerEl) {
+                console.error('Custom AR marker not found! Check the ID.');
+                return;
+            }
+            if (!arContentObject) {
+                console.error('AR content object not found! Check the ID.');
+            }
+
+
+            if (sceneEl.hasLoaded) {
+                console.log('A-Frame 场景已加载 (AR.js)!');
+            } else {
+                sceneEl.addEventListener('loaded', function () {
+                    console.log('A-Frame 场景已加载 (AR.js)!');
+                });
+            }
+
+            markerEl.addEventListener('markerFound', function() {
+                console.log('自定义标记已找到!', markerEl.id);
+                if(arContentObject) {
+                    arContentObject.setAttribute('visible', true);
+                    // 示例: 短暂放大效果
+                    arContentObject.setAttribute('animation__found', {
+                        property: 'scale',
+                        from: '0.5 0.5 0.5', // Start smaller
+                        to: '1 1 1',    // Animate to original size
+                        dur: 500,
+                        easing: 'easeOutElastic'
+                    });
+                    // 确保动画只播放一次，或者根据需要配置
+                     setTimeout(() => {
+                        if (arContentObject.components['animation__found']) {
+                            arContentObject.removeAttribute('animation__found');
+                        }
+                    }, 600); // duration + a little buffer
+                }
+                // 同时显示信息板
+                const infoPlane = markerEl.querySelector('a-plane');
+                if (infoPlane) infoPlane.setAttribute('visible', true);
+            });
+
+            markerEl.addEventListener('markerLost', function() {
+                console.log('自定义标记已丢失!', markerEl.id);
+                if(arContentObject) {
+                    arContentObject.setAttribute('visible', false);
+                }
+                // 同时隐藏信息板
+                const infoPlane = markerEl.querySelector('a-plane');
+                if (infoPlane) infoPlane.setAttribute('visible', false);
+            });
+
+            if (arContentObject) {
+                arContentObject.addEventListener('click', function () {
+                    if (!this.getAttribute('visible')) return;
+
+                    const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+                    this.setAttribute('material', 'color', randomColor);
+                    console.log('AR内容被点击了! 新颜色:', randomColor);
+
+                    const textEl = this.querySelector('a-text');
+                    if (textEl) {
+                        textEl.setAttribute('value', '颜色已变!');
+                        setTimeout(() => {
+                           textEl.setAttribute('value', 'AR 内容已加载!');
+                        }, 2000);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
