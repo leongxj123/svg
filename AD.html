@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智养云 - 阿尔兹海默症守护先行者</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f0f9ff; /* Light blue background */
+        }
+        .header {
+            background-color: #3b82f6; /* Brand blue */
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .header h1 { font-size: 2rem; font-weight: 700; }
+        .header p { font-size: 1rem; margin-top: 0.5rem; }
+
+        .nav-button { background-color: #60a5fa; color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; text-decoration: none; transition: background-color 0.3s ease, transform 0.2s ease; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 0.5rem; }
+        .nav-button:hover { background-color: #3b82f6; transform: translateY(-2px); }
+
+        .section-title { font-size: 1.75rem; font-weight: 600; color: #1e3a8a; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #60a5fa; display: flex; align-items: center; gap: 0.5rem; }
+
+        .game-selection-container { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-bottom: 2rem; }
+        .game-select-button { background-color: #10b981; color: white; padding: 0.8rem 1rem; border-radius: 0.75rem; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background-color 0.3s, transform 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: none; display: inline-flex; flex-direction: column; align-items: center; gap: 0.3rem; width: 110px; /* Fixed width */ height: 95px; /* Fixed height for aspect ratio */ justify-content: center; text-align: center; line-height: 1.1; }
+        .game-select-button i { font-size: 1.4rem; margin-bottom: 0.2rem;}
+        .game-select-button:hover { background-color: #059669; transform: translateY(-2px); }
+        .game-select-button.active { background-color: #047857; transform: scale(1.05) translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+
+        .game-area { padding: 1.5rem; background-color: #e0f2fe; border-radius: 1rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); min-height: 480px; display: flex; flex-direction: column; align-items: center; }
+        .game-content { display: none; width: 100%; max-width: 600px; text-align: center; }
+        .game-content.active { display: block; }
+        .game-title { font-size: 1.5rem; font-weight: 600; color: #1e40af; margin-bottom: 0.5rem; }
+        .game-description { font-size: 0.9rem; color: #374151; margin-bottom: 1rem; line-height: 1.6; }
+        
+        .difficulty-selector, .timer-display { margin-bottom: 1rem; font-size: 0.9rem; color: #1e3a8a; }
+        .difficulty-selector button { background-color: #bfdbfe; color: #1e3a8a; padding: 0.4rem 0.8rem; border-radius: 0.375rem; margin: 0 0.25rem; font-size: 0.85rem; transition: background-color 0.2s; border: 1px solid #93c5fd; }
+        .difficulty-selector button:hover { background-color: #93c5fd; }
+        .difficulty-selector button.selected { background-color: #3b82f6; color: white; font-weight: bold; }
+        .timer-display span { font-weight: bold; color: #1d4ed8; }
+
+        /* Memory Match */
+        .card-container { display: grid; gap: 0.5rem; padding: 0.5rem; max-width: 500px; margin: 0 auto; }
+        .card { width: 100%; aspect-ratio: 1 / 1; background-color: #93c5fd; border-radius: 0.375rem; display: flex; justify-content: center; align-items: center; font-size: 2rem; cursor: pointer; transition: transform 0.3s ease, background-color 0.3s ease; perspective: 1000px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; border-radius: 0.375rem;}
+        .card-front { background-color: #93c5fd; color: #1e3a8a; }
+        .card-front::before { content: '?'; font-size: 1.8rem; font-weight: bold; }
+        .card-back { background-color: #bfdbfe; color: #1e40af; transform: rotateY(180deg); }
+        .card.matched { background-color: #6ee7b7; cursor: default; transform: scale(0.95); }
+        .card.matched .card-front, .card.matched .card-back { background-color: #6ee7b7; }
+        .card:not(.matched):hover { transform: translateY(-2px) scale(1.02); }
+
+        .status-message { margin-top: 1rem; font-size: 1.125rem; font-weight: 500; color: #1e3a8a; min-height: 2.5rem; padding: 0.5rem; background-color: #fff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .control-button { background-color: #2563eb; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background-color 0.3s, transform 0.2s ease; margin-top: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: none; }
+        .control-button i { margin-right: 0.3em; }
+        .control-button:hover { background-color: #1d4ed8; transform: translateY(-1px); }
+        .control-button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+
+        .info-box { background-color: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 1.5rem; } /* Reduced margin-bottom */
+        .info-box h3 { font-size: 1.25rem; font-weight: 600; color: #1e3a8a; margin-bottom: 0.75rem; }
+        .info-box p, .info-box ul { color: #374151; line-height: 1.6; }
+        .info-box ul { list-style-position: inside; }
+        .info-box .sub-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; }
+        .info-box .sub-section h4 { font-size: 1.1rem; font-weight: 600; color: #1e40af; margin-bottom: 0.5rem; }
+
+
+        /* Object Recognition */
+        .object-recognition-game .image-display { width: 120px; height: 120px; background-color: #e2e8f0; margin: 1rem auto; display: flex; justify-content: center; align-items: center; color: #475569; border-radius: 0.75rem; font-size: 4rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .object-recognition-game .options-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 1.5rem; }
+        .object-recognition-game .option-button { background-color: #fbbf24; color: #78350f; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background-color 0.3s, transform 0.2s; border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .object-recognition-game .option-button:hover { background-color: #f59e0b; transform: translateY(-1px); }
+        .object-recognition-game .option-button.correct { background-color: #34d399; color: white; }
+        .object-recognition-game .option-button.incorrect { background-color: #f87171; color: white; }
+
+        /* Number Sequence */
+        .number-sequence-game .number-display-area { font-size: 2.8rem; font-weight: bold; color: #1d4ed8; padding: 2rem; background-color: #fff; border-radius: 0.75rem; margin: 1rem auto; text-align: center; min-height: 100px; letter-spacing: 0.1em; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .number-sequence-game input[type="text"], .quick-math-game input[type="number"] { padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid #94a3b8; margin-right: 0.5rem; width: 220px; font-size: 1rem; text-align: center; }
+        .number-sequence-game input[type="text"]:focus, .quick-math-game input[type="number"]:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
+        .number-sequence-game .timer-bar-container { width: 80%; max-width: 300px; height: 10px; background-color: #e0e0e0; border-radius: 5px; margin: 0.5rem auto; overflow: hidden;}
+        .number-sequence-game .timer-bar { height: 100%; width: 100%; background-color: #3b82f6; transition: width 0.1s linear; }
+
+        /* Quick Math */
+        .quick-math-game .problem-display { font-size: 2.5rem; font-weight: bold; color: #065f46; padding: 2rem; background-color: #fff; border-radius: 0.75rem; margin: 1rem auto; text-align: center; min-height: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* Color Match */
+        .color-match-game .color-word-display { font-size: 3rem; font-weight: bold; padding: 2rem; background-color: #fff; border-radius: 0.75rem; margin: 1rem auto; text-align: center; min-height: 120px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; }
+        .color-match-game .answer-buttons { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; }
+        .color-match-game .answer-button { padding: 0.75rem 2rem; font-size: 1rem; font-weight: 500; border-radius: 0.5rem; cursor: pointer; transition: background-color 0.3s, transform 0.2s; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .color-match-game .answer-button.match { background-color: #34d399; color: white; }
+        .color-match-game .answer-button.match:hover { background-color: #059669; }
+        .color-match-game .answer-button.no-match { background-color: #f87171; color: white; }
+        .color-match-game .answer-button.no-match:hover { background-color: #ef4444; }
+
+        /* Daily Tasks */
+        .daily-task-game .task-list { list-style: none; padding: 0; margin: 1rem auto; max-width: 400px; }
+        .daily-task-game .task-item { background-color: #fff; border: 1px solid #d1d5db; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background-color 0.3s; }
+        .daily-task-game .task-item:hover { background-color: #f3f4f6; }
+        .daily-task-game .task-item.completed { background-color: #d1fae5; text-decoration: line-through; color: #065f46; }
+        .daily-task-game .task-item.completed .task-icon { color: #059669; }
+        .daily-task-game .task-icon { font-size: 1.2rem; color: #6b7280; }
+
+        /* Spot the Difference */
+        .spot-difference-game .panels-container { display: flex; justify-content: space-around; align-items: flex-start; margin-bottom: 1rem; gap: 1rem; }
+        .spot-difference-game .image-panel { border: 2px solid #93c5fd; border-radius: 0.5rem; padding: 0.5rem; background-color: #fff; display: grid; gap: 0.25rem; user-select: none; }
+        .spot-difference-game .spot-item { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; cursor: default; border-radius: 0.25rem; }
+        .spot-difference-game .spot-item.clickable { cursor: pointer; }
+        .spot-difference-game .spot-item.found-diff { background-color: rgba(255, 255, 0, 0.5); border: 2px solid gold; }
+
+        /* Maze Game */
+        .maze-game .maze-grid { display: grid; gap: 1px; border: 2px solid #60a5fa; background-color: #bfdbfe; padding: 4px; margin: 1rem auto; width: fit-content; }
+        .maze-game .maze-cell { width: 35px; height: 35px; background-color: #fff; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: background-color 0.1s; border: 1px solid #e0f2fe; }
+        .maze-game .maze-cell:hover:not(.wall):not(.start):not(.end) { background-color: #dbeafe; }
+        .maze-game .maze-cell.wall { background-color: #6b7280; cursor: not-allowed; }
+        .maze-game .maze-cell.start { background-color: #6ee7b7; color: #047857 } 
+        .maze-game .maze-cell.end { background-color: #f87171; color: #b91c1c }   
+        .maze-game .maze-cell.path-taken { background-color: #fde68a; } 
+        .maze-game .maze-cell.current-pos { background-color: #fb923c; box-shadow: inset 0 0 0 2px #ea580c; } 
+        
+        /* Story Sequencing */
+        .story-sequencing-game .story-text-area { background-color: #fff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; text-align: left; line-height: 1.7; color: #374151; max-height: 150px; overflow-y: auto;}
+        .story-sequencing-game .sentence-snippets-container { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; min-height: 100px; padding: 0.5rem; background-color: #e0e7ff; border-radius: 0.5rem;}
+        .story-sequencing-game .snippet { background-color: #fff; padding: 0.75rem; border: 1px solid #c7d2fe; border-radius: 0.375rem; cursor: grab; user-select: none; transition: background-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .story-sequencing-game .snippet:hover { background-color: #f0f9ff; }
+        .story-sequencing-game .snippet.dragging { opacity: 0.5; background-color: #eef2ff;}
+        .story-sequencing-game .drop-zone { border: 2px dashed #a5b4fc; border-radius: 0.5rem; padding: 1rem; min-height: 100px; background-color: #eef2ff;}
+        .story-sequencing-game .drop-zone .snippet { cursor: default; margin-bottom: 0.5rem;}
+
+        /* Pattern Recognition */
+        .pattern-recognition-game .pattern-display-area { display: flex; justify-content: center; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; min-height: 80px; padding: 1rem; background-color: #fff; border-radius: 0.5rem;}
+        .pattern-recognition-game .pattern-item { font-size: 2.5rem; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border: 1px solid #ddd; border-radius: 0.25rem;}
+        .pattern-recognition-game .pattern-options-container { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
+        .pattern-recognition-game .pattern-option-button { background-color: #a7f3d0; color: #047857; padding: 0.75rem; border-radius: 0.5rem; font-size: 2rem; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background-color 0.2s; border: 1px solid #6ee7b7;}
+        .pattern-recognition-game .pattern-option-button:hover { background-color: #6ee7b7;}
+
+        /* Sound Sequence */
+        .sound-sequence-game .sound-button-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin: 1.5rem 0;}
+        .sound-sequence-game .sound-button { background-color: #fecaca; color: #b91c1c; width: 70px; height: 70px; border-radius: 0.5rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s, transform 0.1s; border: 1px solid #f87171; display: flex; justify-content: center; align-items: center; flex-direction: column;}
+        .sound-sequence-game .sound-button:hover { background-color: #f87171; color:white; }
+        .sound-sequence-game .sound-button.playing { transform: scale(1.1); background-color: #dc2626; color:white; }
+        .sound-sequence-game .user-sequence-display { min-height: 30px; margin-top: 1rem; font-size: 1.2rem; color: #1e3a8a; letter-spacing: 0.2em;}
+
+
+        @media (max-width: 768px) { 
+            .spot-difference-game .spot-item { width: 30px; height: 30px; font-size: 1.5rem;}
+            .maze-game .maze-cell { width: 30px; height: 30px; font-size: 1.2rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-container { flex-direction: column; gap: 0.75rem; }
+            .nav-button { width: 100%; justify-content: center; }
+            .card-container { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 0.4rem; }
+            .card { font-size: 1.8rem; }
+            .header h1 { font-size: 1.75rem; }
+            .header p { font-size: 0.9rem; }
+            .section-title { font-size: 1.5rem; }
+            .game-select-button { padding: 0.7rem 0.8rem; font-size: 0.75rem; width: 100px; height: 85px; } 
+            .game-select-button i { font-size: 1.2rem; }
+            .game-selection-container { gap: 0.4rem; }
+            .game-title { font-size: 1.3rem; }
+            .number-sequence-game input[type="text"], .quick-math-game input[type="number"] { width: calc(100% - 110px); }
+            .control-button { padding: 0.6rem 1.2rem; font-size: 0.9rem; }
+            .color-match-game .color-word-display { font-size: 2.2rem; min-height: 100px; }
+            .color-match-game .answer-button { padding: 0.6rem 1.5rem; }
+            .difficulty-selector button { padding: 0.3rem 0.6rem; font-size: 0.75rem;}
+
+            .spot-difference-game .panels-container { flex-direction: column; align-items: center; }
+            .spot-difference-game .image-panel { max-width: 90%; }
+            .maze-game .maze-grid { max-width: 90%; }
+            .maze-game .maze-cell { width: 28px; height: 28px; font-size: 1rem; }
+
+            .story-sequencing-game .story-text-area { max-height: 120px; font-size: 0.9rem;}
+            .story-sequencing-game .snippet {padding: 0.6rem; font-size: 0.85rem;}
+            .pattern-recognition-game .pattern-item {font-size: 2rem; width: 40px; height: 40px;}
+            .pattern-recognition-game .pattern-option-button {font-size: 1.8rem; width: 50px; height: 50px;}
+            .sound-sequence-game .sound-button {width: 60px; height: 60px; font-size: 0.9rem;}
+        }
+         @media (max-width: 400px) { /* Further adjust for very small screens */
+            .game-select-button { width: calc(50% - 0.4rem); height: 90px; } 
+            .maze-game .maze-cell { width: 24px; height: 24px; font-size: 0.9rem; }
+            .spot-difference-game .spot-item { width: 25px; height: 25px; font-size: 1.2rem;}
+
+         }
+    </style>
+</head>
+<body class="bg-blue-50 min-h-screen flex flex-col">
+
+    <header class="header w-full">
+        <h1><i class="fas fa-brain"></i> 智养云</h1>
+        <p>中国OMO阿尔兹海默症群体守护先行者</p>
+    </header>
+
+    <nav class="w-full max-w-4xl mx-auto p-4">
+        <div class="flex flex-wrap justify-center gap-3 nav-container">
+            <a href="#home" class="nav-button"><i class="fas fa-home"></i> 首页介绍</a>
+            <a href="#games-hub" class="nav-button"><i class="fas fa-puzzle-piece"></i> 认知游戏中心</a>
+            <a href="#omo" class="nav-button"><i class="fas fa-users"></i> OMO融合</a>
+            <a href="#resources" class="nav-button"><i class="fas fa-book-medical"></i> 健康资讯</a>
+        </div>
+    </nav>
+
+    <main class="w-full max-w-4xl mx-auto p-4 md:p-6 flex-grow">
+        <section id="home" class="mb-8 p-6 bg-white rounded-xl shadow-lg">
+            <h2 class="section-title"><i class="fas fa-info-circle"></i> 欢迎来到智养云</h2>
+            <div class="info-box">
+                <p class="text-gray-700 leading-relaxed">
+                    “智养云”是一个致力于通过线上互动与线下关怀相结合（OMO模式），为阿尔兹海默症患者及其家庭提供全方位支持的平台。我们希望通过科技的力量，延缓病程发展，提升患者生活质量，并为照护者提供有效的帮助和资源。
+                </p>
+            </div>
+        </section>
+
+        <section id="games-hub" class="mb-8 p-6 bg-white rounded-xl shadow-lg">
+            <h2 class="section-title"><i class="fas fa-gamepad"></i> 认知游戏中心</h2>
+            <div class="info-box">
+                <p>选择一款小游戏，开始您的认知锻炼之旅吧！这些游戏旨在帮助提高记忆力、注意力和执行功能。</p>
+            </div>
+
+            <div id="game-selection" class="game-selection-container">
+                <button class="game-select-button" data-game="memory-match"><i class="fas fa-clone"></i>记忆匹配</button>
+                <button class="game-select-button" data-game="object-recognition"><i class="fas fa-eye"></i>物品识别</button>
+                <button class="game-select-button" data-game="number-sequence"><i class="fas fa-sort-numeric-down"></i>数字序列</button>
+                <button class="game-select-button" data-game="quick-math"><i class="fas fa-calculator"></i>速算挑战</button>
+                <button class="game-select-button" data-game="color-match"><i class="fas fa-palette"></i>颜色匹配</button>
+                <button class="game-select-button" data-game="daily-task"><i class="fas fa-tasks"></i>每日任务</button>
+                <button class="game-select-button" data-game="spot-difference"><i class="fas fa-search-plus"></i>大家来找茬</button>
+                <button class="game-select-button" data-game="maze-game"><i class="fas fa-route"></i>迷宫寻路</button>
+                <button class="game-select-button" data-game="story-sequencing"><i class="fas fa-stream"></i>故事排序</button>
+                <button class="game-select-button" data-game="pattern-recognition"><i class="fas fa-shapes"></i>图形规律</button>
+                <button class="game-select-button" data-game="sound-sequence"><i class="fas fa-music"></i>声音序列</button>
+            </div>
+
+            <div id="game-active-area" class="game-area">
+                <div id="memory-match-game" class="game-content">
+                    <h3 class="game-title">记忆匹配挑战</h3>
+                    <p class="game-description">点击卡片，找出所有匹配的图案！</p>
+                    <div class="difficulty-selector" id="memory-difficulty-selector">
+                        难度: 
+                        <button data-difficulty="easy">简单 (4x2)</button>
+                        <button data-difficulty="medium" class="selected">中等 (4x4)</button>
+                        <button data-difficulty="hard">困难 (5x4)</button>
+                    </div>
+                    <div class="timer-display" id="memory-timer-display" style="display:none;">时间: <span id="memory-time">0</span> 秒</div>
+                    <div id="memory-game-board" class="card-container"></div>
+                    <div class="text-center">
+                        <p id="memory-status-message" class="status-message">选择难度并开始</p>
+                        <button id="memory-reset-button" class="control-button"><i class="fas fa-redo"></i> 重新开始</button>
+                        <p class="mt-2 text-sm text-gray-600">已匹配: <span id="memory-pairs-matched">0</span> 对 | 尝试次数: <span id="memory-attempts">0</span></p>
+                    </div>
+                </div>
+
+                <div id="object-recognition-game" class="game-content object-recognition-game">
+                    <h3 class="game-title">物品识别游戏</h3>
+                    <p class="game-description">看看这是什么物品？选择正确的名称。</p>
+                    <div id="object-display" class="image-display">❓</div>
+                    <div id="object-options-container" class="options-container"></div>
+                    <p id="object-status-message" class="status-message">请选择一个选项。</p>
+                    <button id="object-next-button" class="control-button" style="display:none;"><i class="fas fa-arrow-right"></i> 下一题</button>
+                     <p class="mt-2 text-sm text-gray-600">得分: <span id="object-score">0</span></p>
+                </div>
+
+                <div id="number-sequence-game" class="game-content number-sequence-game">
+                    <h3 class="game-title">数字序列记忆</h3>
+                    <p class="game-description">记住屏幕上出现的数字，然后在规定时间内按顺序输入。</p>
+                    <div class="timer-display">剩余时间: <span id="number-sequence-timer-value">10</span> 秒</div>
+                    <div class="number-sequence-timer-bar-container my-2">
+                        <div id="number-sequence-timer-bar" class="timer-bar"></div>
+                    </div>
+                    <div id="number-sequence-display-area" class="number-display-area">点击开始</div>
+                    <div class="text-center mt-4">
+                        <input type="text" placeholder="请输入数字序列" id="number-sequence-input" class="text-lg" disabled>
+                        <button id="number-sequence-submit-button" class="control-button" disabled><i class="fas fa-check"></i> 提交</button>
+                    </div>
+                    <button id="number-sequence-start-button" class="control-button"><i class="fas fa-play"></i> 开始 / 下一组</button>
+                    <p id="number-sequence-status-message" class="status-message">准备好了吗？</p>
+                    <p class="mt-2 text-sm text-gray-600">当前长度: <span id="number-sequence-length">3</span> | 正确次数: <span id="number-sequence-correct">0</span></p>
+                </div>
+
+                <div id="quick-math-game" class="game-content quick-math-game">
+                    <h3 class="game-title">速算挑战</h3>
+                    <p class="game-description">快速计算出下面算式的结果。</p>
+                     <div class="difficulty-selector" id="quick-math-difficulty-selector">
+                        难度: 
+                        <button data-difficulty="easy" class="selected">简单</button>
+                        <button data-difficulty="medium">中等</button>
+                        <button data-difficulty="hard">困难</button>
+                    </div>
+                    <div class="timer-display">剩余时间: <span id="quick-math-timer-value">15</span> 秒</div>
+                    <div id="quick-math-problem-display" class="problem-display">选择难度并开始</div>
+                    <div class="text-center mt-4">
+                        <input type="number" placeholder="输入答案" id="quick-math-input" class="text-lg" disabled>
+                        <button id="quick-math-submit-button" class="control-button" disabled><i class="fas fa-check"></i> 提交</button>
+                    </div>
+                     <button id="quick-math-start-button" class="control-button"><i class="fas fa-play"></i> 开始 / 下一题</button>
+                    <p id="quick-math-status-message" class="status-message">来挑战一下吧！</p>
+                    <p class="mt-2 text-sm text-gray-600">得分: <span id="quick-math-score">0</span></p>
+                </div>
+
+                <div id="color-match-game" class="game-content color-match-game">
+                    <h3 class="game-title">颜色匹配挑战</h3>
+                    <p class="game-description">词语的含义和它显示的颜色匹配吗？快速做出判断！</p>
+                    <div class="timer-display">剩余时间: <span id="color-match-timer-value">5</span> 秒</div>
+                    <div id="color-match-word-display" class="color-word-display">点击开始</div>
+                    <div class="answer-buttons">
+                        <button id="color-match-true-button" class="answer-button match" disabled><i class="fas fa-check-circle"></i> 匹配</button>
+                        <button id="color-match-false-button" class="answer-button no-match" disabled><i class="fas fa-times-circle"></i> 不匹配</button>
+                    </div>
+                    <button id="color-match-start-button" class="control-button"><i class="fas fa-play"></i> 开始 / 下一题</button>
+                    <p id="color-match-status-message" class="status-message">准备挑战！</p>
+                    <p class="mt-2 text-sm text-gray-600">得分: <span id="color-match-score">0</span></p>
+                </div>
+                
+                <div id="daily-task-game" class="game-content daily-task-game">
+                    <h3 class="game-title">每日任务清单</h3>
+                    <p class="game-description">点击任务标记为已完成。养成好习惯！</p>
+                    <ul id="daily-task-list" class="task-list"></ul>
+                    <p id="daily-task-status-message" class="status-message">今天已完成 <span id="daily-task-completed-count">0</span> 项任务。</p>
+                    <button id="daily-task-reset-button" class="control-button"><i class="fas fa-sync-alt"></i> 重置新一天任务</button>
+                </div>
+
+                <div id="spot-difference-game" class="game-content spot-difference-game">
+                    <h3 class="game-title">大家来找茬</h3>
+                    <p class="game-description">在右边的图案中找出与左边不同的地方，点击它们！</p>
+                    <div class="panels-container">
+                        <div id="spot-diff-panel-left" class="image-panel"></div>
+                        <div id="spot-diff-panel-right" class="image-panel"></div>
+                    </div>
+                    <p id="spot-difference-status-message" class="status-message">找到 <span id="spot-diff-found-count">0</span> / <span id="spot-diff-total-count">0</span> 个不同点。</p>
+                    <button id="spot-difference-reset-button" class="control-button"><i class="fas fa-redo"></i> 新一组图案</button>
+                </div>
+
+                <div id="maze-game-game" class="game-content maze-game"> <h3 class="game-title">迷宫寻路</h3>
+                    <p class="game-description">点击格子，从 <span class="text-green-600 font-bold">绿色起点</span> 走到 <span class="text-red-600 font-bold">红色终点</span>，避开灰色障碍物。</p>
+                    <div id="maze-grid-container" class="maze-grid"></div>
+                    <p id="maze-status-message" class="status-message">请开始寻路。</p>
+                    <button id="maze-reset-button" class="control-button"><i class="fas fa-redo"></i> 重新生成迷宫</button>
+                     <p class="mt-2 text-sm text-gray-600">步数: <span id="maze-moves-count">0</span></p>
+                </div>
+
+                <div id="story-sequencing-game" class="game-content story-sequencing-game">
+                    <h3 class="game-title">故事排序</h3>
+                    <p class="game-description">请阅读下面的故事，然后将打乱的句子拖拽到下方框内，按正确顺序排列。</p>
+                    <div id="story-text-area" class="story-text-area">故事加载中...</div>
+                    <div id="sentence-snippets-container" class="sentence-snippets-container">将句子拖到这里</div> <div id="story-drop-zone" class="drop-zone"></div>
+                    <button id="story-submit-button" class="control-button"><i class="fas fa-check"></i> 提交答案</button>
+                    <p id="story-status-message" class="status-message">请排列句子。</p>
+                </div>
+
+                <div id="pattern-recognition-game" class="game-content pattern-recognition-game">
+                    <h3 class="game-title">图形规律识别</h3>
+                    <p class="game-description">观察下面的序列，找出规律，并选择下一个正确的图案。</p>
+                    <div id="pattern-display-area" class="pattern-display-area">图案加载中...</div>
+                    <div id="pattern-options-container" class="pattern-options-container"></div>
+                    <button id="pattern-next-button" class="control-button"><i class="fas fa-arrow-right"></i> 下一题</button>
+                    <p id="pattern-status-message" class="status-message">请选择一个选项。</p>
+                    <p class="mt-2 text-sm text-gray-600">得分: <span id="pattern-score">0</span></p>
+                </div>
+
+                <div id="sound-sequence-game" class="game-content sound-sequence-game">
+                    <h3 class="game-title">声音序列记忆</h3>
+                    <p class="game-description">点击“播放序列”聆听声音，然后按顺序点击下方按钮重现序列。</p>
+                    <button id="sound-play-sequence-button" class="control-button"><i class="fas fa-volume-up"></i> 播放序列</button>
+                    <div id="sound-button-container" class="sound-button-container">
+                        </div>
+                    <div id="sound-user-sequence-display" class="user-sequence-display"></div>
+                    <button id="sound-submit-button" class="control-button" disabled><i class="fas fa-check"></i> 提交答案</button>
+                    <p id="sound-status-message" class="status-message">准备聆听。</p>
+                     <p class="mt-2 text-sm text-gray-600">当前长度: <span id="sound-sequence-length-display">3</span> | 得分: <span id="sound-score-display">0</span></p>
+                </div>
+
+
+                <div id="no-game-selected" class="game-content active text-center py-10">
+                    <p class="text-lg text-gray-500"><i class="fas fa-hand-pointer fa-2x mb-3"></i><br>请从上方选择一个游戏开始。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="omo" class="mb-8 p-6 bg-white rounded-xl shadow-lg">
+            <h2 class="section-title"><i class="fas fa-hands-helping"></i> OMO 线上线下融合</h2>
+            <div class="info-box">
+                <h3>我们的OMO理念</h3>
+                <p>
+                    “智养云”不仅提供线上认知训练工具，更致力于搭建连接患者、家庭、医疗机构和社区资源的桥梁，实现线上便捷与线下关怀的深度融合。
+                </p>
+                <div class="sub-section">
+                    <h4><i class="fas fa-laptop-medical mr-2"></i>线上服务</h4>
+                    <ul class="list-disc space-y-1">
+                        <li><strong>认知评估与追踪：</strong> 定期通过App内的互动游戏和评估工具监测认知状况，生成简报供家人或专业人士参考。</li>
+                        <li><strong>个性化训练计划：</strong> 根据评估结果，推荐合适的认知游戏组合和训练强度。(功能规划中)</li>
+                        <li><strong>家庭支持圈：</strong> 建立家庭成员间的私密沟通平台，分享照护经验、管理患者日程、获取专业指导。(功能规划中)</li>
+                        <li><strong>健康知识普及：</strong> 提供易于理解的阿尔兹海默症相关科普文章、视频和播客。</li>
+                    </ul>
+                </div>
+                <div class="sub-section">
+                    <h4><i class="fas fa-hospital-user mr-2"></i>线下支持</h4>
+                    <ul class="list-disc space-y-1">
+                        <li><strong>社区活动资源对接：</strong> 整合并推荐附近的记忆咖啡馆、艺术治疗小组、音乐疗法、太极拳班等有益身心的社区活动。</li>
+                        <li><strong>专业医疗机构导航：</strong> 提供合作的神经科、老年科、康复科等医疗机构信息，协助预约咨询和早期筛查。(功能规划中)</li>
+                        <li><strong>照护者培训与短期替代照护服务：</strong> 链接线下照护技能培训课程资源，提供短期替代照护信息。(功能规划中)</li>
+                        <li><strong>志愿者服务匹配：</strong> 搭建平台，为有需要的家庭匹配经过培训的陪伴和支持志愿者。(功能规划中)</li>
+                    </ul>
+                </div>
+                 <div class="sub-section">
+                    <h4><i class="fas fa-people-arrows mr-2"></i>融合模式亮点</h4>
+                     <p>通过OMO模式，我们旨在：</p>
+                    <ul class="list-disc space-y-1">
+                        <li><strong>提升早期筛查与干预的可及性。</strong></li>
+                        <li><strong>为患者提供持续的、个性化的认知刺激与康复支持。</strong></li>
+                        <li><strong>减轻家庭照护者的负担，提供情感与技能支持。</strong></li>
+                        <li><strong>构建一个充满关爱、理解和支持的社会环境。</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="resources" class="mb-8 p-6 bg-white rounded-xl shadow-lg">
+            <h2 class="section-title"><i class="fas fa-notes-medical"></i> 健康资讯与照护指南</h2>
+            <div class="info-box">
+                <p class="mb-4">
+                    了解阿尔兹海默症，学习有效的照护方法，与我们一起为患者和家庭提供支持。本版块内容将持续更新。
+                </p>
+                <div class="sub-section">
+                    <h4><i class="fas fa-disease mr-2"></i>认识阿尔兹海默症</h4>
+                    <ul class="list-disc space-y-1">
+                        <li><a href="#" class="text-blue-600 hover:underline">阿尔兹海默症的10个早期信号 (文章)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">疾病的不同阶段及其特点 (图文介绍)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">如何区分正常的衰老与认知障碍？ (科普视频)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">诊断流程简介 (文章)</a></li>
+                    </ul>
+                </div>
+                <div class="sub-section">
+                    <h4><i class="fas fa-hands-helping mr-2"></i>日常照护技巧</h4>
+                    <ul class="list-disc space-y-1">
+                        <li><a href="#" class="text-blue-600 hover:underline">与认知障碍患者有效沟通的技巧 (指南)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">营造安全的居家环境：清单与建议 (文章)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">如何应对游走、烦躁等挑战性行为？ (策略分享)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">协助个人卫生与穿着的注意事项 (实用技巧)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">鼓励参与日常活动，维持生活功能 (案例)</a></li>
+                    </ul>
+                </div>
+                <div class="sub-section">
+                    <h4><i class="fas fa-apple-alt mr-2"></i>营养与健康生活方式</h4>
+                    <ul class="list-disc space-y-1">
+                        <li><a href="#" class="text-blue-600 hover:underline">“健脑饮食”：地中海饮食与MIND饮食介绍 (食谱推荐)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">保持规律运动对大脑健康的益处 (运动指南)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">保证充足睡眠的重要性 (文章)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">社交互动与认知刺激：如何保持大脑活力 (活动建议)</a></li>
+                    </ul>
+                </div>
+                <div class="sub-section">
+                    <h4><i class="fas fa-newspaper mr-2"></i>最新研究与进展</h4>
+                     <p><em>（此版块将定期更新阿尔兹海默症领域的前沿研究和治疗进展，敬请期待。）</em></p>
+                </div>
+                <div class="sub-section">
+                    <h4><i class="fas fa-tools mr-2"></i>实用工具与资源下载</h4>
+                    <ul class="list-disc space-y-1">
+                        <li><a href="#" class="text-blue-600 hover:underline">紧急联系信息卡 (模板下载)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">用药管理清单 (模板下载)</a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">本地社区支持服务联系方式 (持续更新)</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="w-full bg-gray-800 text-white text-center p-6 rounded-t-xl mt-auto">
+        <p>&copy; 2025 智养云. 保留所有权利.</p>
+        <p class="text-sm mt-1">————广东医科大学智养云团队</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Game Switching Logic ---
+        const gameSelectButtons = document.querySelectorAll('.game-select-button');
+        const gameContents = document.querySelectorAll('.game-content');
+        const noGameSelectedMessage = document.getElementById('no-game-selected');
+        let activeGameModule = null;
+
+        function setActiveGame(selectedGameId) {
+            gameContents.forEach(content => content.classList.remove('active'));
+            gameSelectButtons.forEach(button => button.classList.remove('active'));
+
+            // Corrected ID formation for game content divs
+            const activeGameContent = document.getElementById(selectedGameId + "-game"); 
+            const activeButton = document.querySelector(`.game-select-button[data-game="${selectedGameId}"]`);
+            
+            if (activeGameModule && typeof activeGameModule.cleanup === 'function') {
+                activeGameModule.cleanup(); 
+            }
+
+            if (activeGameContent) {
+                activeGameContent.classList.add('active');
+                noGameSelectedMessage.classList.remove('active');
+                if (activeButton) activeButton.classList.add('active');
+                
+                switch (selectedGameId) {
+                    case 'memory-match': activeGameModule = memoryGameModule; break;
+                    case 'object-recognition': activeGameModule = objectRecognitionGameModule; break;
+                    case 'number-sequence': activeGameModule = numberSequenceGameModule; break;
+                    case 'quick-math': activeGameModule = quickMathGameModule; break;
+                    case 'color-match': activeGameModule = colorMatchGameModule; break;
+                    case 'daily-task': activeGameModule = dailyTaskGameModule; break;
+                    case 'spot-difference': activeGameModule = spotDifferenceGameModule; break;
+                    case 'maze-game': activeGameModule = mazeGameModule; break; 
+                    case 'story-sequencing': activeGameModule = storySequencingGameModule; break;
+                    case 'pattern-recognition': activeGameModule = patternRecognitionGameModule; break;
+                    case 'sound-sequence': activeGameModule = soundSequenceGameModule; break;
+                    default: activeGameModule = null;
+                }
+                if (activeGameModule && typeof activeGameModule.init === 'function') {
+                    try {
+                        activeGameModule.init(); 
+                    } catch (error) {
+                        console.error("Error initializing game module:", selectedGameId, error);
+                        noGameSelectedMessage.textContent = `加载游戏 "${selectedGameId}" 出错。请重试或选择其他游戏。`;
+                        noGameSelectedMessage.classList.add('active');
+                        activeGameContent.classList.remove('active'); 
+                        if (activeButton) activeButton.classList.remove('active');
+                    }
+                } else if (activeGameModule) {
+                     console.warn("Game module selected but no init function found:", selectedGameId);
+                }
+
+            } else {
+                noGameSelectedMessage.textContent = "请从上方选择一个游戏开始。"; 
+                noGameSelectedMessage.classList.add('active');
+                activeGameModule = null;
+                 console.warn("No active game content found for ID:", selectedGameId + "-game");
+            }
+        }
+        
+        gameSelectButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const gameId = button.dataset.game;
+                setActiveGame(gameId);
+            });
+        });
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        const memoryGameModule = (() => {
+            const gameBoard = document.getElementById('memory-game-board');
+            const statusMessage = document.getElementById('memory-status-message');
+            const resetButton = document.getElementById('memory-reset-button');
+            const pairsMatchedDisplay = document.getElementById('memory-pairs-matched');
+            const attemptsDisplay = document.getElementById('memory-attempts');
+            const difficultySelector = document.getElementById('memory-difficulty-selector');
+            const timerDisplay = document.getElementById('memory-timer-display');
+            const timeDisplaySpan = document.getElementById('memory-time');
+            const baseEmojis = ['🍎', '🍌', '🍒', '🍇', '🍓', '🥝', '🍍', '🥭', '🍑', '🍉', '🥥', '🍋']; 
+            let currentEmojis = [];
+            let cards = []; 
+            let flippedCards = []; 
+            let matchedPairs = 0;
+            let attempts = 0;
+            let lockBoard = false; 
+            let initialized = false;
+            let difficulty = 'medium'; 
+            let gameTimerInterval = null;
+            let secondsElapsed = 0;
+            const difficultySettings = {
+                easy: { pairs: 4, columns: 4, emojis: baseEmojis.slice(0, 4) },    
+                medium: { pairs: 8, columns: 4, emojis: baseEmojis.slice(0, 8) }, 
+                hard: { pairs: 10, columns: 5, emojis: baseEmojis.slice(0, 10) }  
+            };
+
+            function startTimer() {
+                stopTimer(); 
+                secondsElapsed = 0;
+                timeDisplaySpan.textContent = secondsElapsed;
+                timerDisplay.style.display = 'block';
+                gameTimerInterval = setInterval(() => {
+                    secondsElapsed++;
+                    timeDisplaySpan.textContent = secondsElapsed;
+                }, 1000);
+            }
+            function stopTimer() {
+                clearInterval(gameTimerInterval);
+                gameTimerInterval = null;
+            }
+            function createBoard() {
+                stopTimer(); 
+                timerDisplay.style.display = 'none';
+                gameBoard.innerHTML = ''; 
+                statusMessage.textContent = '尝试翻开两张卡片';
+                statusMessage.className = 'status-message text-blue-700'; 
+                matchedPairs = 0;
+                attempts = 0;
+                updateStats();
+                flippedCards = [];
+                lockBoard = false;
+                const settings = difficultySettings[difficulty];
+                currentEmojis = settings.emojis;
+                gameBoard.style.gridTemplateColumns = `repeat(${settings.columns}, minmax(0, 1fr))`; 
+                if (difficulty === 'hard') {
+                    gameBoard.classList.add('gap-px'); 
+                } else {
+                     gameBoard.classList.remove('gap-px');
+                }
+                const cardValues = [...currentEmojis, ...currentEmojis]; 
+                shuffleArray(cardValues); 
+                cardValues.forEach(value => {
+                    const cardElement = document.createElement('div');
+                    cardElement.classList.add('card');
+                    cardElement.dataset.value = value; 
+                    const cardInner = document.createElement('div');
+                    cardInner.classList.add('card-inner');
+                    const cardFront = document.createElement('div');
+                    cardFront.classList.add('card-front'); 
+                    const cardBack = document.createElement('div');
+                    cardBack.classList.add('card-back'); 
+                    cardBack.textContent = value;
+                    cardInner.appendChild(cardFront);
+                    cardInner.appendChild(cardBack);
+                    cardElement.appendChild(cardInner);
+                    cardElement.addEventListener('click', handleCardClick); 
+                    gameBoard.appendChild(cardElement);
+                });
+                cards = gameBoard.querySelectorAll('.card'); 
+            }
+            function handleCardClick(event) {
+                if (lockBoard || matchedPairs === difficultySettings[difficulty].pairs) return;
+                const clickedCard = event.currentTarget;
+                if (clickedCard.classList.contains('flipped') || clickedCard.classList.contains('matched')) return;
+                if (flippedCards.length === 0 && matchedPairs === 0 && attempts === 0) {
+                    startTimer(); 
+                }
+                flipCard(clickedCard); 
+                flippedCards.push(clickedCard); 
+                if (flippedCards.length === 2) {
+                    attempts++;
+                    updateStats();
+                    lockBoard = true; 
+                    checkForMatch(); 
+                }
+            }
+            function flipCard(card) { card.classList.add('flipped'); } 
+            function unflipCards() {
+                setTimeout(() => {
+                    flippedCards.forEach(card => card.classList.remove('flipped'));
+                    flippedCards = []; 
+                    lockBoard = false; 
+                    statusMessage.textContent = '不匹配，再试试看。';
+                    statusMessage.className = 'status-message text-red-600';
+                }, 800); 
+            }
+            function checkForMatch() {
+                const [card1, card2] = flippedCards;
+                if (card1.dataset.value === card2.dataset.value) { 
+                    statusMessage.textContent = '找到了一个匹配！ 🎉';
+                    statusMessage.className = 'status-message text-green-600';
+                    matchedPairs++;
+                    updateStats();
+                    card1.classList.add('matched'); 
+                    card2.classList.add('matched');
+                    flippedCards = []; 
+                    lockBoard = false; 
+                    if (matchedPairs === difficultySettings[difficulty].pairs) {
+                        stopTimer(); 
+                        statusMessage.textContent = `恭喜！您在 ${secondsElapsed} 秒内完成了所有匹配！总共尝试 ${attempts} 次。`;
+                        statusMessage.className = 'status-message text-green-700 font-bold';
+                    }
+                } else { 
+                    unflipCards(); 
+                }
+            }
+            function updateStats() {
+                pairsMatchedDisplay.textContent = matchedPairs;
+                attemptsDisplay.textContent = attempts;
+            }
+            function setDifficulty(newDifficulty) {
+                difficulty = newDifficulty;
+                difficultySelector.querySelectorAll('button').forEach(btn => {
+                    btn.classList.remove('selected');
+                    if (btn.dataset.difficulty === newDifficulty) {
+                        btn.classList.add('selected');
+                    }
+                });
+                createBoard(); 
+            }
+            return {
+                init: () => {
+                    if (!initialized) {
+                        resetButton.addEventListener('click', () => createBoard()); 
+                        difficultySelector.querySelectorAll('button').forEach(button => {
+                            button.addEventListener('click', (e) => setDifficulty(e.target.dataset.difficulty));
+                        });
+                        initialized = true;
+                    }
+                    const selectedButton = difficultySelector.querySelector('button.selected');
+                    difficulty = selectedButton ? selectedButton.dataset.difficulty : 'medium';
+                    createBoard();
+                },
+                cleanup: () => { 
+                    stopTimer();
+                }
+            };
+        })();
+
+        const objectRecognitionGameModule = (() => {
+            const objectDisplay = document.getElementById('object-display');
+            const optionsContainer = document.getElementById('object-options-container');
+            const statusMessage = document.getElementById('object-status-message');
+            const nextButton = document.getElementById('object-next-button');
+            const scoreDisplay = document.getElementById('object-score');
+            const items = [ { emoji: '🍎', name: '苹果' }, { emoji: '🍌', name: '香蕉' }, { emoji: '🚗', name: '汽车' }, { emoji: '🏠', name: '房子' }, { emoji: '⏰', name: '闹钟' }, { emoji: '🔑', name: '钥匙' }, { emoji: '📚', name: '书本' }, { emoji: '💻', name: '电脑' }, { emoji: '⚽', name: '足球' }, { emoji: '🌲', name: '树' }, { emoji: '☀️', name: '太阳' }, { emoji: '🌙', name: '月亮' } ];
+            let currentItem = null; 
+            let score = 0;
+            let initialized = false;
+            let itemPool = []; 
+            function getRandomItems(arr, n, excludeItem) {
+                const filtered = arr.filter(item => item.name !== excludeItem.name); 
+                shuffleArray(filtered);
+                return filtered.slice(0, n); 
+            }
+            function loadNewItem() {
+                if (itemPool.length === 0) { itemPool = [...items]; shuffleArray(itemPool); } 
+                currentItem = itemPool.pop(); 
+                objectDisplay.textContent = currentItem.emoji; 
+                optionsContainer.innerHTML = ''; 
+                statusMessage.textContent = '请选择一个选项。';
+                statusMessage.className = 'status-message text-blue-700';
+                nextButton.style.display = 'none'; 
+                const wrongOptionsCount = 2; 
+                let options = getRandomItems(items, wrongOptionsCount, currentItem).map(item => item.name);
+                options.push(currentItem.name); 
+                shuffleArray(options); 
+                options.forEach(optionName => {
+                    const button = document.createElement('button');
+                    button.classList.add('option-button');
+                    button.textContent = optionName;
+                    button.addEventListener('click', () => checkAnswer(optionName, button));
+                    optionsContainer.appendChild(button);
+                });
+                optionsContainer.querySelectorAll('.option-button').forEach(btn => btn.disabled = false); 
+            }
+            function checkAnswer(selectedName, buttonElement) {
+                optionsContainer.querySelectorAll('.option-button').forEach(btn => btn.disabled = true); 
+                if (selectedName === currentItem.name) { 
+                    statusMessage.textContent = '正确！做得好！👍';
+                    statusMessage.className = 'status-message text-green-600';
+                    buttonElement.classList.add('correct');
+                    score++;
+                    scoreDisplay.textContent = score;
+                } else { 
+                    statusMessage.textContent = `不正确。这是 ${currentItem.name}。`;
+                    statusMessage.className = 'status-message text-red-600';
+                    buttonElement.classList.add('incorrect');
+                    optionsContainer.querySelectorAll('.option-button').forEach(btn => {
+                        if (btn.textContent === currentItem.name) btn.classList.add('correct');
+                    });
+                }
+                nextButton.style.display = 'inline-block'; 
+            }
+            return {
+                init: () => {
+                    if (!initialized) {
+                        nextButton.addEventListener('click', loadNewItem);
+                        initialized = true;
+                    }
+                    score = 0; scoreDisplay.textContent = score; 
+                    itemPool = [...items]; shuffleArray(itemPool); 
+                    loadNewItem(); 
+                },
+                cleanup: () => {} 
+            };
+        })();
+
+        const numberSequenceGameModule = (() => {
+            const displayArea = document.getElementById('number-sequence-display-area');
+            const inputField = document.getElementById('number-sequence-input');
+            const submitButton = document.getElementById('number-sequence-submit-button');
+            const startButton = document.getElementById('number-sequence-start-button');
+            const statusMessage = document.getElementById('number-sequence-status-message');
+            const lengthDisplay = document.getElementById('number-sequence-length');
+            const correctCountDisplay = document.getElementById('number-sequence-correct');
+            const timerValueDisplay = document.getElementById('number-sequence-timer-value');
+            const timerBar = document.getElementById('number-sequence-timer-bar');
+            let currentSequence = "";
+            let sequenceLength = 3; 
+            let correctCount = 0;
+            let displayTimeBase = 1200; 
+            let displayTimePerDigit = 250; 
+            let inputTimeLimit = 10; 
+            let initialized = false;
+            let sequenceTimer = null; 
+            let inputTimerInterval = null; 
+            let timeRemaining = 0; 
+            function updateTimerBar() {
+                const percentage = (timeRemaining / inputTimeLimit) * 100;
+                timerBar.style.width = `${percentage}%`;
+            }
+            function startInputTimer() {
+                stopInputTimer(); 
+                timeRemaining = inputTimeLimit;
+                timerValueDisplay.textContent = timeRemaining;
+                updateTimerBar();
+                inputTimerInterval = setInterval(() => {
+                    timeRemaining--;
+                    timerValueDisplay.textContent = timeRemaining;
+                    updateTimerBar();
+                    if (timeRemaining <= 0) { 
+                        stopInputTimer();
+                        statusMessage.textContent = `时间到！正确的序列是 ${currentSequence}。`;
+                        statusMessage.className = 'status-message text-red-600';
+                        inputField.disabled = true;
+                        submitButton.disabled = true;
+                        startButton.disabled = false;
+                        startButton.innerHTML = '<i class="fas fa-play"></i> 下一组';
+                    }
+                }, 1000);
+            }
+            function stopInputTimer() { clearInterval(inputTimerInterval); }
+            function generateSequence() {
+                let seq = "";
+                for (let i = 0; i < sequenceLength; i++) { seq += Math.floor(Math.random() * 10); }
+                return seq;
+            }
+            function startGame() {
+                stopInputTimer(); 
+                startButton.disabled = true; 
+                inputField.disabled = true; inputField.value = ""; 
+                submitButton.disabled = true; 
+                statusMessage.textContent = "请记住数字...";
+                statusMessage.className = 'status-message text-blue-700';
+                currentSequence = generateSequence(); 
+                displayArea.textContent = currentSequence; 
+                const totalDisplayTime = displayTimeBase + (sequenceLength * displayTimePerDigit);
+                clearTimeout(sequenceTimer); 
+                sequenceTimer = setTimeout(() => {
+                    displayArea.textContent = "现在输入"; 
+                    inputField.disabled = false; submitButton.disabled = false; 
+                    inputField.focus(); 
+                    statusMessage.textContent = "请输入您记住的序列。";
+                    startInputTimer(); 
+                }, totalDisplayTime);
+            }
+            function checkSequence() {
+                stopInputTimer(); 
+                inputField.disabled = true; submitButton.disabled = true; 
+                if (inputField.value === currentSequence) { 
+                    statusMessage.textContent = "正确！太棒了！🎉";
+                    statusMessage.className = 'status-message text-green-600';
+                    correctCount++;
+                    if (correctCount > 0 && correctCount % 2 === 0 && sequenceLength < 10) { sequenceLength++; }
+                } else { 
+                    statusMessage.textContent = `错误。正确的序列是 ${currentSequence}。`;
+                    statusMessage.className = 'status-message text-red-600';
+                }
+                lengthDisplay.textContent = sequenceLength; 
+                correctCountDisplay.textContent = correctCount; 
+                startButton.disabled = false; 
+                startButton.innerHTML = '<i class="fas fa-play"></i> 下一组';
+            }
+            return {
+                init: () => {
+                    if (!initialized) {
+                        startButton.addEventListener('click', startGame);
+                        submitButton.addEventListener('click', checkSequence);
+                        inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !submitButton.disabled) checkSequence(); });
+                        initialized = true;
+                    }
+                    stopInputTimer(); 
+                    clearTimeout(sequenceTimer);
+                    sequenceLength = 3; correctCount = 0;
+                    inputTimeLimit = 10 + Math.floor(sequenceLength / 2) ; 
+                    lengthDisplay.textContent = sequenceLength;
+                    correctCountDisplay.textContent = correctCount;
+                    displayArea.textContent = "点击开始";
+                    statusMessage.textContent = "准备好了吗？";
+                    statusMessage.className = 'status-message text-blue-700';
+                    inputField.value = ""; inputField.disabled = true; submitButton.disabled = true;
+                    startButton.disabled = false; startButton.innerHTML = '<i class="fas fa-play"></i> 开始';
+                    timeRemaining = inputTimeLimit; timerValueDisplay.textContent = timeRemaining; updateTimerBar(); 
+                },
+                cleanup: () => {
+                    stopInputTimer();
+                    clearTimeout(sequenceTimer);
+                }
+            };
+        })();
+
+        const quickMathGameModule = (() => {
+            const problemDisplay = document.getElementById('quick-math-problem-display');
+            const inputField = document.getElementById('quick-math-input');
+            const submitButton = document.getElementById('quick-math-submit-button');
+            const startButton = document.getElementById('quick-math-start-button');
+            const statusMessage = document.getElementById('quick-math-status-message');
+            const scoreDisplay = document.getElementById('quick-math-score');
+            const difficultySelector = document.getElementById('quick-math-difficulty-selector');
+            const timerValueDisplay = document.getElementById('quick-math-timer-value');
+            let currentProblem = { text: "", answer: 0 };
+            let score = 0;
+            let initialized = false;
+            let difficulty = 'easy'; 
+            let timeLimit = 15; 
+            let problemTimerInterval = null; 
+            let timeRemaining = 0;
+            const problemSettings = {
+                easy: { range1: [1, 10], range2: [1, 10], ops: ['+', '-'] },
+                medium: { range1: [1, 20], range2: [1, 20], ops: ['+', '-'], multiplyRange: [1, 5] }, 
+                hard: { range1: [10, 50], range2: [10, 50], ops: ['+', '-'], multiplyRange: [2, 9], divideRange: [10,50, 2, 5] } 
+            };
+            function startProblemTimer() {
+                stopProblemTimer();
+                timeRemaining = timeLimit;
+                timerValueDisplay.textContent = timeRemaining;
+                problemTimerInterval = setInterval(() => {
+                    timeRemaining--;
+                    timerValueDisplay.textContent = timeRemaining;
+                    if (timeRemaining <= 0) { 
+                        stopProblemTimer();
+                        statusMessage.textContent = `时间到！正确答案是 ${currentProblem.answer}。`;
+                        statusMessage.className = 'status-message text-red-600';
+                        inputField.disabled = true; submitButton.disabled = true;
+                        startButton.disabled = false; startButton.innerHTML = '<i class="fas fa-play"></i> 下一题';
+                    }
+                }, 1000);
+            }
+            function stopProblemTimer() { clearInterval(problemTimerInterval); }
+            function generateProblem() {
+                stopProblemTimer(); 
+                const setting = problemSettings[difficulty];
+                let num1, num2, operator, text, answer;
+                operator = setting.ops[Math.floor(Math.random() * setting.ops.length)]; 
+                if (difficulty === 'medium' && Math.random() < 0.33) { 
+                    operator = '*';
+                    num1 = Math.floor(Math.random() * setting.multiplyRange[1]) + setting.multiplyRange[0];
+                    num2 = Math.floor(Math.random() * setting.multiplyRange[1]) + setting.multiplyRange[0];
+                    answer = num1 * num2;
+                    text = `${num1} × ${num2} = ?`;
+                } else if (difficulty === 'hard' && Math.random() < 0.5) { 
+                    if (Math.random() < 0.5) { 
+                        operator = '*';
+                        num1 = Math.floor(Math.random() * (setting.multiplyRange[1] - setting.multiplyRange[0] + 1)) + setting.multiplyRange[0];
+                        num2 = Math.floor(Math.random() * (setting.multiplyRange[1] - setting.multiplyRange[0] + 1)) + setting.multiplyRange[0];
+                        answer = num1 * num2;
+                        text = `${num1} × ${num2} = ?`;
+                    } else { 
+                        operator = '/';
+                        let tempAnswer = Math.floor(Math.random() * (setting.multiplyRange[1] - setting.multiplyRange[0] +1)) + setting.multiplyRange[0]; 
+                        num2 = Math.floor(Math.random() * (setting.divideRange[2] - setting.divideRange[1] +1)) + setting.divideRange[1]; 
+                        if (num2 === 0) num2 = 1; 
+                        num1 = tempAnswer * num2; 
+                        answer = tempAnswer;
+                        text = `${num1} ÷ ${num2} = ?`;
+                    }
+                } else { 
+                    num1 = Math.floor(Math.random() * (setting.range1[1] - setting.range1[0] + 1)) + setting.range1[0];
+                    num2 = Math.floor(Math.random() * (setting.range2[1] - setting.range2[0] + 1)) + setting.range2[0];
+                    if (operator === '+') {
+                        answer = num1 + num2;
+                        text = `${num1} + ${num2} = ?`;
+                    } else { 
+                        if (num1 < num2 && difficulty === 'easy') { [num1, num2] = [num2, num1]; } 
+                        answer = num1 - num2;
+                        text = `${num1} - ${num2} = ?`;
+                    }
+                }
+                currentProblem = { text, answer };
+                problemDisplay.textContent = currentProblem.text; 
+                inputField.value = ""; inputField.disabled = false; submitButton.disabled = false; 
+                inputField.focus();
+                statusMessage.textContent = "请计算答案。";
+                statusMessage.className = 'status-message text-blue-700';
+                startButton.disabled = true; 
+                startProblemTimer(); 
+            }
+            function checkAnswer() {
+                stopProblemTimer(); 
+                const userAnswer = parseInt(inputField.value);
+                inputField.disabled = true; submitButton.disabled = true; 
+                if (!isNaN(userAnswer) && userAnswer === currentProblem.answer) { 
+                    statusMessage.textContent = "正确！非常棒！🚀";
+                    statusMessage.className = 'status-message text-green-600';
+                    score++;
+                } else { 
+                    statusMessage.textContent = `错了哦。正确答案是 ${currentProblem.answer}。`;
+                    statusMessage.className = 'status-message text-red-600';
+                }
+                scoreDisplay.textContent = score; 
+                startButton.disabled = false; startButton.innerHTML = '<i class="fas fa-play"></i> 下一题'; 
+            }
+            function setDifficulty(newDifficulty) {
+                difficulty = newDifficulty;
+                difficultySelector.querySelectorAll('button').forEach(btn => {
+                    btn.classList.remove('selected');
+                    if (btn.dataset.difficulty === newDifficulty) btn.classList.add('selected');
+                });
+                timeLimit = (difficulty === 'easy' ? 20 : difficulty === 'medium' ? 15 : 10); 
+                generateProblem(); 
+            }
+            return {
+                init: () => {
+                    if (!initialized) {
+                        startButton.addEventListener('click', generateProblem);
+                        submitButton.addEventListener('click', checkAnswer);
+                        inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !submitButton.disabled) checkAnswer(); });
+                        difficultySelector.querySelectorAll('button').forEach(button => {
+                            button.addEventListener('click', (e) => setDifficulty(e.target.dataset.difficulty));
+                        });
+                        initialized = true;
+                    }
+                    score = 0; scoreDisplay.textContent = score;
+                    const selectedButton = difficultySelector.querySelector('button.selected');
+                    difficulty = selectedButton ? selectedButton.dataset.difficulty : 'easy'; 
+                    timeLimit = (difficulty === 'easy' ? 20 : difficulty === 'medium' ? 15 : 10); 
+                    problemDisplay.textContent = "选择难度并开始";
+                    statusMessage.textContent = "来挑战一下吧！";
+                    statusMessage.className = 'status-message text-blue-700';
+                    inputField.value = ""; inputField.disabled = true; submitButton.disabled = true;
+                    startButton.disabled = false; startButton.innerHTML = '<i class="fas fa-play"></i> 开始';
+                    timeRemaining = timeLimit; timerValueDisplay.textContent = timeRemaining; 
+                    stopProblemTimer(); 
+                },
+                cleanup: () => {
+                    stopProblemTimer();
+                }
+            };
+        })();
+
+        const colorMatchGameModule = (() => {
+            const wordDisplay = document.getElementById('color-match-word-display');
+            const matchButton = document.getElementById('color-match-true-button');
+            const noMatchButton = document.getElementById('color-match-false-button');
+            const startButton = document.getElementById('color-match-start-button');
+            const statusMessage = document.getElementById('color-match-status-message');
+            const scoreDisplay = document.getElementById('color-match-score');
+            const timerValueDisplay = document.getElementById('color-match-timer-value');
+            const colorData = [ { name: '红色', value: '#ef4444' }, { name: '蓝色', value: '#3b82f6' }, { name: '绿色', value: '#22c55e' }, { name: '黄色', value: '#eab308' }, { name: '紫色', value: '#8b5cf6' }, { name: '橙色', value: '#f97316' } ];
+            let currentWordText = ''; let currentWordColorValue = '';
+            let isMatchScenario = false; 
+            let score = 0; let initialized = false; let gameActive = false; 
+            let timeLimit = 5; 
+            let trialTimerInterval = null; 
+            let timeRemaining = 0;
+            function startTrialTimer() {
+                stopTrialTimer();
+                timeRemaining = timeLimit;
+                timerValueDisplay.textContent = timeRemaining;
+                trialTimerInterval = setInterval(() => {
+                    timeRemaining--;
+                    timerValueDisplay.textContent = timeRemaining;
+                    if (timeRemaining <= 0) { 
+                        stopTrialTimer();
+                        statusMessage.textContent = `时间到！正确答案是：${isMatchScenario ? '匹配' : '不匹配'}。`;
+                        statusMessage.className = 'status-message text-red-600';
+                        matchButton.disabled = true; noMatchButton.disabled = true; 
+                        startButton.disabled = false; startButton.innerHTML = '<i class="fas fa-play"></i> 下一题'; 
+                        gameActive = false;
+                    }
+                }, 1000);
+            }
+            function stopTrialTimer() { clearInterval(trialTimerInterval); }
+            function generateTrial() {
+                stopTrialTimer(); 
+                gameActive = true; 
+                const wordColorObj = colorData[Math.floor(Math.random() * colorData.length)];
+                currentWordText = wordColorObj.name;
+                isMatchScenario = Math.random() < 0.5;
+                if (isMatchScenario) { 
+                    currentWordColorValue = wordColorObj.value;
+                } else { 
+                    let differentColorObj;
+                    do { 
+                        differentColorObj = colorData[Math.floor(Math.random() * colorData.length)];
+                    } while (differentColorObj.name === currentWordText);
+                    currentWordColorValue = differentColorObj.value;
+                }
+                wordDisplay.textContent = currentWordText;
+                wordDisplay.style.color = currentWordColorValue;
+                statusMessage.textContent = "词语和颜色匹配吗？";
+                statusMessage.className = 'status-message text-blue-700';
+                matchButton.disabled = false; noMatchButton.disabled = false; 
+                startButton.disabled = true; 
+                startTrialTimer(); 
+            }
+            function checkAnswer(userChoseMatch) {
+                if (!gameActive) return; 
+                stopTrialTimer(); 
+                gameActive = false; 
+                matchButton.disabled = true; noMatchButton.disabled = true; 
+                let correct = false;
+                if ((userChoseMatch && isMatchScenario) || (!userChoseMatch && !isMatchScenario)) {
+                    correct = true;
+                }
+                if (correct) {
+                    statusMessage.textContent = "正确！反应迅速！🎨";
+                    statusMessage.className = 'status-message text-green-600';
+                    score++;
+                } else {
+                    statusMessage.textContent = `错了哦。正确答案是：${isMatchScenario ? '匹配' : '不匹配'}。`;
+                    statusMessage.className = 'status-message text-red-600';
+                }
+                scoreDisplay.textContent = score; 
+                startButton.disabled = false; startButton.innerHTML = '<i class="fas fa-play"></i> 下一题'; 
+            }
+            return {
+                init: () => {
+                    if (!initialized) {
+                        startButton.addEventListener('click', generateTrial);
+                        matchButton.addEventListener('click', () => checkAnswer(true));
+                        noMatchButton.addEventListener('click', () => checkAnswer(false));
+                        initialized = true;
+                    }
+                    score = 0; scoreDisplay.textContent = score;
+                    wordDisplay.textContent = "点击开始"; wordDisplay.style.color = '#374151'; 
+                    statusMessage.textContent = "准备挑战！"; statusMessage.className = 'status-message text-blue-700';
+                    matchButton.disabled = true; noMatchButton.disabled = true;
+                    startButton.disabled = false; startButton.innerHTML = '<i class="fas fa-play"></i> 开始';
+                    gameActive = false;
+                    timeRemaining = timeLimit; timerValueDisplay.textContent = timeRemaining; 
+                    stopTrialTimer(); 
+                },
+                cleanup: () => {
+                    stopTrialTimer();
+                }
+            };
+        })();
+
+        const dailyTaskGameModule = (() => {
+            const taskListUL = document.getElementById('daily-task-list');
+            const resetButton = document.getElementById('daily-task-reset-button');
+            const statusMessage = document.getElementById('daily-task-status-message');
+            const completedCountSpan = document.getElementById('daily-task-completed-count');
+            const defaultTasks = [
+                { id: 'task1', text: '喝一杯水', completed: false, icon: 'fas fa-tint' },
+                { id: 'task2', text: '吃营养早餐', completed: false, icon: 'fas fa-utensils' },
+                { id: 'task3', text: '刷牙至少2分钟', completed: false, icon: 'fas fa-tooth' },
+                { id: 'task4', text: '进行10分钟轻度活动', completed: false, icon: 'fas fa-walking' },
+                { id: 'task5', text: '阅读或学习新事物', completed: false, icon: 'fas fa-book-open' },
+                { id: 'task6', text: '与家人或朋友交流', completed: false, icon: 'fas fa-comments' }
+            ];
+            let tasks = []; 
+            let initialized = false;
+            function saveTasks() {
+                localStorage.setItem('dailyTasks_智养云', JSON.stringify(tasks));
+            }
+            function loadTasks() {
+                const storedTasks = localStorage.getItem('dailyTasks_智养云');
+                if (storedTasks) {
+                    tasks = JSON.parse(storedTasks);
+                } else {
+                    tasks = JSON.parse(JSON.stringify(defaultTasks)); 
+                }
+            }
+            function renderTasks() {
+                taskListUL.innerHTML = ''; 
+                let completedCount = 0;
+                tasks.forEach(task => {
+                    const li = document.createElement('li');
+                    li.classList.add('task-item');
+                    li.dataset.taskId = task.id;
+                    const taskText = document.createElement('span');
+                    taskText.textContent = task.text;
+                    const taskIcon = document.createElement('i');
+                    taskIcon.className = `task-icon ${task.icon}`; 
+                    if (task.completed) { 
+                        li.classList.add('completed'); 
+                        completedCount++;
+                    }
+                    li.appendChild(taskText);
+                    li.appendChild(taskIcon);
+                    li.addEventListener('click', () => toggleTask(task.id)); 
+                    taskListUL.appendChild(li);
+                });
+                completedCountSpan.textContent = completedCount; 
+                statusMessage.textContent = `今天已完成 ${completedCount} / ${tasks.length} 项任务。`;
+            }
+            function toggleTask(taskId) {
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.completed = !task.completed; 
+                    saveTasks(); 
+                    renderTasks(); 
+                }
+            }
+            function resetAllTasks() {
+                tasks = JSON.parse(JSON.stringify(defaultTasks)); 
+                saveTasks();
+                renderTasks();
+                statusMessage.textContent = "新的一天，新的开始！已重置所有任务。";
+            }
+            return {
+                init: () => {
+                    if (!initialized) {
+                        resetButton.addEventListener('click', resetAllTasks);
+                        initialized = true;
+                    }
+                    loadTasks(); 
+                    renderTasks(); 
+                },
+                cleanup: () => {}
+            };
+        })();
+
+        const spotDifferenceGameModule = (() => {
+            const panelLeft = document.getElementById('spot-diff-panel-left');
+            const panelRight = document.getElementById('spot-diff-panel-right');
+            const statusMessage = document.getElementById('spot-difference-status-message');
+            const resetButton = document.getElementById('spot-difference-reset-button');
+            const foundCountSpan = document.getElementById('spot-diff-found-count');
+            const totalCountSpan = document.getElementById('spot-diff-total-count');
+            const gridSize = 5; 
+            const totalItems = gridSize * gridSize;
+            const baseEmojis = ['😀', '😂', '😍', '🤔', '😎', '😢', '🥳', '🤯', '🤩', '😴', '👍', '👎', '🎉', '🎁', '🎈', '🚀', '💡', '🌍', '⭐', '☀️']; 
+            const numDifferences = 3; 
+            let originalItems = []; 
+            let differentItems = []; 
+            let differenceLocations = []; 
+            let foundDifferences = 0;
+            let initialized = false;
+
+            function createPanel(panelElement, itemsArray, isClickable = false) {
+                panelElement.innerHTML = '';
+                panelElement.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                itemsArray.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.classList.add('spot-item');
+                    itemDiv.textContent = item;
+                    itemDiv.dataset.index = index;
+                    if (isClickable) {
+                        itemDiv.classList.add('clickable');
+                        if (differenceLocations.includes(index) && !itemDiv.classList.contains('found-diff')) {
+                             itemDiv.addEventListener('click', handleDifferenceClick);
+                        } else if (!differenceLocations.includes(index)) { 
+                             itemDiv.addEventListener('click', handleNonDifferenceClick);
+                        }
+                    }
+                    panelElement.appendChild(itemDiv);
+                });
+            }
+            function handleNonDifferenceClick(event) {
+                const clickedItem = event.currentTarget;
+                if (clickedItem.classList.contains('found-diff')) return; 
+                statusMessage.textContent = "这里没有不同哦，再仔细看看！";
+                statusMessage.className = 'status-message text-orange-600';
+                clickedItem.style.transition = 'transform 0.1s ease-in-out';
+                clickedItem.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    clickedItem.style.transform = 'scale(1)';
+                }, 100);
+            }
+            function handleDifferenceClick(event) {
+                const clickedItem = event.currentTarget;
+                const index = parseInt(clickedItem.dataset.index);
+                if (differenceLocations.includes(index) && !clickedItem.classList.contains('found-diff')) {
+                    clickedItem.classList.add('found-diff'); 
+                    foundDifferences++;
+                    foundCountSpan.textContent = foundDifferences;
+                    statusMessage.textContent = "找到了一个不同点！👍";
+                    statusMessage.className = 'status-message text-green-600';
+                    const clone = clickedItem.cloneNode(true);
+                    clickedItem.parentNode.replaceChild(clone, clickedItem);
+                    if (foundDifferences === numDifferences) {
+                        statusMessage.textContent = "恭喜！所有不同点都找到了！🎉";
+                        statusMessage.className = 'status-message text-green-700 font-bold';
+                        panelRight.querySelectorAll('.spot-item').forEach(item => {
+                            const itemClone = item.cloneNode(true); 
+                            item.parentNode.replaceChild(itemClone, item);
+                            itemClone.classList.remove('clickable'); 
+                        });
+                    }
+                }
+            }
+            function generateGame() {
+                originalItems = [];
+                differentItems = [];
+                differenceLocations = [];
+                foundDifferences = 0;
+                let availableEmojis = [...baseEmojis];
+                shuffleArray(availableEmojis);
+                for (let i = 0; i < totalItems; i++) {
+                    originalItems.push(availableEmojis[i % availableEmojis.length]); 
+                }
+                shuffleArray(originalItems); 
+                differentItems = [...originalItems];
+                let possibleDiffIndices = Array.from(Array(totalItems).keys()); 
+                shuffleArray(possibleDiffIndices);
+                for (let i = 0; i < numDifferences; i++) {
+                    const diffIndex = possibleDiffIndices[i];
+                    differenceLocations.push(diffIndex);
+                    let newEmoji;
+                    do {
+                        newEmoji = baseEmojis[Math.floor(Math.random() * baseEmojis.length)];
+                    } while (newEmoji === originalItems[diffIndex]); 
+                    differentItems[diffIndex] = newEmoji;
+                }
+                createPanel(panelLeft, originalItems, false);
+                createPanel(panelRight, differentItems, true); 
+                foundCountSpan.textContent = foundDifferences;
+                totalCountSpan.textContent = numDifferences;
+                statusMessage.textContent = "请找出两边的不同之处。";
+                statusMessage.className = 'status-message text-blue-700';
+            }
+            return {
+                init: () => {
+                    if (!initialized) {
+                        resetButton.addEventListener('click', generateGame);
+                        initialized = true;
+                    }
+                    generateGame();
+                },
+                cleanup: () => {}
+            };
+        })();
+
+        const mazeGameModule = (() => {
+            const gridContainer = document.getElementById('maze-grid-container');
+            const statusMessage = document.getElementById('maze-status-message');
+            const resetButton = document.getElementById('maze-reset-button');
+            const movesCountSpan = document.getElementById('maze-moves-count');
+            const MAZE_SIZE = 7; 
+            let maze = [];
+            let playerPos = { r: 0, c: 0 };
+            let startPos = { r: 0, c: 0 };
+            let endPos = { r: MAZE_SIZE - 1, c: MAZE_SIZE - 1 };
+            let moves = 0;
+            let initialized = false;
+            let gameWon = false;
+            let playerPathHistory = []; 
+
+            function generateRecursiveBacktrackerMaze() {
+                maze = Array(MAZE_SIZE).fill(null).map(() => Array(MAZE_SIZE).fill(1)); 
+                const stack = [];
+                let currentCell = { r: startPos.r, c: startPos.c };
+                maze[currentCell.r][currentCell.c] = 0; 
+                stack.push(currentCell);
+
+                while (stack.length > 0) {
+                    currentCell = stack[stack.length - 1]; 
+                    const neighbors = [];
+                    if (currentCell.r - 2 >= 0 && maze[currentCell.r - 2][currentCell.c] === 1) neighbors.push({ r: currentCell.r - 2, c: currentCell.c, wallR: currentCell.r - 1, wallC: currentCell.c });
+                    if (currentCell.r + 2 < MAZE_SIZE && maze[currentCell.r + 2][currentCell.c] === 1) neighbors.push({ r: currentCell.r + 2, c: currentCell.c, wallR: currentCell.r + 1, wallC: currentCell.c });
+                    if (currentCell.c - 2 >= 0 && maze[currentCell.r][currentCell.c - 2] === 1) neighbors.push({ r: currentCell.r, c: currentCell.c - 2, wallR: currentCell.r, wallC: currentCell.c - 1 });
+                    if (currentCell.c + 2 < MAZE_SIZE && maze[currentCell.r][currentCell.c + 2] === 1) neighbors.push({ r: currentCell.r, c: currentCell.c + 2, wallR: currentCell.r, wallC: currentCell.c + 1 });
+
+                    if (neighbors.length > 0) {
+                        const nextCellInfo = neighbors[Math.floor(Math.random() * neighbors.length)];
+                        maze[nextCellInfo.wallR][nextCellInfo.wallC] = 0; 
+                        maze[nextCellInfo.r][nextCellInfo.c] = 0;       
+                        stack.push({ r: nextCellInfo.r, c: nextCellInfo.c });
+                    } else {
+                        stack.pop();
+                    }
+                }
+                maze[startPos.r][startPos.c] = 2; 
+                maze[endPos.r][endPos.c] = 3;     
+                
+                if (maze[endPos.r][endPos.c] === 1) { 
+                     maze[endPos.r][endPos.c] = 3; 
+                     if(endPos.r > 0 && maze[endPos.r-1][endPos.c] === 1 && maze[endPos.r-1][endPos.c-1] === 0) maze[endPos.r-1][endPos.c] =0; 
+                     else if(endPos.c > 0 && maze[endPos.r][endPos.c-1] === 1 && maze[endPos.r-1]?.[endPos.c-1] === 0) maze[endPos.r][endPos.c-1] =0;
+                }
+
+                playerPos = { ...startPos };
+                playerPathHistory = [{ ...playerPos }];
+                moves = 0;
+                gameWon = false;
+                updateMovesDisplay();
+            }
+            
+            function renderMaze() {
+                if (!gridContainer) return; // Guard against null if called before DOM ready or if ID is wrong
+                gridContainer.innerHTML = '';
+                gridContainer.style.gridTemplateColumns = `repeat(${MAZE_SIZE}, 1fr)`;
+                for (let r = 0; r < MAZE_SIZE; r++) {
+                    for (let c = 0; c < MAZE_SIZE; c++) {
+                        const cell = document.createElement('div');
+                        cell.classList.add('maze-cell');
+                        cell.dataset.r = r;
+                        cell.dataset.c = c;
+
+                        if (maze[r][c] === 1) cell.classList.add('wall');
+                        else if (maze[r][c] === 2) cell.classList.add('start');
+                        else if (maze[r][c] === 3) cell.classList.add('end');
+                        
+                        if (playerPathHistory.some(p => p.r === r && p.c === c)) {
+                            cell.classList.add('path-taken');
+                        }
+                        if (r === playerPos.r && c === playerPos.c) {
+                             cell.classList.add('current-pos');
+                        }
+                        if (maze[r][c] !== 1) { 
+                            cell.addEventListener('click', handleCellClick);
+                        }
+                        gridContainer.appendChild(cell);
+                    }
+                }
+            }
+            function handleCellClick(event) {
+                if (gameWon) return; 
+                const r = parseInt(event.currentTarget.dataset.r);
+                const c = parseInt(event.currentTarget.dataset.c);
+                const dr = Math.abs(r - playerPos.r);
+                const dc = Math.abs(c - playerPos.c);
+
+                if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) { 
+                    if (maze[r][c] !== 1) { 
+                        playerPos = { r, c };
+                        if (playerPathHistory.length > 1 && playerPathHistory[playerPathHistory.length - 2].r === r && playerPathHistory[playerPathHistory.length - 2].c === c) {
+                            playerPathHistory.pop(); 
+                        } else {
+                            playerPathHistory.push({ ...playerPos });
+                        }
+                        moves++;
+                        updateMovesDisplay();
+                        renderMaze(); 
+                        if (r === endPos.r && c === endPos.c) { 
+                            gameWon = true;
+                            statusMessage.textContent = `恭喜！您用 ${moves} 步找到了出口！🎉`;
+                            statusMessage.className = 'status-message text-green-700 font-bold';
+                        } else {
+                            statusMessage.textContent = "继续寻找出口...";
+                            statusMessage.className = 'status-message text-blue-700';
+                        }
+                    } else {
+                        statusMessage.textContent = "不能穿墙哦！";
+                        statusMessage.className = 'status-message text-red-600';
+                    }
+                } else {
+                    statusMessage.textContent = "请点击相邻的格子移动。";
+                    statusMessage.className = 'status-message text-orange-600';
+                }
+            }
+            function updateMovesDisplay() { if(movesCountSpan) movesCountSpan.textContent = moves; }
+            return {
+                init: () => {
+                    if (!gridContainer) {
+                        console.error("Maze grid container not found!");
+                        return;
+                    }
+                    if (!initialized) {
+                        if(resetButton) resetButton.addEventListener('click', () => {
+                            generateRecursiveBacktrackerMaze();
+                            renderMaze();
+                            if(statusMessage) {
+                                statusMessage.textContent = "新迷宫已生成，请开始寻路。";
+                                statusMessage.className = 'status-message text-blue-700';
+                            }
+                        });
+                        initialized = true;
+                    }
+                    generateRecursiveBacktrackerMaze();
+                    renderMaze();
+                    if(statusMessage) {
+                        statusMessage.textContent = "请开始寻路。";
+                        statusMessage.className = 'status-message text-blue-700';
+                    }
+                },
+                cleanup: () => {}
+            };
+        })();
+
+        const storySequencingGameModule = (() => {
+            const storyTextArea = document.getElementById('story-text-area');
+            const snippetsContainer = document.getElementById('sentence-snippets-container'); 
+            const dropZone = document.getElementById('story-drop-zone');
+            const submitButton = document.getElementById('story-submit-button');
+            const statusMessage = document.getElementById('story-status-message');
+            const stories = [
+                { fullText: "小明早上起床，先刷了牙，然后吃了美味的早餐。吃完早餐后，他高高兴兴地去上学了。下午放学回家，他先完成了作业，然后才出去和小伙伴们玩耍。", sentences: ["小明早上起床，先刷了牙", "然后吃了美味的早餐", "吃完早餐后，他高高兴兴地去上学了", "下午放学回家，他先完成了作业", "然后才出去和小伙伴们玩耍"], id: "story1" },
+                { fullText: "春天来了，公园里的花都开了，有红色的、黄色的，还有紫色的。小鸟在树上唱歌，蝴蝶在花丛中飞舞。小华和妈妈一起去公园放风筝，玩得很开心。", sentences: ["春天来了，公园里的花都开了", "有红色的、黄色的，还有紫色的", "小鸟在树上唱歌，蝴蝶在花丛中飞舞", "小华和妈妈一起去公园放风筝", "玩得很开心"], id: "story2" }
+            ];
+            let currentStory = null;
+            let correctOrder = [];
+            let draggedSnippet = null;
+            let initialized = false;
+
+            function loadStory() {
+                currentStory = stories[Math.floor(Math.random() * stories.length)];
+                storyTextArea.textContent = currentStory.fullText;
+                correctOrder = [...currentStory.sentences];
+                let shuffledSnippets = [...currentStory.sentences];
+                shuffleArray(shuffledSnippets);
+                snippetsContainer.innerHTML = '';
+                dropZone.innerHTML = '';
+                shuffledSnippets.forEach((sentence, index) => {
+                    const snippetDiv = document.createElement('div');
+                    snippetDiv.classList.add('snippet');
+                    snippetDiv.textContent = sentence;
+                    snippetDiv.draggable = true;
+                    snippetDiv.dataset.originalText = sentence; 
+                    snippetDiv.id = `snippet-${currentStory.id}-${index}`;
+                    snippetDiv.addEventListener('dragstart', handleDragStart);
+                    snippetsContainer.appendChild(snippetDiv);
+                });
+                statusMessage.textContent = "请将句子拖拽到下方，按正确顺序排列。";
+                statusMessage.className = 'status-message text-blue-700';
+                submitButton.disabled = false;
+            }
+
+            function handleDragStart(e) {
+                draggedSnippet = e.target;
+                e.dataTransfer.setData('text/plain', e.target.id);
+                setTimeout(() => { 
+                     e.target.classList.add('dragging');
+                }, 0);
+            }
+             function handleDragEnd(e) {
+                if(draggedSnippet) draggedSnippet.classList.remove('dragging');
+            }
+
+            function setupDropZone() {
+                [dropZone, snippetsContainer].forEach(container => {
+                    container.addEventListener('dragover', (e) => {
+                        e.preventDefault(); 
+                        const afterElement = getDragAfterElement(container, e.clientY);
+                        const currentlyDragged = document.querySelector('.dragging');
+                        if (currentlyDragged && currentlyDragged.parentNode === container) { 
+                            if (afterElement == null) {
+                                container.appendChild(currentlyDragged);
+                            } else {
+                                container.insertBefore(currentlyDragged, afterElement);
+                            }
+                        }
+                    });
+                    container.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        if (draggedSnippet) {
+                            if (draggedSnippet.parentNode !== container) {
+                                container.appendChild(draggedSnippet); 
+                            } 
+                            draggedSnippet.classList.remove('dragging');
+                            draggedSnippet.draggable = (container === snippetsContainer); 
+                            draggedSnippet = null;
+                        }
+                    });
+                });
+                document.addEventListener('dragend', handleDragEnd);
+            }
+
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.snippet:not(.dragging)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            function checkOrder() {
+                const droppedItems = Array.from(dropZone.querySelectorAll('.snippet'));
+                if (droppedItems.length !== correctOrder.length) {
+                    statusMessage.textContent = "请将所有句子都拖到排序区。";
+                    statusMessage.className = 'status-message text-orange-600';
+                    return;
+                }
+                let isCorrect = true;
+                for (let i = 0; i < droppedItems.length; i++) {
+                    if (droppedItems[i].textContent !== correctOrder[i]) {
+                        isCorrect = false;
+                        break;
+                    }
+                }
+                if (isCorrect) {
+                    statusMessage.textContent = "太棒了！顺序完全正确！🎉";
+                    statusMessage.className = 'status-message text-green-700 font-bold';
+                } else {
+                    statusMessage.textContent = "顺序不太对哦，再试一次吧！";
+                    statusMessage.className = 'status-message text-red-600';
+                }
+                submitButton.disabled = true;
+            }
+
+            return {
+                init: () => {
+                    if (!initialized) {
+                        submitButton.addEventListener('click', checkOrder);
+                        setupDropZone();
+                        initialized = true;
+                    }
+                    loadStory();
+                },
+                cleanup: () => {
+                     document.removeEventListener('dragend', handleDragEnd);
+                }
+            };
+        })();
+
+        const patternRecognitionGameModule = (() => {
+            const displayArea = document.getElementById('pattern-display-area');
+            const optionsContainer = document.getElementById('pattern-options-container');
+            const nextButton = document.getElementById('pattern-next-button');
+            const statusMessage = document.getElementById('pattern-status-message');
+            const scoreDisplay = document.getElementById('pattern-score');
+            const patterns = [
+                { type: 'ABAB', elements: ['🍎', '🍌'], length: 4, optionsCount: 3 },
+                { type: 'ABAB', elements: ['🔵', '🟡'], length: 4, optionsCount: 3 },
+                { type: 'AABB', elements: ['🐶', '🐱'], length: 4, optionsCount: 3 },
+                { type: 'ABC', elements: ['☀️', '🌙', '⭐'], length: 3, optionsCount: 4 },
+                { type: 'AAB', elements: ['🚗', '🚲'], length: 3, optionsCount: 3},
+            ];
+            const allPossibleElements = ['🍎', '🍌', '🔵', '🟡', '🐶', '🐱', '☀️', '🌙', '⭐', '🚗', '🚲', '🚀', '🏠', '🌲', '🎁', '🎉'];
+            let currentPattern = null;
+            let sequence = [];
+            let correctAnswer = '';
+            let score = 0;
+            let initialized = false;
+
+            function generatePatternTrial() {
+                currentPattern = patterns[Math.floor(Math.random() * patterns.length)];
+                sequence = [];
+                let displaySequenceLength = currentPattern.length; 
+
+                if (currentPattern.type === 'ABAB') {
+                    for (let i = 0; i < displaySequenceLength; i++) sequence.push(currentPattern.elements[i % 2]);
+                    correctAnswer = currentPattern.elements[displaySequenceLength % 2];
+                } else if (currentPattern.type === 'AABB') {
+                     for (let i = 0; i < displaySequenceLength; i++) sequence.push(currentPattern.elements[Math.floor(i/2) % 2]);
+                    correctAnswer = currentPattern.elements[Math.floor(displaySequenceLength/2) % 2];
+                } else if (currentPattern.type === 'ABC') {
+                    for (let i = 0; i < displaySequenceLength; i++) sequence.push(currentPattern.elements[i % 3]);
+                    correctAnswer = currentPattern.elements[displaySequenceLength % 3];
+                } else if (currentPattern.type === 'AAB') {
+                    for (let i = 0; i < displaySequenceLength; i++) {
+                        if (i % 3 === 2) sequence.push(currentPattern.elements[1]); 
+                        else sequence.push(currentPattern.elements[0]); 
+                    }
+                     if (displaySequenceLength % 3 === 2) correctAnswer = currentPattern.elements[1];
+                     else correctAnswer = currentPattern.elements[0];
+                }
+
+                displayArea.innerHTML = '';
+                sequence.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.classList.add('pattern-item');
+                    itemDiv.textContent = item;
+                    displayArea.appendChild(itemDiv);
+                });
+                const questionMark = document.createElement('div');
+                questionMark.classList.add('pattern-item');
+                questionMark.textContent = '?';
+                displayArea.appendChild(questionMark);
+
+                let options = [correctAnswer];
+                let tempElements = [...allPossibleElements]; 
+                shuffleArray(tempElements);
+                for(let el of tempElements) {
+                    if (options.length >= currentPattern.optionsCount) break;
+                    if (!options.includes(el) && el !== correctAnswer) {
+                        options.push(el);
+                    }
+                }
+                while (options.length < currentPattern.optionsCount) {
+                     let randomElement = allPossibleElements[Math.floor(Math.random() * allPossibleElements.length)];
+                      if (!options.includes(randomElement)) {
+                        options.push(randomElement);
+                    }
+                }
+
+                shuffleArray(options);
+                optionsContainer.innerHTML = '';
+                options.forEach(opt => {
+                    const optButton = document.createElement('button');
+                    optButton.classList.add('pattern-option-button');
+                    optButton.textContent = opt;
+                    optButton.addEventListener('click', () => checkPatternAnswer(opt, optButton));
+                    optionsContainer.appendChild(optButton);
+                });
+                statusMessage.textContent = "选择正确的下一个图案。";
+                statusMessage.className = 'status-message text-blue-700';
+                optionsContainer.querySelectorAll('button').forEach(b => b.disabled = false);
+                nextButton.disabled = true;
+            }
+
+            function checkPatternAnswer(selectedOption, buttonElement) {
+                optionsContainer.querySelectorAll('button').forEach(b => b.disabled = true);
+                if (selectedOption === correctAnswer) {
+                    statusMessage.textContent = "正确！规律找到了！🧠";
+                    statusMessage.className = 'status-message text-green-600';
+                    buttonElement.style.backgroundColor = '#34d399'; 
+                    score++;
+                } else {
+                    statusMessage.textContent = `错了哦。正确答案是 ${correctAnswer}。`;
+                    statusMessage.className = 'status-message text-red-600';
+                    buttonElement.style.backgroundColor = '#f87171'; 
+                     optionsContainer.querySelectorAll('button').forEach(b => {
+                        if(b.textContent === correctAnswer) b.style.backgroundColor = '#34d399';
+                    });
+                }
+                scoreDisplay.textContent = score;
+                nextButton.disabled = false;
+            }
+
+            return {
+                init: () => {
+                    if (!initialized) {
+                        nextButton.addEventListener('click', generatePatternTrial);
+                        initialized = true;
+                    }
+                    score = 0;
+                    scoreDisplay.textContent = score;
+                    generatePatternTrial();
+                },
+                cleanup: () => {}
+            };
+        })();
+
+        const soundSequenceGameModule = (() => {
+            const playButton = document.getElementById('sound-play-sequence-button');
+            const soundButtonsContainer = document.getElementById('sound-button-container');
+            const userSequenceDisplay = document.getElementById('sound-user-sequence-display');
+            const submitButton = document.getElementById('sound-submit-button');
+            const statusMessage = document.getElementById('sound-status-message');
+            const lengthDisplay = document.getElementById('sound-sequence-length-display');
+            const scoreDisplay = document.getElementById('sound-score-display');
+
+            const availableNotes = ['C4', 'D4', 'E4', 'F4', 'G4']; 
+            const noteLabels = ['Do', 'Re', 'Mi', 'Fa', 'So']; 
+            let currentSequence = []; 
+            let userSequence = [];
+            let sequenceLength = 3;
+            let score = 0;
+            let initialized = false;
+            let synth = null; 
+            let audioContextStarted = false;
+            let playTimeout = null; 
+
+            async function startAudioContext() {
+                if (Tone.context.state !== 'running') {
+                    try {
+                        await Tone.start();
+                        audioContextStarted = true;
+                        console.log("AudioContext started by Tone.js");
+                        if (!synth) synth = new Tone.Synth().toDestination(); 
+                    } catch (e) {
+                        console.error("Error starting Tone.js audio context:", e);
+                        statusMessage.textContent = "无法激活音频，请检查浏览器设置。";
+                        statusMessage.className = 'status-message text-red-600';
+                    }
+                } else {
+                    audioContextStarted = true; 
+                     if (!synth) synth = new Tone.Synth().toDestination();
+                }
+            }
+
+            function createSoundButtons() {
+                soundButtonsContainer.innerHTML = '';
+                availableNotes.forEach((note, index) => {
+                    const button = document.createElement('button');
+                    button.classList.add('sound-button');
+                    button.textContent = noteLabels[index];
+                    button.dataset.note = note;
+                    button.addEventListener('click', () => handleSoundButtonClick(note, button));
+                    soundButtonsContainer.appendChild(button);
+                });
+            }
+
+            async function handleSoundButtonClick(note, buttonElement) {
+                if (!audioContextStarted) await startAudioContext();
+                if (!synth || !audioContextStarted) {
+                    statusMessage.textContent = "音频未就绪，请重试。"; return;
+                }
+                
+                userSequence.push(note);
+                userSequenceDisplay.textContent = userSequence.map(n => noteLabels[availableNotes.indexOf(n)]).join(' - ');
+                
+                buttonElement.classList.add('playing');
+                try {
+                    synth.triggerAttackRelease(note, "8n", Tone.now());
+                } catch(e) { console.error("Error playing sound:", e); }
+                setTimeout(() => buttonElement.classList.remove('playing'), 200);
+
+                if (userSequence.length === sequenceLength) {
+                    submitButton.disabled = false;
+                } else {
+                    submitButton.disabled = true;
+                }
+            }
+
+            function generateNewSequence() {
+                currentSequence = [];
+                for (let i = 0; i < sequenceLength; i++) {
+                    currentSequence.push(availableNotes[Math.floor(Math.random() * availableNotes.length)]);
+                }
+                userSequence = [];
+                userSequenceDisplay.textContent = '';
+                submitButton.disabled = true;
+                playButton.disabled = false;
+                lengthDisplay.textContent = sequenceLength;
+                statusMessage.textContent = "准备聆听序列。";
+                statusMessage.className = 'status-message text-blue-700';
+                soundButtonsContainer.querySelectorAll('.sound-button').forEach(b => b.disabled = true); 
+            }
+
+            async function playCurrentSequence() {
+                if (!audioContextStarted) await startAudioContext();
+                if (!synth || !audioContextStarted) {
+                     statusMessage.textContent = "音频未就绪，请稍后再试或点击播放。"; return;
+                }
+
+                playButton.disabled = true;
+                soundButtonsContainer.querySelectorAll('.sound-button').forEach(b => b.disabled = true); 
+
+                clearTimeout(playTimeout); 
+
+                function playNoteWithDelay(index) {
+                    if (index >= currentSequence.length) {
+                        soundButtonsContainer.querySelectorAll('.sound-button').forEach(b => b.disabled = false); 
+                        statusMessage.textContent = "请按顺序重现声音。";
+                        return;
+                    }
+                    const note = currentSequence[index];
+                    const buttonToHighlight = soundButtonsContainer.querySelector(`[data-note="${note}"]`);
+                    
+                    if (buttonToHighlight) buttonToHighlight.classList.add('playing');
+                    try {
+                        synth.triggerAttackRelease(note, "8n", Tone.now());
+                    } catch(e) { console.error("Error playing sound in sequence:", e); }
+                    
+                    playTimeout = setTimeout(() => {
+                        if (buttonToHighlight) buttonToHighlight.classList.remove('playing');
+                        playNoteWithDelay(index + 1);
+                    }, 600); 
+                }
+                playNoteWithDelay(0);
+            }
+
+            function checkUserSequence() {
+                let correct = userSequence.length === currentSequence.length && userSequence.every((val, index) => val === currentSequence[index]);
+
+                if (correct) {
+                    statusMessage.textContent = "正确！听力真棒！🎶";
+                    statusMessage.className = 'status-message text-green-600';
+                    score++;
+                    if (sequenceLength < availableNotes.length + 3) { 
+                        sequenceLength++;
+                    }
+                } else {
+                    statusMessage.textContent = "不完全正确，正确序列是：" + currentSequence.map(n => noteLabels[availableNotes.indexOf(n)]).join(' - ');
+                    statusMessage.className = 'status-message text-red-600';
+                }
+                scoreDisplay.textContent = score;
+                generateNewSequence(); 
+            }
+
+            return {
+                init: () => {
+                    if (!initialized) {
+                        playButton.addEventListener('click', playCurrentSequence);
+                        submitButton.addEventListener('click', checkUserSequence);
+                        createSoundButtons();
+                        initialized = true;
+                    }
+                    startAudioContext().then(() => {
+                        score = 0;
+                        scoreDisplay.textContent = score;
+                        sequenceLength = 3; 
+                        generateNewSequence();
+                    }).catch(e => {
+                         statusMessage.textContent = "音频初始化失败，请刷新页面或检查浏览器设置。";
+                    });
+                },
+                cleanup: () => { 
+                    clearTimeout(playTimeout);
+                    if (synth && audioContextStarted) { 
+                        try { synth.releaseAll(); } catch(e) { console.warn("Synth release error:", e)}
+                    }
+                }
+            };
+        })();
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                    if (targetId === '#games-hub') {
+                        const activeGameButton = document.querySelector('.game-select-button.active');
+                        if (!activeGameButton) { setActiveGame(''); } 
+                    }
+                }
+            });
+        });
+
+        setActiveGame(''); 
+    });
+    </script>
+</body>
+</html>
