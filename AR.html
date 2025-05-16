@@ -82,7 +82,7 @@
                      renderer="colorManagement: true; physicallyCorrectLights: true"
                      vr-mode-ui="enabled: false">
                 <a-assets>
-                    <a-asset-item id="custom-pattern" src="https://api.2023gpt.top/fileSystem/download/20250516/ba916e92-30c4-4154-9035-ba5a5c6d6f2d.patt"></a-asset-item>
+                    <a-asset-item id="custom-pattern" src="https://svg.2023gpt.top/pattern.patt"></a-asset-item>
                 </a-assets>
 
                 <a-light type="ambient" color="#BBB"></a-light>
@@ -125,7 +125,7 @@
             <ol class="list-decimal list-inside text-gray-600 space-y-2">
                 <li>确保您的浏览器已授权访问摄像头。</li>
                 <li>
-                    准备好与您提供的 `.patt` 文件 (<code>ba916e92-30c4-4154-9035-ba5a5c6d6f2d.patt</code>) 对应的标记图像。
+                    准备好与您提供的 `.patt` 文件 (<code>pattern.patt</code> 来自 <code>svg.2023gpt.top</code>) 对应的标记图像。
                     您需要打印此图像或在另一个屏幕上显示它。
                 </li>
                 <li>将您设备的摄像头对准该标记图像。</li>
@@ -134,7 +134,7 @@
                     <strong>重要提示:</strong>
                     <ul>
                         <li>- 标记图像需要有清晰的黑色边框和高对比度的内部图案。</li>
-                        <li>- 确保提供的 `.patt` 文件URL (<code>https://api.2023gpt.top/...</code>) 是可公开访问的，并且服务器允许跨域请求 (CORS)，否则浏览器可能无法加载标记图案。</li>
+                        <li>- 确保提供的 `.patt` 文件URL (<code>https://svg.2023gpt.top/pattern.patt</code>) 是可公开访问的，并且服务器允许跨域请求 (CORS)，否则浏览器可能无法加载标记图案。</li>
                     </ul>
                 </li>
             </ol>
@@ -203,7 +203,7 @@
                     });
                     // 确保动画只播放一次，或者根据需要配置
                      setTimeout(() => {
-                        if (arContentObject.components['animation__found']) {
+                        if (arContentObject.components && arContentObject.components['animation__found']) { // Check if component exists
                             arContentObject.removeAttribute('animation__found');
                         }
                     }, 600); // duration + a little buffer
