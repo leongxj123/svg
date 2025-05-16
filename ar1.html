@@ -125,33 +125,21 @@
       }
 
       const showPortfolio = (done) => {
-        const portfolio = document.querySelector("#portfolio-panel");
+        const contentContainer = document.querySelector("#content-container");
         const portfolioLeftButton = document.querySelector("#portfolio-left-button");
         const portfolioRightButton = document.querySelector("#portfolio-right-button");
         const paintandquestPreviewButton = document.querySelector("#paintandquest-preview-button");
 
         let currentItem = 0;
 
-        // 确保先隐藏所有内容，然后再显示
-        portfolio.setAttribute("visible", false);
-        portfolioLeftButton.setAttribute("visible", false);
-        portfolioRightButton.setAttribute("visible", false);
-        document.querySelector("#portfolio-item0").setAttribute("visible", false);
-        document.querySelector("#portfolio-item1").setAttribute("visible", false);
-        document.querySelector("#portfolio-item2").setAttribute("visible", false);
+        contentContainer.setAttribute("visible", true);
         
-        // 设置好位置后再显示
-        portfolio.setAttribute("position", "0 0.6 -0.01");
+        portfolioLeftButton.setAttribute("visible", true);
+        portfolioRightButton.setAttribute("visible", true);
         
-        // 使用延时确保位置设置完成后再显示
-        setTimeout(() => {
-          portfolio.setAttribute("visible", true);
-          portfolioLeftButton.setAttribute("visible", true);
-          portfolioRightButton.setAttribute("visible", true);
-          document.querySelector("#portfolio-item0").setAttribute("visible", true);
-        }, 100);
+        showPortfolioItem(0);
 
-        const showPortfolioItem = (item) => {
+        function showPortfolioItem(item) {
           for (let i = 0; i <= 2; i++) {
             document.querySelector("#portfolio-item" + i).setAttribute("visible", i === item);
           }
@@ -185,7 +173,6 @@
             setupVideoControls(videoElement, "#video-control-button");
           }
           
-          // 确保视频宽高比正确
           if (videoElement.readyState >= 1) {
             const videoWidth = videoElement.videoWidth;
             const videoHeight = videoElement.videoHeight;
@@ -198,14 +185,10 @@
           }
         });
 
-        // 延时确保一切就绪再回调
-        setTimeout(() => {
-          done();
-        }, 200);
+        done();
       }
 
       const showAvatar = (onDone) => {
-        // 简化头像显示逻辑
         onDone();
       }
 
@@ -214,35 +197,34 @@
           this.el.addEventListener('targetFound', event => {
             console.log("target found");
             
-            // 清理任何可能存在的旧元素，防止重复
-            const portfolio = document.querySelector("#portfolio-panel");
-            portfolio.setAttribute("visible", false);
-            document.querySelector("#profile-button").setAttribute("visible", false);
-            document.querySelector("#web-button").setAttribute("visible", false);
-            document.querySelector("#email-button").setAttribute("visible", false);
-            document.querySelector("#location-button").setAttribute("visible", false);
-            document.querySelector("#text-container").setAttribute("visible", false);
+            this.resetScene();
             
-            // 设置适当的延时，确保顺序加载
-            setTimeout(() => {
-              showAvatar(() => {
-                showPortfolio(() => {
-                  showInfo();
-                });
+            showAvatar(() => {
+              showPortfolio(() => {
+                showInfo();
               });
-            }, 300);
+            });
           });
           
           this.el.addEventListener('targetLost', event => {
             console.log("target lost");
-            // 隐藏所有元素
-            document.querySelector("#portfolio-panel").setAttribute("visible", false);
-            document.querySelector("#profile-button").setAttribute("visible", false);
-            document.querySelector("#web-button").setAttribute("visible", false);
-            document.querySelector("#email-button").setAttribute("visible", false);
-            document.querySelector("#location-button").setAttribute("visible", false);
-            document.querySelector("#text-container").setAttribute("visible", false);
+            this.resetScene();
           });
+        },
+        
+        resetScene: function() {
+          document.querySelector("#content-container").setAttribute("visible", false);
+          document.querySelector("#portfolio-item0").setAttribute("visible", false);
+          document.querySelector("#portfolio-item1").setAttribute("visible", false);
+          document.querySelector("#portfolio-item2").setAttribute("visible", false);
+          document.querySelector("#portfolio-left-button").setAttribute("visible", false);
+          document.querySelector("#portfolio-right-button").setAttribute("visible", false);
+          document.querySelector("#video-control-button").setAttribute("visible", false);
+          document.querySelector("#profile-button").setAttribute("visible", false);
+          document.querySelector("#web-button").setAttribute("visible", false);
+          document.querySelector("#email-button").setAttribute("visible", false);
+          document.querySelector("#location-button").setAttribute("visible", false);
+          document.querySelector("#text-container").setAttribute("visible", false);
         }
       });
     </script>
@@ -446,8 +428,8 @@
           <img id="paintandquest-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" />
           <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
           <video id="paintandquest-video-webm" autoplay="false" loop="true" src="https://api.2023gpt.top/fileSystem/download/20250517/f7287dd8-66ef-4c26-b3e8-fda35d97eab4.mp4"></video>
-          <img id="coffeemachine-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" crossorigin="anonymous" />
-          <img id="peak-preview" src="https://api.2023gpt.top/fileSystem/download/20250517/53e13719-e28e-4d95-a826-d8dd4c711a50.png" crossorigin="anonymous" />
+          <img id="coffeemachine-preview" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzljYTNhZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZHk9Ii4zNWVtIj5Db2ZmZWUgTWFjaGluZTwvdGV4dD48L3N2Zz4=" crossorigin="anonymous" />
+          <img id="peak-preview" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzY0NzQ4YiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZHk9Ii4zNWVtIj5QZWFrIFByZXZpZXc8L3RleHQ+PC9zdmc+" crossorigin="anonymous" />
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable">
@@ -456,44 +438,41 @@
         <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
           <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
 
-          <a-entity visible=false id="portfolio-panel" position="0 0 -0.01">
+          <a-entity id="content-container" position="0 0 0.01">
             <a-text value="AR测试By.leong" color="black" align="center" width="2" position="0 0.4 0" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
-            <a-entity id="portfolio-item0">
-              <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0"></a-video>
-              <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
-              </a-image>
-              <a-image visible=false id="video-control-button" class="clickable" src="#icon-play" position="0.4 -0.2 0.001" height="0.08" width="0.08" opacity="0.7" animation="property: opacity; to: 1; dur: 200; startEvents: mouseenter; dir: alternate" animation__2="property: opacity; to: 0.7; dur: 200; startEvents: mouseleave; dir: alternate"></a-image>
+            
+            <a-entity id="items-container" position="0 0 0">
+              <a-entity id="portfolio-item0" visible="false">
+                <a-video id="paintandquest-video-link" webkit-playsinline playsinline width="1" height="0.552" position="0 0 0"></a-video>
+                <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1"></a-image>
+                <a-image visible="false" id="video-control-button" class="clickable" src="#icon-play" position="0.4 -0.2 0.001" height="0.08" width="0.08" opacity="0.7" animation="property: opacity; to: 1; dur: 200; startEvents: mouseenter; dir: alternate" animation__2="property: opacity; to: 0.7; dur: 200; startEvents: mouseleave; dir: alternate"></a-image>
+              </a-entity>
+              
+              <a-entity id="portfolio-item1" visible="false">
+                <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1"></a-image>
+              </a-entity>
+              
+              <a-entity id="portfolio-item2" visible="false">
+                <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1"></a-image>
+              </a-entity>
             </a-entity>
-            <a-entity id="portfolio-item1" visible=false>
-              <a-image class="clickable" src="#coffeemachine-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
-              </a-image>
-            </a-entity>
-            <a-entity id="portfolio-item2" visible=false>
-              <a-image class="clickable" src="#peak-preview" alpha-test="0.5" position="0 0 0" height="0.552" width="1">
-              </a-image>
-            </a-entity>
-
-            <a-image visible=false id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
-            <a-image visible=false id="portfolio-right-button" class="clickable" src="#icon-right" position="0.7 0 0" height="0.15" width="0.15"></a-image>
+            
+            <a-image visible="false" id="portfolio-left-button" class="clickable" src="#icon-left" position="-0.7 0 0" height="0.15" width="0.15"></a-image>
+            <a-image visible="false" id="portfolio-right-button" class="clickable" src="#icon-right" position="0.7 0 0" height="0.15" width="0.15"></a-image>
           </a-entity>
 
-          <a-image visible=false id="profile-button" class="clickable" src="#icon-profile" position="-0.42 -0.5 0" height="0.15" width="0.15"
-            animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
-          ></a-image>
+          <a-entity id="buttons-container" position="0 -0.5 0.02">
+            <a-image visible="false" id="profile-button" class="clickable" src="#icon-profile" position="-0.42 0 0" height="0.15" width="0.15"
+              animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"></a-image>
+            <a-image visible="false" id="web-button" class="clickable" src="#icon-web" alpha-test="0.5" position="-0.14 0 0" height="0.15" width="0.15"
+              animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"></a-image>
+            <a-image visible="false" id="email-button" class="clickable" src="#icon-email"  position="0.14 0 0" height="0.15" width="0.15"
+              animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"></a-image>
+            <a-image visible="false" id="location-button" class="clickable" src="#icon-location" position="0.42 0 0" height="0.15" width="0.15"
+              animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"></a-image>
+          </a-entity>
 
-          <a-image visible=false id="web-button" class="clickable" src="#icon-web" alpha-test="0.5" position="-0.14 -0.5 0" height="0.15" width="0.15"
-            animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
-          ></a-image>
-
-          <a-image visible=false id="email-button" class="clickable" src="#icon-email"  position="0.14 -0.5 0" height="0.15" width="0.15"
-            animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
-          ></a-image>
-
-          <a-image visible=false id="location-button" class="clickable" src="#icon-location" position="0.42 -0.5 0" height="0.15" width="0.15"
-            animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
-          ></a-image>
-
-          <a-entity visible=false id="text-container" position="0 -1 0">
+          <a-entity visible="false" id="text-container" position="0 -1 0.02">
             <a-plane id="text-background" color="#FFF8E1" width="2" height="0.15" opacity="0.9"></a-plane>
             <a-text id="text" class="clickable" value="" color="black" align="center" width="2" position="0 0 0.001" font="https://cdn.aframe.io/fonts/Roboto-msdf.json"></a-text>
           </a-entity>
