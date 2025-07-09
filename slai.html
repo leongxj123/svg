@@ -265,6 +265,22 @@
             opacity: 1;
         }
 
+        @media (max-width: 768px) {
+            .delete-button {
+                opacity: 1;
+                /* Always show delete buttons on mobile */
+                top: -10px;
+                /* Position slightly above the message */
+                left: 0;
+                /* Adjust position for better visibility */
+            }
+
+            .message.user .delete-button {
+                left: auto;
+                right: 0;
+            }
+        }
+
         /* 消息操作按钮 */
         .message-actions {
             position: absolute;
@@ -950,7 +966,7 @@
     <div class="container">
         <div class="header">
             <h1>智能聊天助手（支持维语版）</h1>
-            <h3>本站点仅用于团队内容科研研究，请勿外传，切勿上传或生成政治、保密、违法相关文件</h3>
+            <h3>本站点仅用于团队项目研究，请勿外传，切勿上传或生成政治、保密、违法相关文件</h3>
             <div class="header-buttons">
                 <button id="exportButton" class="header-button" title="导出对话">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
