@@ -903,18 +903,47 @@
 
             .header h3 {
                 font-size: 12px;
+                margin-bottom: 32px;
             }
 
             .header-buttons {
-                transform: none;
-                margin-top: 4px;
+                position: static;
+                display: flex;
+                flex-wrap: wrap;
                 justify-content: center;
+                margin-top: -24px;
+                margin-bottom: 6px;
+                z-index: 2;
+            }
+
+            .header-button {
+                font-size: 12px;
+                padding: 4px 8px;
             }
 
             .bulk-controls {
                 width: 98%;
                 font-size: 13px;
                 padding: 6px 4px;
+            }
+
+            .message {
+                overflow: visible;
+            }
+
+            .delete-button {
+                width: 20px;
+                height: 20px;
+                font-size: 12px;
+                left: -22px;
+                top: 2px;
+                z-index: 3;
+                opacity: 1 !important;
+            }
+
+            .message.user .delete-button {
+                right: -22px;
+                left: auto;
             }
 
             /* 保证图片不撑满屏 */
@@ -925,7 +954,6 @@
                 object-fit: contain !important;
             }
 
-            /* 文件上传区域适配 */
             .file-upload-container {
                 padding: 6px 2px;
             }
@@ -2278,6 +2306,8 @@
                     copyButton.textContent = '复制';
                     copyButton.addEventListener('click', (e) => {
                         e.stopPropagation(); // 阻止冒泡
+
+
 
                         // 提取纯文本（不含Markdown标记和时间戳）
                         const plainText = extractPlainText(contentDiv.innerHTML);
