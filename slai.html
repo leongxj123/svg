@@ -257,16 +257,6 @@
             opacity: 1;
         }
 
-        /* 始终显示AI消息的删除按钮 */
-        .message.assistant .delete-button {
-            opacity: 1 !important;
-            display: flex !important;
-            z-index: 10;
-            left: -30px;
-            right: auto;
-            pointer-events: auto;
-        }
-
         /* 消息操作按钮 */
         .message-actions {
             position: absolute;
@@ -913,54 +903,18 @@
 
             .header h3 {
                 font-size: 12px;
-                margin-bottom: 40px;
             }
 
             .header-buttons {
-                position: static;
-                display: flex;
-                flex-wrap: wrap;
+                transform: none;
+                margin-top: 4px;
                 justify-content: center;
-                margin-top: -24px;
-                margin-bottom: 16px;
-                z-index: 2;
-            }
-
-            .header-button {
-                font-size: 12px;
-                padding: 4px 8px;
             }
 
             .bulk-controls {
                 width: 98%;
                 font-size: 13px;
                 padding: 6px 4px;
-            }
-
-            .message {
-                overflow: visible;
-            }
-
-            .delete-button {
-                width: 20px;
-                height: 20px;
-                font-size: 12px;
-                left: -22px;
-                top: 2px;
-                z-index: 10 !important;
-                opacity: 1 !important;
-                display: flex !important;
-                pointer-events: auto;
-            }
-
-            .message.user .delete-button {
-                right: -22px;
-                left: auto;
-            }
-
-            .message.assistant .delete-button {
-                left: -22px;
-                right: auto;
             }
 
             /* 保证图片不撑满屏 */
@@ -971,6 +925,7 @@
                 object-fit: contain !important;
             }
 
+            /* 文件上传区域适配 */
             .file-upload-container {
                 padding: 6px 2px;
             }
@@ -2309,12 +2264,20 @@
                         contentDiv.classList.add('rtl');
                     } else if (direction === 'auto' && detectTextDirection(assistantMessage) === 'rtl') {
                         contentDiv.classList.add('rtl');
-                    } else
+                    } else {
+                        contentDiv.classList.remove('rtl');
+                    }
+
+                    // 添加操作按钮
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'message-actions';
+
+                    // 复制按钮
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'action-btn';
                     copyButton.textContent = '复制';
                     copyButton.addEventListener('click', (e) => {
                         e.stopPropagation(); // 阻止冒泡
-
-
 
                         // 提取纯文本（不含Markdown标记和时间戳）
                         const plainText = extractPlainText(contentDiv.innerHTML);
