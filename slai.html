@@ -1,0 +1,2498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能聊天助手（支持维语）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-buttons {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .header-button svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .config-section {
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-bottom: 1px solid #bdc3c7;
+        }
+
+        .config-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .config-group label {
+            font-weight: bold;
+            min-width: 80px;
+        }
+
+        .config-group input,
+        .config-group select {
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .config-group input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            position: relative;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message.deleting {
+            opacity: 0.5;
+            transform: translateX(20px);
+        }
+
+        .message.selected {
+            outline: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 5px;
+            margin: -5px 0 15px 0;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background-color: #3498db;
+        }
+
+        .message.assistant .message-avatar {
+            background-color: #2ecc71;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            position: relative;
+            /* 默认正常方向 */
+            direction: ltr;
+            text-align: left;
+            /* 改进文本渲染 */
+            line-height: 1.5;
+        }
+
+        /* 改进Markdown内容渲染 */
+        .message-content p {
+            margin-bottom: 8px;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content code {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .message-content pre {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .message-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+
+        .message-content ul,
+        .message-content ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .message-content blockquote {
+            border-left: 3px solid #ddd;
+            padding-left: 10px;
+            color: #666;
+            margin: 8px 0;
+        }
+
+        /* 从右向左的内容样式 */
+        .message-content.rtl {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .message.user .message-content {
+            background-color: #3498db;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* 删除按钮 */
+        .delete-button {
+            position: absolute;
+            top: 0;
+            right: auto;
+            left: -30px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message.user .delete-button {
+            left: auto;
+            right: -30px;
+        }
+
+        .message:hover .delete-button {
+            opacity: 1;
+        }
+
+        /* 消息操作按钮 */
+        .message-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .message-content.rtl .message-actions {
+            right: auto;
+            left: 5px;
+        }
+
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            background-color: rgba(255, 255, 255, 0.7);
+            border: none;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .action-btn:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* 批量删除控制栏 */
+        .bulk-controls {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: none;
+            gap: 10px;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .bulk-controls.visible {
+            display: flex;
+        }
+
+        .bulk-controls button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .bulk-controls .cancel-btn {
+            background-color: #7f8c8d;
+            color: white;
+        }
+
+        .bulk-controls .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        /* 复制成功提示 */
+        .copy-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .input-section {
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-top: 1px solid #bdc3c7;
+            position: relative;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            position: relative;
+            align-items: flex-end;
+        }
+
+        /* 替换为textarea的样式 */
+        #messageInput {
+            flex: 1;
+            min-height: 38px;
+            max-height: 150px;
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+            resize: none;
+            overflow-y: auto;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        #messageInput:focus {
+            border-color: #3498db;
+        }
+
+        #sendButton {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        #sendButton:hover {
+            background-color: #2980b9;
+        }
+
+        #sendButton:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        #stopButton {
+            padding: 12px 24px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            display: none;
+        }
+
+        #stopButton:hover {
+            background-color: #c0392b;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-message {
+            color: #e74c3c;
+            padding: 10px;
+            background-color: #fee;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .success-message {
+            color: #27ae60;
+            padding: 10px;
+            background-color: #efe;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        /* 高级设置区域 */
+        .advanced-settings {
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            display: none;
+        }
+
+        .advanced-toggle {
+            cursor: pointer;
+            color: #3498db;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .language-settings {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            gap: 10px;
+        }
+
+        /* 确认对话框 */
+        .confirm-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+        }
+
+        .confirm-dialog.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dialog-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .dialog-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .dialog-buttons button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .dialog-buttons .cancel {
+            background-color: #ecf0f1;
+            color: #7f8c8d;
+        }
+
+        .dialog-buttons .confirm {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        /* 文件上传相关样式 */
+        .file-upload-container {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background-color: #f7f9fa;
+            border-top: 1px solid #ddd;
+            padding: 15px;
+            display: none;
+            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.1);
+            z-index: 5;
+        }
+
+        .file-upload-container.active {
+            display: block;
+        }
+
+        .file-drop-area {
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            background-color: #f9f9f9;
+        }
+
+        .file-drop-area.dragging {
+            border-color: #3498db;
+            background-color: #e1f0fa;
+        }
+
+        .file-drop-area p {
+            margin-bottom: 10px;
+            color: #7f8c8d;
+        }
+
+        .file-upload-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .file-upload-button:hover {
+            background-color: #2980b9;
+        }
+
+        .file-input {
+            position: absolute;
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .file-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .file-item {
+            position: relative;
+            width: 100px;
+            height: 120px;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f5f5f5;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-thumbnail {
+            height: 70px;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .file-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-thumbnail .file-icon {
+            font-size: 30px;
+            color: #7f8c8d;
+        }
+
+        .file-info {
+            padding: 5px;
+            font-size: 10px;
+            text-align: center;
+            word-break: break-all;
+        }
+
+        .file-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 10px;
+        }
+
+        .file-size {
+            font-size: 9px;
+            color: #7f8c8d;
+        }
+
+        .file-status {
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .file-status.uploading {
+            color: #f39c12;
+        }
+
+        .file-status.success {
+            color: #27ae60;
+        }
+
+        .file-status.error {
+            color: #e74c3c;
+        }
+
+        .file-delete {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 18px;
+            height: 18px;
+            background-color: rgba(231, 76, 60, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 重新定位附件图标 */
+        .attachment-indicator {
+            position: relative;
+            left: auto;
+            right: auto;
+            top: auto;
+            transform: none;
+            color: #3498db;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            align-self: flex-end;
+            margin-bottom: 4px;
+        }
+
+        .attachment-indicator.active {
+            color: #2ecc71;
+        }
+
+        .file-upload-close {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #7f8c8d;
+            border: none;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 编辑/重新发送功能样式 */
+        .edit-button {
+            position: absolute;
+            top: 0;
+            right: auto;
+            left: 10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message.user .edit-button {
+            left: auto;
+            right: 10px;
+        }
+
+        .resend-button {
+            position: absolute;
+            top: 30px;
+            right: auto;
+            left: 10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message.user .resend-button {
+            left: auto;
+            right: 10px;
+        }
+
+        /* 悬停时更明显 */
+        .message:hover .edit-button,
+        .message:hover .resend-button {
+            opacity: 1;
+        }
+
+        /* 添加消息时间戳 */
+        .message-timestamp {
+            font-size: 10px;
+            color: #7f8c8d;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .message.user .message-timestamp {
+            text-align: left;
+        }
+
+        /* 响应式样式 */
+        @media (max-width: 768px) {
+            .config-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .config-group label {
+                min-width: auto;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .header h1 {
+                font-size: 20px;
+                padding-right: 100px;
+            }
+
+            .header-buttons {
+                transform: scale(0.9) translateY(-50%);
+            }
+
+            .bulk-controls {
+                width: 90%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .message-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+
+            .message-content {
+                max-width: 90%;
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .input-section {
+                padding: 10px;
+            }
+
+            .input-group {
+                flex-wrap: wrap;
+            }
+
+            .attachment-indicator {
+                order: 1;
+                width: 36px;
+                height: 36px;
+            }
+
+            #messageInput {
+                order: 3;
+                width: 100%;
+                margin-top: 8px;
+            }
+
+            #sendButton,
+            #stopButton {
+                order: 2;
+                padding: 10px;
+            }
+
+            .header-buttons {
+                position: static;
+                transform: none;
+                margin-top: 10px;
+                justify-content: center;
+            }
+
+            .header h1 {
+                padding-right: 0;
+            }
+
+            /* 强制限制所有消息内容中的图片尺寸 */
+            .message-content img {
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: 300px !important;
+                object-fit: contain !important;
+            }
+
+            /* 特别处理图片容器 */
+            .message-content p:has(img),
+            .message-content div:has(img) {
+                max-width: 100%;
+                overflow: hidden;
+            }
+
+            /* 移动端优化按钮位置 */
+            .message.user .edit-button,
+            .message.user .resend-button,
+            .message.user .delete-button {
+                right: -30px;
+            }
+
+            .message.user .edit-button {
+                right: -30px;
+                top: 30px;
+            }
+
+            .message.user .resend-button {
+                right: -30px;
+                top: 60px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>智能聊天助手（支持维语版）</h1>
+            <h3>本站点仅用于团队内容科研研究，请勿外传，切勿上传或生成政治、保密、违法相关文件</h3>
+            <div class="header-buttons">
+                <button id="exportButton" class="header-button" title="导出对话">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M12 3v12M7 11l5 5 5-5M5 21h14"></path>
+                    </svg>
+                    导出
+                </button>
+                <button id="clearButton" class="header-button" title="清空聊天">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                    </svg>
+                    清空
+                </button>
+            </div>
+        </div>
+
+        <div class="config-section">
+            <div class="config-group" style="margin-bottom: 10px;">
+                <label for="apiUrl">API地址:</label>
+                <input type="text" id="apiUrl" placeholder="请输入API地址"
+                    value="https://api.2023gpt.top/v1/chat/completions">
+                <label for="apiKey">API Key:</label>
+                <input type="text" id="apiKey" placeholder="请输入您的API Key">
+            </div>
+            <div class="config-group">
+                <label for="modelSelect">模型:</label>
+                <select id="modelSelect">
+                    <option value="维语翻译">维语翻译</option>
+                    <option value="gpt-4o-all">GPT-4O</option>
+                    <option value="学术科研1">学术科研1</option>
+                    <option value="学术科研3">学术科研2</option>
+                    <option value="ResearchGPT">ResearchGPT</option>
+                    <option value="Pubmed检索">Pubmed检索</option>
+                    <option value="PubMed报告">PubMed报告</option>
+                    <option value="绘图">绘图1</option>
+                    <option value="flux">绘图2</option>
+                    <option value="url-analysis">链接内容分析</option>
+                    <option value="veo3-fast">veo3-fast</option>
+                </select>
+                <label for="tempSlider">温度:</label>
+                <input type="range" id="tempSlider" min="0" max="2" step="0.1" value="0.7">
+                <span id="tempValue">0.7</span>
+                <label for="streamCheckbox">流式输出:</label>
+                <input type="checkbox" id="streamCheckbox" checked>
+            </div>
+            <div class="advanced-toggle" id="advancedToggle">显示高级设置 ▼</div>
+            <div class="advanced-settings" id="advancedSettings">
+                <div class="language-settings">
+                    <label for="textDirectionSelect">文字方向:</label>
+                    <select id="textDirectionSelect">
+                        <option value="ltr">从左到右</option>
+                        <option value="rtl">从右到左</option>
+                    </select>
+                    <label for="maxTokens">最大Token:</label>
+                    <input type="number" id="maxTokens" min="100" max="1000000" value="128000" style="width: 100px;">
+                </div>
+                <div class="config-group" style="margin-top: 10px;">
+                    <label for="systemPrompt">系统提示:</label>
+                    <input type="text" id="systemPrompt" placeholder="输入系统提示信息">
+                </div>
+                <div class="config-group" style="margin-top: 10px;">
+                    <label for="contextLength">上下文长度:</label>
+                    <input type="number" id="contextLength" min="1" max="50" value="10" style="width: 100px;">
+                    <span id="contextLengthDesc">保留最近10条消息作为上下文</span>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label for="selectionModeCheckbox" style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="selectionModeCheckbox">
+                        <span style="margin-left: 5px;">启用批量选择模式</span>
+                    </label>
+                </div>
+            </div>
+            <div id="statusMessage"></div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <!-- 聊天消息将在这里显示 -->
+        </div>
+
+        <div class="bulk-controls" id="bulkControls">
+            <span id="selectedCount">已选择 0 条消息</span>
+            <button class="cancel-btn" id="cancelSelectButton">取消</button>
+            <button class="delete-btn" id="bulkDeleteButton">删除选中</button>
+        </div>
+
+        <div class="input-section">
+            <!-- 文件上传区域 -->
+            <div class="file-upload-container" id="fileUploadContainer">
+                <button class="file-upload-close" id="fileUploadClose">×</button>
+                <div class="file-drop-area" id="fileDropArea">
+                    <p>拖放文件到此处，或点击下方按钮选择文件</p>
+                    <label for="fileInput" class="file-upload-button">选择文件</label>
+                    <input type="file" id="fileInput" class="file-input" multiple>
+                </div>
+                <div class="file-preview" id="filePreview"></div>
+            </div>
+
+            <div class="input-group">
+                <div class="attachment-indicator" id="attachmentIndicator" title="附件">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48">
+                        </path>
+                    </svg>
+                </div>
+                <!-- 替换input为textarea -->
+                <textarea id="messageInput" placeholder="输入您的消息..." autofocus></textarea>
+                <button id="sendButton">发送</button>
+                <button id="stopButton">停止</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-toast" id="copyToast">复制成功</div>
+
+    <div class="confirm-dialog" id="confirmDialog">
+        <div class="dialog-content">
+            <div class="dialog-title" id="dialogTitle">确认操作</div>
+            <div id="dialogMessage">确定要执行此操作吗？</div>
+            <div class="dialog-buttons">
+                <button class="cancel" id="dialogCancel">取消</button>
+                <button class="confirm" id="dialogConfirm">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加Markdown解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        // 全局变量
+        let conversationHistory = [];
+        let isGenerating = false;
+        let selectionMode = false;
+        let selectedMessages = new Set();
+        let messageElements = new Map(); // 消息ID到DOM元素的映射
+        let messageCounter = 0; // 用于生成唯一ID
+        let abortController = null; // 用于中止请求
+        let uploadedFiles = []; // 存储上传的文件
+        let uploadedFileUrls = []; // 存储上传成功后的文件URL
+        let currentEditingMessageId = null; // 当前正在编辑的消息ID
+
+        // DOM元素
+        const apiUrlInput = document.getElementById('apiUrl');
+        const apiKeyInput = document.getElementById('apiKey');
+        const modelSelect = document.getElementById('modelSelect');
+        const tempSlider = document.getElementById('tempSlider');
+        const tempValue = document.getElementById('tempValue');
+        const streamCheckbox = document.getElementById('streamCheckbox');
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const stopButton = document.getElementById('stopButton');
+        const clearButton = document.getElementById('clearButton');
+        const exportButton = document.getElementById('exportButton');
+        const statusMessage = document.getElementById('statusMessage');
+        const copyToast = document.getElementById('copyToast');
+        const textDirectionSelect = document.getElementById('textDirectionSelect');
+        const systemPrompt = document.getElementById('systemPrompt');
+        const maxTokens = document.getElementById('maxTokens');
+        const contextLength = document.getElementById('contextLength');
+        const contextLengthDesc = document.getElementById('contextLengthDesc');
+        const advancedToggle = document.getElementById('advancedToggle');
+        const advancedSettings = document.getElementById('advancedSettings');
+        const selectionModeCheckbox = document.getElementById('selectionModeCheckbox');
+        const bulkControls = document.getElementById('bulkControls');
+        const selectedCount = document.getElementById('selectedCount');
+        const cancelSelectButton = document.getElementById('cancelSelectButton');
+        const bulkDeleteButton = document.getElementById('bulkDeleteButton');
+        const confirmDialog = document.getElementById('confirmDialog');
+        const dialogTitle = document.getElementById('dialogTitle');
+        const dialogMessage = document.getElementById('dialogMessage');
+        const dialogCancel = document.getElementById('dialogCancel');
+        const dialogConfirm = document.getElementById('dialogConfirm');
+        const fileUploadContainer = document.getElementById('fileUploadContainer');
+        const fileUploadClose = document.getElementById('fileUploadClose');
+        const fileDropArea = document.getElementById('fileDropArea');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const attachmentIndicator = document.getElementById('attachmentIndicator');
+
+        // 自动检测文本方向的正则表达式 (阿拉伯文、波斯文、维吾尔文等字符范围)
+        const rtlRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+        // 配置Marked选项（针对Markdown渲染）
+        marked.setOptions({
+            breaks: true, // 启用换行符支持
+            gfm: true,    // 启用GitHub风格的Markdown
+            headerIds: false, // 禁用自动添加ID到标题
+            mangle: false, // 禁用自动转义html entities
+            smartLists: true // 使用更智能的列表行为
+        });
+
+        // 提取纯文本内容（去除Markdown和时间戳）
+        function extractPlainText(htmlContent) {
+            // 创建临时DOM元素
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+
+            // 移除时间戳元素
+            const timestamps = tempDiv.querySelectorAll('.message-timestamp');
+            timestamps.forEach(el => el.remove());
+
+            // 移除操作按钮
+            const actions = tempDiv.querySelectorAll('.message-actions');
+            actions.forEach(el => el.remove());
+
+            // 获取纯文本内容
+            return tempDiv.textContent || tempDiv.innerText || "";
+        }
+
+        // 添加textarea自动调整高度功能
+        function autoResizeTextarea(textarea) {
+            // 重置高度以获取正确的scrollHeight
+            textarea.style.height = 'auto';
+
+            // 设置新高度基于scrollHeight，并限制最大高度
+            const newHeight = Math.min(textarea.scrollHeight, 150);
+            textarea.style.height = newHeight + 'px';
+        }
+
+        // 为textarea添加自动调整高度的事件监听
+        messageInput.addEventListener('input', function () {
+            autoResizeTextarea(this);
+        });
+
+        // 文件上传相关初始化
+        attachmentIndicator.addEventListener('click', () => {
+            fileUploadContainer.classList.toggle('active');
+        });
+
+        fileUploadClose.addEventListener('click', () => {
+            fileUploadContainer.classList.remove('active');
+        });
+
+        // 拖放文件相关事件
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            fileDropArea.classList.add('dragging');
+        }
+
+        function unhighlight() {
+            fileDropArea.classList.remove('dragging');
+        }
+
+        fileDropArea.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFiles, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFileList(files);
+        }
+
+        function handleFiles(e) {
+            const files = e.target.files;
+            handleFileList(files);
+        }
+
+        function handleFileList(files) {
+            if (files.length === 0) return;
+
+            // 添加文件到上传列表并立即开始上传
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                // 检查文件大小限制 (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showStatus(`文件 ${file.name} 超过10MB限制，无法上传`, 'error');
+                    continue;
+                }
+
+                // 添加到文件列表
+                uploadedFiles.push(file);
+
+                // 添加预览
+                const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                addFilePreview(file, fileId);
+
+                // 立即开始上传此文件
+                uploadFile(file, fileId);
+            }
+
+            // 更新附件指示器
+            updateAttachmentIndicator();
+
+            // 清空文件输入以允许再次选择相同的文件
+            fileInput.value = '';
+        }
+
+        function addFilePreview(file, fileId) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.id = fileId;
+
+            const thumbnail = document.createElement('div');
+            thumbnail.className = 'file-thumbnail';
+
+            // 检查是否为图片文件
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+                thumbnail.appendChild(img);
+            } else {
+                // 非图片文件显示图标
+                const fileIcon = document.createElement('div');
+                fileIcon.className = 'file-icon';
+
+                // 根据文件类型显示不同图标
+                if (file.type.includes('pdf')) {
+                    fileIcon.innerHTML = '📄';
+                } else if (file.type.includes('word') || file.type.includes('document')) {
+                    fileIcon.innerHTML = '📝';
+                } else if (file.type.includes('spreadsheet') || file.type.includes('excel')) {
+                    fileIcon.innerHTML = '📊';
+                } else if (file.type.includes('presentation') || file.type.includes('powerpoint')) {
+                    fileIcon.innerHTML = '📊';
+                } else if (file.type.includes('text')) {
+                    fileIcon.innerHTML = '📃';
+                } else if (file.type.includes('zip') || file.type.includes('rar') || file.type.includes('archive')) {
+                    fileIcon.innerHTML = '📦';
+                } else if (file.type.includes('audio')) {
+                    fileIcon.innerHTML = '🎵';
+                } else if (file.type.includes('video')) {
+                    fileIcon.innerHTML = '🎬';
+                } else {
+                    fileIcon.innerHTML = '📁';
+                }
+
+                thumbnail.appendChild(fileIcon);
+            }
+
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'file-info';
+
+            const fileName = document.createElement('div');
+            fileName.className = 'file-name';
+            fileName.title = file.name;
+            fileName.textContent = file.name;
+
+            const fileSize = document.createElement('div');
+            fileSize.className = 'file-size';
+            fileSize.textContent = formatFileSize(file.size);
+
+            const fileStatus = document.createElement('div');
+            fileStatus.className = 'file-status uploading';
+            fileStatus.textContent = '上传中...';
+            fileStatus.dataset.id = fileId;
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'file-delete';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.title = '删除文件';
+            deleteBtn.addEventListener('click', () => {
+                // 从上传列表中删除
+                const fileIndex = uploadedFiles.findIndex(f => f === file);
+                if (fileIndex !== -1) {
+                    uploadedFiles.splice(fileIndex, 1);
+                }
+
+                // 从URL列表中删除
+                const urlIndex = uploadedFileUrls.findIndex(u => u.fileId === fileId);
+                if (urlIndex !== -1) {
+                    uploadedFileUrls.splice(urlIndex, 1);
+                }
+
+                // 从DOM中删除
+                fileItem.remove();
+
+                // 更新附件指示器
+                updateAttachmentIndicator();
+            });
+
+            fileInfo.appendChild(fileName);
+            fileInfo.appendChild(fileSize);
+            fileInfo.appendChild(fileStatus);
+            fileItem.appendChild(thumbnail);
+            fileItem.appendChild(fileInfo);
+            fileItem.appendChild(deleteBtn);
+
+            filePreview.appendChild(fileItem);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateAttachmentIndicator() {
+            if (uploadedFileUrls.length > 0) {
+                attachmentIndicator.classList.add('active');
+                attachmentIndicator.title = `已添加 ${uploadedFileUrls.length} 个文件`;
+            } else {
+                attachmentIndicator.classList.remove('active');
+                attachmentIndicator.title = '添加附件';
+            }
+        }
+
+        // 上传单个文件到服务器
+        async function uploadFile(file, fileId) {
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                updateFileStatus(fileId, 'error', '未设置API Key');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('https://api.2023gpt.top/fileSystem/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': apiKey
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`上传失败: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 上传成功，保存URL
+                    updateFileStatus(fileId, 'success', '上传成功');
+
+                    // 存储文件URL
+                    uploadedFileUrls.push({
+                        fileId: fileId,
+                        url: result.url,
+                        filename: file.name
+                    });
+
+                    updateAttachmentIndicator();
+                } else {
+                    throw new Error(result.message || '上传失败');
+                }
+            } catch (error) {
+                console.error('文件上传错误:', error);
+                updateFileStatus(fileId, 'error', '上传失败');
+            }
+        }
+
+        // 更新文件状态
+        function updateFileStatus(fileId, status, message) {
+            const statusElement = document.querySelector(`.file-status[data-id="${fileId}"]`);
+            if (statusElement) {
+                statusElement.className = `file-status ${status}`;
+                statusElement.textContent = message;
+            }
+        }
+
+        // 显示确认对话框
+        function showConfirmDialog(title, message, callback) {
+            dialogTitle.textContent = title;
+            dialogMessage.textContent = message;
+            confirmDialog.classList.add('visible');
+
+            dialogConfirm.onclick = () => {
+                confirmDialog.classList.remove('visible');
+                callback(true);
+            };
+
+            dialogCancel.onclick = () => {
+                confirmDialog.classList.remove('visible');
+                callback(false);
+            };
+        }
+
+        // 上下文长度设置
+        contextLength.addEventListener('input', () => {
+            const length = parseInt(contextLength.value);
+            contextLengthDesc.textContent = `保留最近${length}条消息作为上下文`;
+            saveConfig();
+        });
+
+        // 高级设置显示/隐藏
+        advancedToggle.addEventListener('click', () => {
+            if (advancedSettings.style.display === 'block') {
+                advancedSettings.style.display = 'none';
+                advancedToggle.textContent = '显示高级设置 ▼';
+            } else {
+                advancedSettings.style.display = 'block';
+                advancedToggle.textContent = '隐藏高级设置 ▲';
+            }
+        });
+
+        // 切换选择模式
+        selectionModeCheckbox.addEventListener('change', () => {
+            selectionMode = selectionModeCheckbox.checked;
+
+            if (selectionMode) {
+                bulkControls.classList.add('visible');
+                chatContainer.querySelectorAll('.message').forEach(msg => {
+                    msg.style.cursor = 'pointer';
+                });
+            } else {
+                bulkControls.classList.remove('visible');
+                selectedMessages.clear();
+                updateSelectedCount();
+                chatContainer.querySelectorAll('.message').forEach(msg => {
+                    msg.style.cursor = '';
+                    msg.classList.remove('selected');
+                });
+            }
+        });
+
+        // 取消选择
+        cancelSelectButton.addEventListener('click', () => {
+            selectionModeCheckbox.checked = false;
+            selectionMode = false;
+            bulkControls.classList.remove('visible');
+            selectedMessages.clear();
+            updateSelectedCount();
+            chatContainer.querySelectorAll('.message').forEach(msg => {
+                msg.style.cursor = '';
+                msg.classList.remove('selected');
+            });
+        });
+
+        // 批量删除
+        bulkDeleteButton.addEventListener('click', () => {
+            if (selectedMessages.size === 0) return;
+
+            showConfirmDialog(
+                '确认删除',
+                `确定要删除已选择的 ${selectedMessages.size} 条消息吗？`,
+                (confirmed) => {
+                    if (confirmed) {
+                        deleteSelectedMessages();
+                    }
+                }
+            );
+        });
+
+        // 更新选中数量
+        function updateSelectedCount() {
+            selectedCount.textContent = `已选择 ${selectedMessages.size} 条消息`;
+        }
+
+        // 从本地存储加载配置
+        function loadConfig() {
+            const savedApiUrl = localStorage.getItem('apiUrl');
+            const savedApiKey = localStorage.getItem('apiKey');
+            const savedModel = localStorage.getItem('model');
+            const savedTemp = localStorage.getItem('temperature');
+            const savedStream = localStorage.getItem('stream');
+            const savedDirection = localStorage.getItem('textDirection');
+            const savedSystemPrompt = localStorage.getItem('systemPrompt');
+            const savedMaxTokens = localStorage.getItem('maxTokens');
+            const savedContextLength = localStorage.getItem('contextLength');
+
+            if (savedApiUrl) apiUrlInput.value = savedApiUrl;
+            if (savedApiKey) apiKeyInput.value = savedApiKey;
+            if (savedModel) modelSelect.value = savedModel;
+            if (savedTemp) {
+                tempSlider.value = savedTemp;
+                tempValue.textContent = savedTemp;
+            }
+            if (savedStream !== null) streamCheckbox.checked = savedStream === 'true';
+            if (savedDirection) textDirectionSelect.value = savedDirection;
+            if (savedSystemPrompt) systemPrompt.value = savedSystemPrompt;
+            if (savedMaxTokens) maxTokens.value = savedMaxTokens;
+            if (savedContextLength) {
+                contextLength.value = savedContextLength;
+                contextLengthDesc.textContent = `保留最近${savedContextLength}条消息作为上下文`;
+            }
+
+            // 加载对话历史
+            const savedHistory = localStorage.getItem('conversationHistory');
+            if (savedHistory) {
+                try {
+                    const parsedHistory = JSON.parse(savedHistory);
+
+                    // 为每条消息添加ID，如果没有的话
+                    conversationHistory = parsedHistory.map(msg => {
+                        if (!msg.id && msg.role !== 'system') {
+                            msg.id = generateMessageId();
+                        }
+                        return msg;
+                    });
+
+                    // 重建聊天界面
+                    conversationHistory.forEach(msg => {
+                        if (msg.role === 'system') return; // 不显示系统消息
+                        addMessageToUI(msg.role, msg.content, msg.id, msg.originalContent);
+                    });
+                } catch (e) {
+                    console.error('无法加载历史对话:', e);
+                }
+            }
+        }
+
+        // 生成消息ID
+        function generateMessageId() {
+            return `msg_${Date.now()}_${messageCounter++}`;
+        }
+
+        // 保存配置到本地存储
+        function saveConfig() {
+            localStorage.setItem('apiUrl', apiUrlInput.value);
+            localStorage.setItem('apiKey', apiKeyInput.value);
+            localStorage.setItem('model', modelSelect.value);
+            localStorage.setItem('temperature', tempSlider.value);
+            localStorage.setItem('stream', streamCheckbox.checked);
+            localStorage.setItem('textDirection', textDirectionSelect.value);
+            localStorage.setItem('systemPrompt', systemPrompt.value);
+            localStorage.setItem('maxTokens', maxTokens.value);
+            localStorage.setItem('contextLength', contextLength.value);
+
+            // 保存对话历史
+            localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
+        }
+
+        // 显示状态消息
+        function showStatus(message, type = 'info') {
+            statusMessage.className = type === 'error' ? 'error-message' : 'success-message';
+            statusMessage.textContent = message;
+            setTimeout(() => {
+                statusMessage.textContent = '';
+            }, 3000);
+        }
+
+        // 显示复制成功提示
+        function showCopyToast() {
+            copyToast.style.opacity = '1';
+            setTimeout(() => {
+                copyToast.style.opacity = '0';
+            }, 2000);
+        }
+
+        // 检测文本方向
+        function detectTextDirection(text) {
+            // 如果包含RTL字符，返回rtl，否则返回ltr
+            return rtlRegex.test(text) ? 'rtl' : 'ltr';
+        }
+
+        // 删除选中的消息
+        function deleteSelectedMessages() {
+            // 将Set转为Array，以防在遍历过程中修改Set
+            const idsToDelete = Array.from(selectedMessages);
+
+            // 按照ID删除消息
+            idsToDelete.forEach(id => {
+                deleteMessage(id);
+            });
+
+            // 清空选中集合
+            selectedMessages.clear();
+            updateSelectedCount();
+
+            // 如果没有选中的消息了，可以考虑退出选择模式
+            if (selectionModeCheckbox.checked && selectedMessages.size === 0) {
+                selectionModeCheckbox.checked = false;
+                selectionMode = false;
+                bulkControls.classList.remove('visible');
+            }
+
+            showStatus(`已删除 ${idsToDelete.length} 条消息`, 'success');
+
+            // 保存更新后的对话历史
+            saveConfig();
+        }
+
+        // 删除单条消息
+        function deleteMessage(messageId) {
+            // 从DOM中移除
+            const messageElement = messageElements.get(messageId);
+            if (messageElement) {
+                messageElement.classList.add('deleting');
+                setTimeout(() => {
+                    messageElement.remove();
+                    messageElements.delete(messageId);
+                }, 300); // 动画时间
+            }
+
+            // 从历史记录中移除
+            const messageIndex = conversationHistory.findIndex(msg => msg.id === messageId);
+            if (messageIndex !== -1) {
+                conversationHistory.splice(messageIndex, 1);
+            }
+
+            // 如果该消息在选中集合中，移除它
+            if (selectedMessages.has(messageId)) {
+                selectedMessages.delete(messageId);
+                updateSelectedCount();
+            }
+        }
+
+        // 添加消息到UI
+        function addMessageToUI(role, content, messageId = null, originalContent = null) {
+            if (!messageId) {
+                messageId = generateMessageId();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.dataset.id = messageId;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'user' ? '用户' : 'AI';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            // 根据设置或自动检测决定文字方向
+            const direction = textDirectionSelect.value;
+
+            // 应用文字方向
+            if (direction === 'rtl' || (direction === 'auto' && detectTextDirection(content) === 'rtl')) {
+                contentDiv.classList.add('rtl');
+            }
+
+            // 根据角色处理内容
+            if (role === 'assistant') {
+                // 使用Markdown解析器处理AI回复
+                contentDiv.innerHTML = marked.parse(content);
+            } else {
+                // 用户消息不需要Markdown解析
+                contentDiv.textContent = content;
+            }
+
+            // 添加时间戳
+            const timestamp = document.createElement('div');
+            timestamp.className = 'message-timestamp';
+            timestamp.textContent = new Date().toLocaleTimeString();
+            contentDiv.appendChild(timestamp);
+
+            // 添加删除按钮
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-button';
+            deleteButton.innerHTML = '×';
+            deleteButton.title = '删除此消息';
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // 阻止冒泡，以防触发消息选择
+
+                showConfirmDialog(
+                    '确认删除',
+                    '确定要删除这条消息吗？',
+                    (confirmed) => {
+                        if (confirmed) {
+                            deleteMessage(messageId);
+                            saveConfig();
+                        }
+                    }
+                );
+            });
+
+            // 添加编辑按钮（只给用户消息添加）
+            if (role === 'user') {
+                const editButton = document.createElement('button');
+                editButton.className = 'edit-button';
+                editButton.innerHTML = '✎';
+                editButton.title = '编辑此消息';
+                editButton.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 阻止冒泡
+                    editMessage(messageId);
+                });
+                messageDiv.appendChild(editButton);
+            }
+
+            // 添加重新发送按钮（只给用户消息添加）
+            if (role === 'user') {
+                const resendButton = document.createElement('button');
+                resendButton.className = 'resend-button';
+                resendButton.innerHTML = '↻';
+                resendButton.title = '重新发送此消息';
+                resendButton.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 阻止冒泡
+                    resendMessage(messageId);
+                });
+                messageDiv.appendChild(resendButton);
+            }
+
+            // 添加操作按钮容器 (只给AI回复添加)
+            if (role === 'assistant') {
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'message-actions';
+
+                // 复制按钮
+                const copyButton = document.createElement('button');
+                copyButton.className = 'action-btn';
+                copyButton.textContent = '复制';
+                copyButton.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 阻止冒泡
+
+                    // 提取纯文本（不含Markdown标记和时间戳）
+                    const plainText = extractPlainText(contentDiv.innerHTML);
+
+                    navigator.clipboard.writeText(plainText)
+                        .then(() => {
+                            showCopyToast();
+                        })
+                        .catch(err => {
+                            console.error('复制失败:', err);
+                            showStatus('复制失败', 'error');
+                        });
+                });
+
+                // 朗读按钮（如果浏览器支持）
+                if ('speechSynthesis' in window) {
+                    const speakButton = document.createElement('button');
+                    speakButton.className = 'action-btn';
+                    speakButton.textContent = '朗读';
+                    speakButton.addEventListener('click', (e) => {
+                        e.stopPropagation(); // 阻止冒泡
+                        // 停止正在播放的语音
+                        window.speechSynthesis.cancel();
+
+                        // 使用提取的纯文本进行朗读
+                        const plainText = extractPlainText(contentDiv.innerHTML);
+                        const utterance = new SpeechSynthesisUtterance(plainText);
+
+                        // 如果是RTL文本，尝试设置合适的语言
+                        if (contentDiv.classList.contains('rtl')) {
+                            utterance.lang = 'ar'; // 默认使用阿拉伯语，因为大多数浏览器支持
+                        }
+                        window.speechSynthesis.speak(utterance);
+                    });
+                    actionsDiv.appendChild(speakButton);
+                }
+
+                actionsDiv.appendChild(copyButton);
+                contentDiv.appendChild(actionsDiv);
+            }
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(deleteButton);
+
+            // 添加选择消息的功能
+            messageDiv.addEventListener('click', () => {
+                if (!selectionMode) return;
+
+                if (selectedMessages.has(messageId)) {
+                    selectedMessages.delete(messageId);
+                    messageDiv.classList.remove('selected');
+                } else {
+                    selectedMessages.add(messageId);
+                    messageDiv.classList.add('selected');
+                }
+
+                updateSelectedCount();
+            });
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // 保存消息元素引用
+            messageElements.set(messageId, messageDiv);
+
+            return { contentDiv, messageId, originalContent };
+        }
+
+        function processMessageContent(contentDiv) {
+            // 处理所有图片元素，无论其格式
+            const images = contentDiv.querySelectorAll('img');
+            images.forEach(img => {
+                // 设置内联样式确保限制尺寸
+                img.style.maxWidth = '30%';
+                img.style.height = 'auto';
+                img.style.maxHeight = '300px';
+                img.style.objectFit = 'contain';
+
+                // 添加加载事件处理程序
+                img.addEventListener('load', function () {
+                    // 图片加载完成后重新滚动到底部
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                });
+            });
+        }
+
+        // 编辑消息
+        function editMessage(messageId) {
+            const message = conversationHistory.find(msg => msg.id === messageId);
+            if (!message || message.role !== 'user') return;
+
+            // 设置当前编辑的消息ID
+            currentEditingMessageId = messageId;
+
+            // 如果有原始内容（包含文件链接），使用它
+            const contentToEdit = message.originalContent || message.content;
+
+            // 将内容填入输入框
+            messageInput.value = contentToEdit;
+            messageInput.focus();
+
+            // 自动调整textarea高度
+            autoResizeTextarea(messageInput);
+
+            // 更改发送按钮文本
+            sendButton.textContent = '更新';
+
+            // 提示用户正在编辑
+            showStatus('正在编辑消息，按更新保存修改', 'info');
+        }
+
+        // 重新发送消息
+        function resendMessage(messageId) {
+            const message = conversationHistory.find(msg => msg.id === messageId);
+            if (!message || message.role !== 'user') return;
+
+            // 找到这条消息后面的所有消息
+            const messageIndex = conversationHistory.findIndex(msg => msg.id === messageId);
+            if (messageIndex === -1) return;
+
+            // 确认重新发送
+            showConfirmDialog(
+                '确认重新发送',
+                '重新发送此消息将删除此消息之后的所有对话。确定继续吗？',
+                async (confirmed) => {
+                    if (confirmed) {
+                        // 删除此消息之后的所有消息（从DOM和历史记录中）
+                        for (let i = conversationHistory.length - 1; i > messageIndex; i--) {
+                            const msgToDelete = conversationHistory[i];
+                            deleteMessage(msgToDelete.id);
+                        }
+
+                        // 获取原始内容或普通内容
+                        const contentToResend = message.originalContent || message.content;
+
+                        // 删除当前消息
+                        deleteMessage(messageId);
+
+                        // 重新发送
+                        messageInput.value = contentToResend;
+
+                        // 自动调整textarea高度
+                        autoResizeTextarea(messageInput);
+
+                        await sendMessage();
+                    }
+                }
+            );
+        }
+
+        // 添加消息到聊天
+        function addMessage(role, content, originalContent = null) {
+            const messageId = generateMessageId();
+            const { contentDiv } = addMessageToUI(role, content, messageId, originalContent);
+
+            // 添加到历史
+            conversationHistory.push({
+                role,
+                content,
+                id: messageId,
+                originalContent
+            });
+
+            return { contentDiv, messageId };
+        }
+
+        // 清空聊天
+        function clearChat() {
+            showConfirmDialog(
+                '确认清空',
+                '确定要清空所有聊天记录吗？这将无法恢复！',
+                (confirmed) => {
+                    if (confirmed) {
+                        chatContainer.innerHTML = '';
+                        conversationHistory = [];
+                        messageElements.clear();
+
+                        // 如果有系统提示，保留它
+                        const sysPrompt = systemPrompt.value.trim();
+                        if (sysPrompt) {
+                            conversationHistory.push({ role: 'system', content: sysPrompt });
+                        }
+
+                        // 清空已上传的文件
+                        uploadedFiles = [];
+                        uploadedFileUrls = [];
+                        filePreview.innerHTML = '';
+                        updateAttachmentIndicator();
+
+                        saveConfig();
+                        showStatus('聊天记录已清空', 'success');
+                    }
+                }
+            );
+        }
+
+        // 导出对话
+        function exportChat() {
+            // 排除系统消息
+            const exportHistory = conversationHistory.filter(msg => msg.role !== 'system');
+
+            // 格式化对话内容
+            let exportContent = '# 聊天记录\n\n';
+            exportHistory.forEach(msg => {
+                const roleText = msg.role === 'user' ? '用户' : 'AI助手';
+
+                // 提取纯文本内容，不包含时间戳
+                let content = msg.content;
+                if (msg.role === 'assistant') {
+                    // 创建临时元素来解析Markdown并获取纯文本
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = marked.parse(content);
+
+                    // 移除时间戳
+                    const timestamps = tempDiv.querySelectorAll('.message-timestamp');
+                    timestamps.forEach(el => el.remove());
+
+                    content = tempDiv.textContent || tempDiv.innerText || content;
+                }
+
+                exportContent += `## ${roleText}\n\n${content}\n\n`;
+            });
+
+            // 创建下载链接
+            const blob = new Blob([exportContent], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            a.href = url;
+            a.download = `聊天记录_${timestamp}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showStatus('聊天记录已导出', 'success');
+        }
+
+        // 停止生成
+        function stopGeneration() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+
+                isGenerating = false;
+                sendButton.disabled = false;
+                sendButton.innerHTML = '发送';
+                stopButton.style.display = 'none';
+
+                showStatus('已停止生成', 'success');
+            }
+        }
+
+        // 准备发送到API的上下文
+        function prepareContext() {
+            // 复制一份历史记录
+            let context = [...conversationHistory];
+
+            // 获取设定的上下文长度
+            const maxContextLength = parseInt(contextLength.value);
+
+            // 确保保留系统消息
+            let systemMessages = context.filter(msg => msg.role === 'system');
+
+            // 获取用户和助手消息
+            let conversationMessages = context.filter(msg => msg.role !== 'system');
+
+            // 如果对话消息超出上下文长度，只保留最近的maxContextLength条
+            if (conversationMessages.length > maxContextLength) {
+                conversationMessages = conversationMessages.slice(-maxContextLength);
+            }
+
+            // 合并系统消息和裁剪后的对话消息
+            context = [...systemMessages, ...conversationMessages];
+
+            // 清除ID等非API需要的字段
+            return context.map(({ role, content }) => ({ role, content }));
+        }
+
+        // 处理API错误
+        function handleAPIError(error, messageId, contentDiv) {
+            // 如果是中止错误，特殊处理
+            if (error.name === 'AbortError') {
+                for (let i = 0; i < conversationHistory.length; i++) {
+                    if (conversationHistory[i].id === messageId) {
+                        conversationHistory[i].content += "\n\n[已停止生成]";
+                        contentDiv.innerHTML += "<p><em>[已停止生成]</em></p>";
+                        break;
+                    }
+                }
+                return;
+            }
+
+            console.error('Error:', error);
+            contentDiv.innerHTML = '<p class="error">发生错误: ' + error.message + '</p>';
+
+            // 添加重试按钮
+            const retryButton = document.createElement('button');
+            retryButton.className = 'action-btn';
+            retryButton.textContent = '重试';
+            retryButton.style.marginTop = '10px';
+            retryButton.addEventListener('click', () => {
+                // 找到最后一条用户消息
+                const userMessages = conversationHistory.filter(msg => msg.role === 'user');
+                if (userMessages.length > 0) {
+                    const lastUserMsg = userMessages[userMessages.length - 1];
+
+                    // 删除错误的AI回复
+                    deleteMessage(messageId);
+
+                    // 发送请求
+                    sendAPIRequest(lastUserMsg.content);
+                }
+            });
+
+            contentDiv.appendChild(retryButton);
+            showStatus('请求失败: ' + error.message, 'error');
+        }
+
+        // 发送API请求的核心函数
+        async function sendAPIRequest(userMessageContent, existingMessageId = null, existingContentDiv = null) {
+            const apiKey = apiKeyInput.value.trim();
+            const apiUrl = apiUrlInput.value.trim();
+
+            if (!apiKey || !apiUrl) {
+                showStatus('API配置不完整', 'error');
+                return;
+            }
+
+            // 准备发送到API的消息历史 (带有上下文长度限制)
+            const apiMessages = prepareContext();
+
+            // 如果没有现有的消息ID和内容DIV，创建新的
+            let messageId = existingMessageId;
+            let contentDiv = existingContentDiv;
+
+            if (!messageId || !contentDiv) {
+                const { contentDiv: newContentDiv, messageId: newMessageId } = addMessage('assistant', '');
+                contentDiv = newContentDiv;
+                messageId = newMessageId;
+            }
+
+            try {
+                const isStream = streamCheckbox.checked;
+
+                // 准备请求体
+                const requestBody = {
+                    model: modelSelect.value,
+                    messages: apiMessages,
+                    temperature: parseFloat(tempSlider.value),
+                    max_tokens: parseInt(maxTokens.value),
+                    stream: isStream
+                };
+
+                // 创建AbortController用于中止请求
+                abortController = new AbortController();
+
+                if (isStream) {
+                    // 流式请求
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify(requestBody),
+                        signal: abortController.signal
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let assistantMessage = '';
+                    let markdownContent = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const data = line.slice(6);
+                                if (data === '[DONE]') continue;
+
+                                try {
+                                    const json = JSON.parse(data);
+                                    const content = json.choices[0]?.delta?.content || '';
+                                    assistantMessage += content;
+                                    markdownContent = assistantMessage;
+
+                                    // 使用Markdown解析器渲染内容
+                                    contentDiv.innerHTML = marked.parse(markdownContent);
+                                    processMessageContent(contentDiv);
+
+                                    // 检测并应用文字方向
+                                    const direction = textDirectionSelect.value;
+                                    if (direction === 'rtl') {
+                                        contentDiv.classList.add('rtl');
+                                    } else if (direction === 'auto' && detectTextDirection(assistantMessage) === 'rtl') {
+                                        contentDiv.classList.add('rtl');
+                                    } else {
+                                        contentDiv.classList.remove('rtl');
+                                    }
+
+                                    // 动态添加操作按钮
+                                    if (!contentDiv.querySelector('.message-actions')) {
+                                        const actionsDiv = document.createElement('div');
+                                        actionsDiv.className = 'message-actions';
+
+                                        // 复制按钮
+                                        const copyButton = document.createElement('button');
+                                        copyButton.className = 'action-btn';
+                                        copyButton.textContent = '复制';
+                                        copyButton.addEventListener('click', (e) => {
+                                            e.stopPropagation(); // 阻止冒泡
+
+                                            // 提取纯文本（不含Markdown标记和时间戳）
+                                            const plainText = extractPlainText(contentDiv.innerHTML);
+
+                                            navigator.clipboard.writeText(plainText)
+                                                .then(() => showCopyToast())
+                                                .catch(err => showStatus('复制失败', 'error'));
+                                        });
+
+                                        // 朗读按钮
+                                        if ('speechSynthesis' in window) {
+                                            const speakButton = document.createElement('button');
+                                            speakButton.className = 'action-btn';
+                                            speakButton.textContent = '朗读';
+                                            speakButton.addEventListener('click', (e) => {
+                                                e.stopPropagation(); // 阻止冒泡
+                                                window.speechSynthesis.cancel();
+
+                                                // 获取纯文本用于朗读
+                                                const plainText = extractPlainText(contentDiv.innerHTML);
+                                                const utterance = new SpeechSynthesisUtterance(plainText);
+
+                                                if (contentDiv.classList.contains('rtl')) {
+                                                    utterance.lang = 'ar';
+                                                }
+                                                window.speechSynthesis.speak(utterance);
+                                            });
+                                            actionsDiv.appendChild(speakButton);
+                                        }
+
+                                        actionsDiv.appendChild(copyButton);
+                                        contentDiv.appendChild(actionsDiv);
+
+                                        // 添加时间戳
+                                        const timestamp = document.createElement('div');
+                                        timestamp.className = 'message-timestamp';
+                                        timestamp.textContent = new Date().toLocaleTimeString();
+                                        contentDiv.appendChild(timestamp);
+                                    }
+
+                                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                                } catch (e) {
+                                    console.error('Parse error:', e);
+                                }
+                            }
+                        }
+                    }
+
+                    // 更新历史中的消息内容
+                    for (let i = 0; i < conversationHistory.length; i++) {
+                        if (conversationHistory[i].id === messageId) {
+                            conversationHistory[i].content = assistantMessage;
+                            break;
+                        }
+                    }
+
+                } else {
+                    // 非流式请求
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify(requestBody),
+                        signal: abortController.signal
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const assistantMessage = data.choices[0].message.content;
+
+                    // 使用Markdown解析器渲染内容
+                    contentDiv.innerHTML = marked.parse(assistantMessage);
+                    processMessageContent(contentDiv);
+
+                    // 检测并应用文字方向
+                    const direction = textDirectionSelect.value;
+                    if (direction === 'rtl') {
+                        contentDiv.classList.add('rtl');
+                    } else if (direction === 'auto' && detectTextDirection(assistantMessage) === 'rtl') {
+                        contentDiv.classList.add('rtl');
+                    } else {
+                        contentDiv.classList.remove('rtl');
+                    }
+
+                    // 添加操作按钮
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'message-actions';
+
+                    // 复制按钮
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'action-btn';
+                    copyButton.textContent = '复制';
+                    copyButton.addEventListener('click', (e) => {
+                        e.stopPropagation(); // 阻止冒泡
+
+                        // 提取纯文本（不含Markdown标记和时间戳）
+                        const plainText = extractPlainText(contentDiv.innerHTML);
+
+                        navigator.clipboard.writeText(plainText)
+                            .then(() => showCopyToast())
+                            .catch(err => showStatus('复制失败', 'error'));
+                    });
+
+                    // 朗读按钮
+                    if ('speechSynthesis' in window) {
+                        const speakButton = document.createElement('button');
+                        speakButton.className = 'action-btn';
+                        speakButton.textContent = '朗读';
+                        speakButton.addEventListener('click', (e) => {
+                            e.stopPropagation(); // 阻止冒泡
+                            window.speechSynthesis.cancel();
+
+                            // 获取纯文本用于朗读
+                            const plainText = extractPlainText(contentDiv.innerHTML);
+                            const utterance = new SpeechSynthesisUtterance(plainText);
+
+                            if (contentDiv.classList.contains('rtl')) {
+                                utterance.lang = 'ar';
+                            }
+                            window.speechSynthesis.speak(utterance);
+                        });
+                        actionsDiv.appendChild(speakButton);
+                    }
+
+                    actionsDiv.appendChild(copyButton);
+                    contentDiv.appendChild(actionsDiv);
+
+                    // 添加时间戳
+                    const timestamp = document.createElement('div');
+                    timestamp.className = 'message-timestamp';
+                    timestamp.textContent = new Date().toLocaleTimeString();
+                    contentDiv.appendChild(timestamp);
+
+                    // 更新历史中的消息内容
+                    for (let i = 0; i < conversationHistory.length; i++) {
+                        if (conversationHistory[i].id === messageId) {
+                            conversationHistory[i].content = assistantMessage;
+                            break;
+                        }
+                    }
+                }
+
+                // 保存对话历史到本地存储
+                saveConfig();
+
+                return true; // 请求成功
+            } catch (error) {
+                handleAPIError(error, messageId, contentDiv);
+                return false; // 请求失败
+            }
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+
+            // 检查是否有消息或附件
+            if (!message && uploadedFileUrls.length === 0) return;
+
+            const apiKey = apiKeyInput.value.trim();
+            const apiUrl = apiUrlInput.value.trim();
+
+            if (!apiKey) {
+                showStatus('请输入API Key', 'error');
+                return;
+            }
+
+            if (!apiUrl) {
+                showStatus('请输入API地址', 'error');
+                return;
+            }
+
+            // 保存配置
+            saveConfig();
+
+            // 处理编辑模式
+            if (currentEditingMessageId) {
+                // 查找正在编辑的消息
+                const messageIndex = conversationHistory.findIndex(msg => msg.id === currentEditingMessageId);
+                if (messageIndex !== -1) {
+                    // 获取消息元素
+                    const messageElement = messageElements.get(currentEditingMessageId);
+                    if (messageElement) {
+                        // 更新DOM
+                        const contentDiv = messageElement.querySelector('.message-content');
+                        contentDiv.textContent = message;
+
+                        // 更新历史记录
+                        conversationHistory[messageIndex].content = message;
+
+                        // 重置编辑状态
+                        currentEditingMessageId = null;
+                        sendButton.textContent = '发送';
+
+                        // 清空输入框
+                        messageInput.value = '';
+                        messageInput.style.height = 'auto'; // 重置高度
+
+                        // 保存更新
+                        saveConfig();
+
+                        showStatus('消息已更新', 'success');
+                        return;
+                    }
+                }
+            }
+
+            // 禁用输入并显示停止按钮
+            isGenerating = true;
+            messageInput.value = '';
+            messageInput.style.height = 'auto'; // 重置高度
+            sendButton.disabled = true;
+            sendButton.innerHTML = '生成中<span class="loading"></span>';
+            stopButton.style.display = 'inline-block';
+
+            // 构建带有文件URL的消息
+            let userMessageContent = message;
+            let fileUrlsText = '';
+            let apiMessageContent = message;
+
+            if (uploadedFileUrls.length > 0) {
+                // 将所有文件URL添加到消息前面，每个URL后面加一个空格
+                fileUrlsText = uploadedFileUrls.map(fileObj => fileObj.url).join(' ') + ' ';
+
+                // 添加文件列表信息
+                const fileNames = uploadedFileUrls.map(fileObj => fileObj.filename).join(', ');
+
+                // 在UI中显示的消息添加附件说明
+                userMessageContent = message + (message ? '\n\n' : '') + `[附件: ${fileNames}]`;
+
+                // API发送的消息包含文件URL和用户输入
+                apiMessageContent = fileUrlsText + message;
+            }
+
+            // 添加用户消息到UI
+            const userMessageId = addMessage('user', userMessageContent, apiMessageContent).messageId;
+
+            // 处理系统提示
+            const sysPrompt = systemPrompt.value.trim();
+
+            // 检查是否已有系统消息
+            let hasSystemMsg = false;
+            for (let i = 0; i < conversationHistory.length; i++) {
+                if (conversationHistory[i].role === 'system') {
+                    if (sysPrompt) {
+                        conversationHistory[i].content = sysPrompt;
+                    } else {
+                        conversationHistory.splice(i, 1);
+                    }
+                    hasSystemMsg = true;
+                    break;
+                }
+            }
+
+            // 如果没有系统消息但有系统提示，添加它
+            if (!hasSystemMsg && sysPrompt) {
+                conversationHistory.unshift({ role: 'system', content: sysPrompt });
+            }
+
+            // 更新最后一条用户消息的内容为API格式
+            const userMessageIndex = conversationHistory.findIndex(msg => msg.id === userMessageId);
+            if (userMessageIndex !== -1) {
+                conversationHistory[userMessageIndex].content = apiMessageContent;
+            }
+
+            // 发送API请求
+            await sendAPIRequest(apiMessageContent);
+
+            // 无论请求成功或失败，都执行以下操作
+            isGenerating = false;
+            sendButton.disabled = false;
+            sendButton.innerHTML = '发送';
+            stopButton.style.display = 'none';
+            abortController = null;
+            messageInput.focus();
+
+            // 清空已上传的文件列表，因为已经发送了
+            uploadedFiles = [];
+            uploadedFileUrls = [];
+            filePreview.innerHTML = '';
+            updateAttachmentIndicator();
+
+            // 隐藏文件上传区域
+            fileUploadContainer.classList.remove('active');
+        }
+
+        // 事件监听器
+        tempSlider.addEventListener('input', (e) => {
+            tempValue.textContent = e.target.value;
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+        stopButton.addEventListener('click', stopGeneration);
+        clearButton.addEventListener('click', clearChat);
+        exportButton.addEventListener('click', exportChat);
+
+        // 更新键盘事件处理，支持Shift+Enter
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !isGenerating) {
+                e.preventDefault(); // 阻止默认行为（添加新行）
+                sendMessage();
+            }
+            // 如果是Shift+Enter，允许默认行为（添加新行）
+        });
+
+        // 文字方向更改事件
+        textDirectionSelect.addEventListener('change', () => {
+            const direction = textDirectionSelect.value;
+            // 应用到所有现有消息
+            document.querySelectorAll('.message-content').forEach(element => {
+                if (direction === 'rtl') {
+                    element.classList.add('rtl');
+                } else if (direction === 'ltr') {
+                    element.classList.remove('rtl');
+                } else {
+                    // auto - 根据内容检测
+                    const content = element.textContent;
+                    if (detectTextDirection(content) === 'rtl') {
+                        element.classList.add('rtl');
+                    } else {
+                        element.classList.remove('rtl');
+                    }
+                }
+            });
+            saveConfig();
+        });
+
+        // 初始化
+        loadConfig();
+        messageInput.focus();
+    </script>
+</body>
+
+</html>
