@@ -257,6 +257,16 @@
             opacity: 1;
         }
 
+        /* 始终显示AI消息的删除按钮 */
+        .message.assistant .delete-button {
+            opacity: 1 !important;
+            display: flex !important;
+            z-index: 10;
+            left: -30px;
+            right: auto;
+            pointer-events: auto;
+        }
+
         /* 消息操作按钮 */
         .message-actions {
             position: absolute;
@@ -2299,17 +2309,7 @@
                         contentDiv.classList.add('rtl');
                     } else if (direction === 'auto' && detectTextDirection(assistantMessage) === 'rtl') {
                         contentDiv.classList.add('rtl');
-                    } else {
-                        contentDiv.classList.remove('rtl');
-                    }
-
-                    // 添加操作按钮
-                    const actionsDiv = document.createElement('div');
-                    actionsDiv.className = 'message-actions';
-
-                    // 复制按钮
-                    const copyButton = document.createElement('button');
-                    copyButton.className = 'action-btn';
+                    } else
                     copyButton.textContent = '复制';
                     copyButton.addEventListener('click', (e) => {
                         e.stopPropagation(); // 阻止冒泡
